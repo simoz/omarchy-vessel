@@ -28,12 +28,56 @@ BarWidget {
     function close() { opened = false; configuring = false; }
     function toggle() { if (!opened && report.status === "SETUP") configuring = true; opened = !opened; }
     function refresh() { VesselService.restart(); }
+    function revealShip(ship) {
+        selectedMmsi = ship.mmsi;
+        radar.focusShip(ship);
+        // A list click must reveal the chart as well as the geographic contact.
+        viewport.contentY = 0;
+    }
+    onConfiguringChanged: viewport.contentY = 0
     // Attach once per monitor while the singleton owns the shared network process.
     onSettingsChanged: if (attached) VesselService.configure(settings)
     Component.onCompleted: { attached = true; VesselService.attach(settings); }
     Component.onDestruction: if (attached) VesselService.detach()
     // Age labels need a clock only while the details panel is visible.
     Timer { interval: 1000; running: root.opened; repeat: true; onTriggered: root.now = Date.now() }
+
+    component Label: Text {
+        color: Color.foreground; font.family: root.family; font.pixelSize: 12
+        textFormat: Text.PlainText
+    }
+    // Consistent hit-area heights and shared styling keep all panel
+    // commands consistent, including the reception toggle.
+    component Action: Rectangle {
+        id: action
+        property string text
+        signal triggered()
+        implicitWidth: actionLabel.implicitWidth + 16
+        implicitHeight: 30
+        radius: 3
+        color: "transparent"
+        border.width: 1
+        border.color: activeFocus || pointer.containsMouse ? Color.accent : "transparent"
+        activeFocusOnTab: true
+        Accessible.role: Accessible.Button
+        Accessible.name: text
+        Accessible.onPressAction: triggered()
+        Label {
+            id: actionLabel
+            anchors.centerIn: parent
+            text: action.text; color: Color.accent
+        }
+        Keys.onReturnPressed: triggered()
+        Keys.onSpacePressed: triggered()
+        Keys.onEscapePressed: root.close()
+        MouseArea {
+            id: pointer
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: action.triggered()
+        }
+    }
 
     WidgetButton {
         id: button
@@ -61,16 +105,19 @@ BarWidget {
         open: root.opened
         focusTarget: keys
         contentWidth: fittedContentWidth(Style.space(440))
-        contentHeight: fittedContentHeight(root.configuring ? form.implicitHeight : body.implicitHeight)
+        contentHeight: fittedContentHeight(root.configuring ? form.implicitHeight : body.implicitHeight + footer.height + 12)
         PanelKeyCatcher {
             id: keys
             anchors.fill: parent
             blocked: root.configuring || radar.zoomControlsFocused || settingsAction.activeFocus || receptionAction.activeFocus || reconnectAction.activeFocus
             onCloseRequested: root.close()
             onReturnRequested: root.refresh()
-            // Allow the whole panel to scroll when the available screen height is limited.
+            // Only the body scrolls; reception controls remain reachable on short screens.
             Flickable {
+                id: viewport
+                objectName: "panelViewport"
                 anchors.fill: parent
+                anchors.bottomMargin: root.configuring ? 0 : footer.height + 12
                 contentHeight: root.configuring ? form.implicitHeight : body.implicitHeight
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
@@ -87,10 +134,6 @@ BarWidget {
                     visible: !root.configuring
                     width: parent.width
                     spacing: 12
-                    component Label: Text {
-                        color: Color.foreground; font.family: root.family; font.pixelSize: 12
-                        textFormat: Text.PlainText
-                    }
                     Row {
                         width: parent.width
                         Label { width: parent.width * 0.6; text: "V E S S E L  /  MARINE RADAR"; color: Color.accent; font.bold: true; font.pixelSize: 11 }
@@ -131,14 +174,30 @@ BarWidget {
                     Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.3 }
                     Column {
                         width: parent.width; spacing: 6; visible: root.selectedShip !== null
-                        Label { width: parent.width; elide: Text.ElideRight; font.pixelSize: 20; text: root.selectedShip ? (root.selectedShip.name || "MMSI " + root.selectedShip.mmsi) : "" }
-                        Label { text: root.selectedShip ? root.selectedShip.type + " · " + root.selectedShip.mmsi : ""; color: Color.muted }
+                        Label {
+                            width: parent.width; wrapMode: Text.WordWrap
+                            font.pixelSize: 22; font.bold: true
+                            text: root.selectedShip ? (root.selectedShip.name || "MMSI " + root.selectedShip.mmsi) : ""
+                        }
+                        Label { text: "DESTINATION"; font.pixelSize: 9; color: Color.muted }
+                        Label {
+                            width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 16
+                            text: root.selectedShip ? (root.selectedShip.destination || "Not reported") : ""
+                            color: root.selectedShip && root.selectedShip.destination ? Color.accent : Color.muted
+                        }
                         Label {
                             width: parent.width; wrapMode: Text.WordWrap
                             text: root.selectedShip ? Model.distance(root.selectedShip.distance, root.unit) + " " + Model.compass(root.selectedShip.bearing) + " · " + Math.round(root.selectedShip.bearing) + "° from you" + "  /  " + (root.selectedShip.speed === null ? "Speed unknown" : root.selectedShip.speed.toFixed(1) + " kn") : ""
                         }
-                        Label { width: parent.width; wrapMode: Text.WordWrap; text: root.selectedShip ? "DEST / " + (root.selectedShip.destination || "Not reported") : ""; color: Color.muted }
-                        Label { text: root.selectedShip ? root.selectedShip.timeSource + " · " + Model.age(root.selectedShip.lastSeen, root.now) + (root.selectedShip.stale ? " · OLD POSITION" : "") : ""; color: root.selectedShip && root.selectedShip.stale ? Color.accent : Color.muted }
+                        Label {
+                            width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 10; color: Color.muted
+                            text: root.selectedShip ? root.selectedShip.type + " · MMSI " + root.selectedShip.mmsi : ""
+                        }
+                        Label {
+                            width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 10
+                            text: root.selectedShip ? root.selectedShip.timeSource + " · " + Model.age(root.selectedShip.lastSeen, root.now) + (root.selectedShip.stale ? " · OLD POSITION" : "") : ""
+                            color: root.selectedShip && root.selectedShip.stale ? Color.accent : Color.muted
+                        }
                     }
                     Label {
                         width: parent.width; wrapMode: Text.WordWrap; visible: root.ships.length === 0
@@ -158,6 +217,7 @@ BarWidget {
                         spacing: 4
                         delegate: Rectangle {
                             required property var modelData
+                            objectName: "vessel-" + modelData.mmsi
                             width: ListView.view.width; height: 32
                             color: Color.background
                             border.width: root.selectedShip && root.selectedShip.mmsi === modelData.mmsi ? 1 : 0
@@ -165,60 +225,40 @@ BarWidget {
                             opacity: modelData.stale ? 0.5 : 1
                             Label { anchors.left: parent.left; anchors.leftMargin: 8; anchors.verticalCenter: parent.verticalCenter; width: parent.width * 0.65; elide: Text.ElideRight; text: modelData.name || modelData.mmsi }
                             Label { anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter; text: Model.distance(modelData.distance, root.unit); color: Color.accent }
-                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.selectedMmsi = modelData.mmsi }
+                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.revealShip(modelData) }
                         }
                     }
                     Label { width: parent.width; wrapMode: Text.WordWrap; text: root.report.demo ? "SIMULATED TRAFFIC · no live positions" : "AISStream · received vessels only · not for navigation"; font.pixelSize: 10; color: Color.muted }
-                    // Consistent hit-area heights and shared styling keep all panel
-                    // commands consistent, including the reception toggle.
-                    component Action: Rectangle {
-                        id: action
-                        property string text
-                        signal triggered()
-                        implicitWidth: actionLabel.implicitWidth + 16
-                        implicitHeight: 30
-                        radius: 3
-                        color: "transparent"
-                        border.width: 1
-                        border.color: activeFocus || pointer.containsMouse ? Color.accent : "transparent"
-                        activeFocusOnTab: true
-                        Accessible.role: Accessible.Button
-                        Accessible.name: text
-                        Accessible.onPressAction: triggered()
-                        Label {
-                            id: actionLabel
-                            anchors.centerIn: parent
-                            text: action.text; color: Color.accent
-                        }
-                        Keys.onReturnPressed: triggered()
-                        Keys.onSpacePressed: triggered()
-                        Keys.onEscapePressed: root.close()
-                        MouseArea {
-                            id: pointer
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: action.triggered()
-                        }
+
+                }
+            }
+            Item {
+                id: footer
+                objectName: "panelFooter"
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 43
+                visible: !root.configuring
+                Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.3 }
+                Row {
+                    anchors.bottom: parent.bottom
+                    spacing: 12
+                    Action {
+                        id: settingsAction
+                        text: "SETTINGS"
+                        onTriggered: { root.configuring = true; VesselService.loadSettings(); }
                     }
-                    Row {
-                        spacing: 12
-                        Action {
-                            id: settingsAction
-                            text: "SETTINGS"
-                            onTriggered: { root.configuring = true; VesselService.loadSettings(); }
-                        }
-                        Action {
-                            id: receptionAction
-                            objectName: "pauseReception"
-                            text: VesselService.paused ? "RESUME" : "PAUSE"
-                            onTriggered: VesselService.togglePaused()
-                        }
-                        Action {
-                            id: reconnectAction
-                            text: "RECONNECT"
-                            onTriggered: root.refresh()
-                        }
+                    Action {
+                        id: receptionAction
+                        objectName: "pauseReception"
+                        text: VesselService.paused ? "RESUME" : "PAUSE"
+                        onTriggered: VesselService.togglePaused()
+                    }
+                    Action {
+                        id: reconnectAction
+                        text: "RECONNECT"
+                        onTriggered: root.refresh()
                     }
                 }
             }

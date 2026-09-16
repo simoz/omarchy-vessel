@@ -63,3 +63,17 @@ test('panned contact selection includes ships beyond the original view radius', 
   assert.equal(m.closestContact([ship], p.x, p.y, 300, 12.5, offset), ship);
   assert.equal(m.closestContact([ship], p.x, p.y, 300, 12.5), null);
 });
+test('selecting a vessel reveals it at every zoom, including the coverage boundary', () => {
+  for (const zoom of [1, 2, 4, 8, 16, 32, 64]) {
+    for (const bearing of [0, 45, 90, 135, 180, 225, 270, 315]) {
+      for (const distance of [0, 4.5, 24.9, 25]) {
+        const ship = {bearing, distance};
+        const wanted = m.shipCenter(ship, 25);
+        const center = m.boundedCenter(wanted.x, wanted.y, zoom);
+        const scale = zoom * m.radarRadius(340);
+        const position = m.point(ship, 340, 25 / zoom, {x: center.x * scale, y: center.y * scale});
+        assert.ok(m.inView(position, 340), `Hidden at zoom ${zoom}, bearing ${bearing}, distance ${distance}`);
+      }
+    }
+  }
+});

@@ -28,6 +28,12 @@ Item {
         var p = Model.boundedCenter(x, y, zoom);
         viewCenter = Qt.point(p.x, p.y);
     }
+    // Recenter only on an explicit list selection, never on each AIS update.
+    // Preserve zoom; the coverage constraint keeps the loaded map under the view.
+    function focusShip(ship) {
+        var center = Model.shipCenter(ship, radiusNm);
+        setCenter(center.x, center.y);
+    }
     function recenter() { viewCenter = Qt.point(0, 0); }
     onZoomChanged: setCenter(viewCenter.x, viewCenter.y)
     onBasemapChanged: recenter()

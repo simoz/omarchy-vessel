@@ -142,7 +142,9 @@ In **Settings**, select **Offline demo · Genoa (Italy)**, then **SAVE & CONNECT
 Six clearly labelled simulated boats appear around Genoa (Italy); demo mode makes no
 network requests. Uncheck demo and save to switch to live traffic.
 
-Click a contact on the radar or list to select it. Escape closes the radar panel;
+Click a contact on the radar or list to select it. Selecting from the list brings
+the radar back into view and recenters it on the vessel, preserving your zoom
+and respecting the loaded coverage boundary. Escape closes the radar panel;
 Enter or a middle-click on the bar reconnects. Settings supports normal text
 editing and a **CANCEL** button.
 
@@ -177,7 +179,7 @@ unavailable or throttle requests; coordinates remain a fallback. Set
 The radar sweep is a faint visual effect beneath the markers, not a source of
 position updates. Its texture is painted once and rotated on the render thread;
 it stops when the panel is closed or Settings is open. **SETTINGS**, **PAUSE / RESUME** and
-**RECONNECT** share a single footer row. The bar shows only the boat icon.
+**RECONNECT** share a fixed footer that stays visible while the panel scrolls. The bar shows only the boat icon.
 
 Reconnect after travelling to refresh the location. The radius always uses
 nautical miles, even when display units are kilometres (1 nm = 1.852 km).

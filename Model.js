@@ -1,7 +1,8 @@
 // All chart coordinates share the same margin; the outer space holds compass labels.
 function radarRadius(size) { return Math.max(1, size / 2 - 24); }
 function inView(position, size, margin) {
-    return Math.hypot(position.x - size / 2, position.y - size / 2) <= radarRadius(size) - (margin || 0);
+    // Absorb floating-point rounding at the range ring, especially at high zoom.
+    return Math.hypot(position.x - size / 2, position.y - size / 2) <= radarRadius(size) - (margin || 0) + 0.000001;
 }
 
 // Backend timestamps use seconds; QML Date.now() uses milliseconds.
@@ -88,4 +89,11 @@ function boundedCenter(x, y, zoom) {
     var limit = Math.max(0, 1 - 1 / zoom), length = Math.hypot(x, y);
     var scale = length > limit && length > 0 ? limit / length : 1;
     return {x: x * scale, y: y * scale};
+}
+
+// A vessel's position in coverage-radius units, for explicit list-to-map navigation.
+function shipCenter(ship, coverageRadius) {
+    var angle = ship.bearing * Math.PI / 180;
+    var range = ship.distance / coverageRadius;
+    return {x: Math.sin(angle) * range, y: -Math.cos(angle) * range};
 }
