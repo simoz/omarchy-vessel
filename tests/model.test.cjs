@@ -48,3 +48,18 @@ test('small radar marks keep generous hit targets and select the closest contact
   assert.equal(m.closestContact([near],p.x,p.y+17,340,25),null);
   assert.equal(m.closestContact([near],p.x,p.y,340,5),null);
 });
+test('panning keeps the complete viewport within loaded coverage', () => {
+  assert.equal(m.boundedCenter(1, 1, 1).x, 0);
+  const p = m.boundedCenter(3, 4, 2);
+  assert.ok(Math.abs(Math.hypot(p.x, p.y) - 0.5) < 1e-9);
+  assert.ok(Math.abs(p.x / p.y - 0.75) < 1e-9);
+  assert.equal(m.boundedCenter(0.1, 0, 4).x, 0.1);
+});
+test('panned contact selection includes ships beyond the original view radius', () => {
+  const ship = {mmsi: 'east', bearing: 90, distance: 15};
+  const offset = {x: 63, y: 0};
+  const p = m.point(ship, 300, 12.5, offset);
+  assert.ok(p.x < 276);
+  assert.equal(m.closestContact([ship], p.x, p.y, 300, 12.5, offset), ship);
+  assert.equal(m.closestContact([ship], p.x, p.y, 300, 12.5), null);
+});

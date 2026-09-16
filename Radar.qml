@@ -9,17 +9,31 @@ Item {
     property var ships: []
     property var basemap: ({available: false, polygons: [], coastlines: []})
     property real radiusNm: 25
-    readonly property bool zoomControlsFocused: zoomInButton.activeFocus || zoomOutButton.activeFocus
+    readonly property bool zoomControlsFocused: zoomInButton.activeFocus || zoomOutButton.activeFocus || centerButton.activeFocus
     signal closeRequested()
     Keys.onEscapePressed: closeRequested()
     property int zoomLevel: 0
     readonly property real zoom: Math.pow(2, zoomLevel)
     readonly property real viewRadiusNm: radiusNm / zoom
-    readonly property var visibleShips: ships.filter(function(ship) { return ship.distance <= viewRadiusNm; })
+    property point viewCenter: Qt.point(0, 0)
+    readonly property real chartRadius: Math.max(1, width / 2 - 24)
+    readonly property point centerPixels: Qt.point(viewCenter.x * zoom * chartRadius, viewCenter.y * zoom * chartRadius)
+    readonly property bool panned: Math.hypot(viewCenter.x, viewCenter.y) > 0.00001
+    readonly property var visibleShips: ships.filter(function(ship) {
+        var p = Model.point(ship, root.width, root.viewRadiusNm, root.centerPixels);
+        return Math.hypot(p.x - root.width / 2, p.y - root.width / 2) <= root.chartRadius;
+    })
+    function setCenter(x, y) {
+        var p = Model.boundedCenter(x, y, zoom);
+        viewCenter = Qt.point(p.x, p.y);
+    }
+    function recenter() { viewCenter = Qt.point(0, 0); }
+    onZoomChanged: setCenter(viewCenter.x, viewCenter.y)
+    onBasemapChanged: recenter()
     // Keep the zoom local: changing the view must never reconnect the AIS feed.
     function zoomIn() { zoomLevel = Math.min(3, zoomLevel + 1); }
     function zoomOut() { zoomLevel = Math.max(0, zoomLevel - 1); }
-    onRadiusNmChanged: zoomLevel = 0
+    onRadiusNmChanged: { zoomLevel = 0; recenter(); }
     property string selectedMmsi: ""
     signal selected(string mmsi)
     implicitHeight: width
@@ -29,6 +43,8 @@ Item {
         id: mapLayer
         anchors.fill: parent
         property var geography: root.basemap
+        property point offset: root.centerPixels
+        onOffsetChanged: requestPaint()
         property real viewScale: root.zoom
         onViewScaleChanged: requestPaint()
         property color coastColor: Color.accent
@@ -49,8 +65,8 @@ Item {
                 c.beginPath();
                 rings.forEach(function(points) {
                     points.forEach(function(p, i) {
-                        if (i === 0) c.moveTo(mid + p[0] * r * viewScale, mid + p[1] * r * viewScale);
-                        else c.lineTo(mid + p[0] * r * viewScale, mid + p[1] * r * viewScale);
+                        if (i === 0) c.moveTo(mid + p[0] * r * viewScale - offset.x, mid + p[1] * r * viewScale - offset.y);
+                        else c.lineTo(mid + p[0] * r * viewScale - offset.x, mid + p[1] * r * viewScale - offset.y);
                     });
                     c.closePath();
                 });
@@ -68,8 +84,8 @@ Item {
             c.beginPath();
             (geography.coastlines || []).forEach(function(points) {
                 points.forEach(function(p, i) {
-                    if (i === 0) c.moveTo(mid + p[0] * r * viewScale, mid + p[1] * r * viewScale);
-                    else c.lineTo(mid + p[0] * r * viewScale, mid + p[1] * r * viewScale);
+                    if (i === 0) c.moveTo(mid + p[0] * r * viewScale - offset.x, mid + p[1] * r * viewScale - offset.y);
+                    else c.lineTo(mid + p[0] * r * viewScale - offset.x, mid + p[1] * r * viewScale - offset.y);
                 });
             });
             c.globalAlpha = 0.7; c.strokeStyle = coastColor; c.lineWidth = 1.2;
@@ -81,7 +97,7 @@ Item {
     Canvas {
         id: sweep
         anchors.fill: parent
-        visible: root.scanning
+        visible: root.scanning && !root.panned
         property color ink: Color.accent
         onInkChanged: requestPaint()
         onWidthChanged: requestPaint()
@@ -102,7 +118,7 @@ Item {
         }
         RotationAnimator on rotation {
             from: 0; to: 360; duration: 12000; loops: Animation.Infinite
-            running: root.scanning && root.visible
+            running: root.scanning && root.visible && !root.panned
         }
     }
     // Static grid: repaint for geometry or theme changes, not for every incoming position.
@@ -136,6 +152,8 @@ Item {
         property var contacts: root.visibleShips
         property string selection: root.selectedMmsi
         onSelectionChanged: requestPaint()
+        property point offset: root.centerPixels
+        onOffsetChanged: requestPaint()
         property real viewScale: root.zoom
         property color ink: Color.muted
         property color halo: Color.background
@@ -150,12 +168,12 @@ Item {
             var c = getContext("2d"); c.reset();
             c.font = "10px monospace";
             var cities = (geography.cities || []).map(function(city) {
-                return {name: city.name, x: city.x, y: city.y, textWidth: c.measureText(city.name).width};
+                return {name: city.name, x: city.x - root.viewCenter.x, y: city.y - root.viewCenter.y, textWidth: c.measureText(city.name).width};
             });
             // Reserve the visible symbols, not their larger invisible click targets.
-            var occupied = [{x: width / 2 - 14, y: height / 2 - 6, width: 28, height: 32}];
+            var occupied = [{x: width / 2 - offset.x - 14, y: height / 2 - offset.y - 6, width: 28, height: 32}];
             contacts.forEach(function(ship) {
-                var p = Model.point(ship, width, root.viewRadiusNm);
+                var p = Model.point(ship, width, root.viewRadiusNm, root.centerPixels);
                 var margin = ship.mmsi === selection ? 10 : 6;
                 occupied.push({x: p.x - margin, y: p.y - margin, width: margin * 2, height: margin * 2});
             });
@@ -178,8 +196,8 @@ Item {
             text: modelData; color: Color.muted; font.pixelSize: 11; font.family: "monospace"
         }
     }
-    Rectangle { anchors.centerIn: parent; width: 7; height: 7; radius: 4; color: Color.foreground }
-    Text { anchors.centerIn: parent; anchors.verticalCenterOffset: 17; text: "YOU"; font.pixelSize: 9; color: Color.muted }
+    Rectangle { anchors.centerIn: parent; anchors.horizontalCenterOffset: -root.centerPixels.x; anchors.verticalCenterOffset: -root.centerPixels.y; visible: Math.hypot(root.centerPixels.x, root.centerPixels.y) < root.chartRadius - 4; width: 7; height: 7; radius: 4; color: Color.foreground }
+    Text { anchors.centerIn: parent; anchors.horizontalCenterOffset: -root.centerPixels.x; anchors.verticalCenterOffset: 17 - root.centerPixels.y; visible: Math.hypot(root.centerPixels.x, 17 - root.centerPixels.y) < root.chartRadius - 16; text: "YOU"; font.pixelSize: 9; color: Color.muted }
     // Small, solid marks keep crowded harbours legible. Course changes rotate
     // the triangle without repainting its Canvas; unknown course is a plain dot.
     Repeater {
@@ -187,7 +205,7 @@ Item {
         Item {
             id: target
             required property var modelData
-            readonly property var position: Model.point(modelData, root.width, root.viewRadiusNm)
+            readonly property var position: Model.point(modelData, root.width, root.viewRadiusNm, root.centerPixels)
             readonly property bool chosen: root.selectedMmsi === modelData.mmsi
             readonly property bool hasCourse: typeof modelData.course === "number" && isFinite(modelData.course) && modelData.course >= 0 && modelData.course < 360
             readonly property color ink: chosen ? Color.foreground : Color.accent
@@ -224,13 +242,33 @@ Item {
     // A shared hit test picks the closest contact when generous click targets
     // overlap, rather than letting the last-painted vessel steal the click.
     MouseArea {
+        objectName: "mapInteraction"
         anchors.fill: parent
         hoverEnabled: true
-        cursorShape: Model.closestContact(root.visibleShips, mouseX, mouseY, root.width, root.viewRadiusNm) ? Qt.PointingHandCursor : Qt.ArrowCursor
+        preventStealing: true
+        property point pressPoint
+        property point pressCenter
+        property bool moved: false
+        cursorShape: pressed && moved ? Qt.ClosedHandCursor : root.zoomLevel > 0 ? Qt.OpenHandCursor : Qt.ArrowCursor
+        onPressed: function(mouse) {
+            if (Math.hypot(mouse.x - width / 2, mouse.y - height / 2) > root.chartRadius) {
+                mouse.accepted = false; return;
+            }
+            pressPoint = Qt.point(mouse.x, mouse.y);
+            pressCenter = root.viewCenter;
+            moved = false;
+        }
+        onPositionChanged: function(mouse) {
+            if (!pressed) return;
+            // A small threshold separates deliberate drags from normal click jitter.
+            if (Math.hypot(mouse.x - pressPoint.x, mouse.y - pressPoint.y) > 5) moved = true;
+            if (moved) root.setCenter(pressCenter.x - (mouse.x - pressPoint.x) / (root.chartRadius * root.zoom),
+                                      pressCenter.y - (mouse.y - pressPoint.y) / (root.chartRadius * root.zoom));
+        }
         onClicked: function(mouse) {
-            var contact = Model.closestContact(root.visibleShips, mouse.x, mouse.y, root.width, root.viewRadiusNm);
+            if (moved) return;
+            var contact = Model.closestContact(root.visibleShips, mouse.x, mouse.y, root.width, root.viewRadiusNm, root.centerPixels);
             if (contact) root.selected(contact.mmsi);
-            else mouse.accepted = false;
         }
     }
     Row {
@@ -239,6 +277,7 @@ Item {
         spacing: 4
         component ZoomButton: Rectangle {
             property string label
+            property string accessibleLabel: label === "+" ? "Zoom in" : "Zoom out"
             property bool available: true
             signal activated()
             width: 26; height: 26; radius: 3
@@ -246,7 +285,7 @@ Item {
             opacity: available ? 0.9 : 0.3
             activeFocusOnTab: available
             Accessible.role: Accessible.Button
-            Accessible.name: label === "+" ? "Zoom in" : "Zoom out"
+            Accessible.name: accessibleLabel
             Accessible.onPressAction: if (available) activated()
             Text { anchors.centerIn: parent; text: parent.label; color: Color.foreground; font.pixelSize: 18 }
             Keys.onReturnPressed: if (available) activated()
@@ -257,6 +296,7 @@ Item {
                 onClicked: parent.activated()
             }
         }
+        ZoomButton { id: centerButton; objectName: "recenter"; label: "⌖"; accessibleLabel: "Center on me"; available: root.panned; onActivated: root.recenter() }
         ZoomButton { id: zoomOutButton; objectName: "zoomOut"; label: "−"; available: root.zoomLevel > 0; onActivated: root.zoomOut() }
         ZoomButton { id: zoomInButton; objectName: "zoomIn"; label: "+"; available: root.zoomLevel < 3; onActivated: root.zoomIn() }
     }

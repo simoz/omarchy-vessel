@@ -256,3 +256,15 @@ milliseconds. Live positions are never extrapolated or stored on disk.
 - Automatic location contacts [ipwho.is](https://ipwhois.io/documentation). Fixed coordinates and demo mode skip this request.
 - Demo uses no network. No telemetry or persistent position log is added.
 - Reported timestamps are used when present; otherwise the UI explicitly labels receipt time. An open connection doesn't guarantee complete coverage.
+
+### Drag the map
+
+Zoom in with **+**, then drag inside the radar to explore the loaded area.
+The view stays within the current AIS coverage; at full range it is already
+showing the whole area. Click **⌖** (Center on me) to return to your position.
+A short click still selects a vessel. Cities, coastline and the **YOU** marker
+move together; vessel distances remain relative to your location. The sweep
+pauses while the view is away from your position. Zooming out constrains the
+view again, and a new location/map resets its center. Panning never reconnects AIS.
+
+![Panned radar view](docs/pan-preview.png)

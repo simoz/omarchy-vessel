@@ -14,11 +14,12 @@ function distance(nm, unit) {
     return (unit === "km" ? nm * 1.852 : nm).toFixed(1) + " " + (unit === "km" ? "km" : "nm");
 }
 // Project relative bearing and range onto a north-up radar with a 24-pixel margin.
-function point(ship, size, radius) {
+function point(ship, size, radius, center) {
     var angle = ship.bearing * Math.PI / 180;
-    var r = Math.min(1, ship.distance / radius) * (size / 2 - 24);
+    var r = (ship.distance / radius) * (size / 2 - 24);
     // Canvas Y grows downwards, so north needs a negative cosine offset.
-    return {x: size / 2 + Math.sin(angle) * r, y: size / 2 - Math.cos(angle) * r};
+    center = center || {x: 0, y: 0};
+    return {x: size / 2 + Math.sin(angle) * r - center.x, y: size / 2 - Math.cos(angle) * r - center.y};
 }
 
 // Labels use the same normalized coordinates as land and the same zoom as ships.
@@ -61,15 +62,23 @@ function cityLabels(cities, size, zoom, occupied) {
 
 // Keep a 16-pixel click radius around each tiny mark. Distance, not draw order,
 // resolves overlapping targets; contacts outside the current view are ignored.
-function closestContact(ships, x, y, size, radius) {
+function closestContact(ships, x, y, size, radius, center) {
     var nearest = null, best = 16 * 16;
     ships.forEach(function(ship) {
-        if (ship.distance > radius) return;
-        var p = point(ship, size, radius);
+        var p = point(ship, size, radius, center);
+        if (Math.hypot(p.x - size / 2, p.y - size / 2) > size / 2 - 24) return;
         var squared = Math.pow(x - p.x, 2) + Math.pow(y - p.y, 2);
         if (squared <= best && (nearest === null || squared < best)) {
             best = squared; nearest = ship;
         }
     });
     return nearest;
+}
+
+// The entire viewport must remain inside the observer's loaded coverage circle.
+// Centers use coverage-radius units, independent of zoom and widget size.
+function boundedCenter(x, y, zoom) {
+    var limit = Math.max(0, 1 - 1 / zoom), length = Math.hypot(x, y);
+    var scale = length > limit && length > 0 ? limit / length : 1;
+    return {x: x * scale, y: y * scale};
 }
