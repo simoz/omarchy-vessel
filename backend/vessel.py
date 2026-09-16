@@ -206,7 +206,7 @@ class Receiver:
 def populate_demo(fleet, tick, now):
     boats = (("HAVEN",37),("NORTH STAR",70),("OUTPOST",30),("BLUE HOUR",60),("LITTLE TERN",36),("BRONZE",52))
     for index, (name, kind) in enumerate(boats):
-        # Motion stays offshore, south of Genova. Live traffic is never animated.
+        # Motion stays offshore, south of Genoa (Italy). Live traffic is never animated.
         bearing = 160+index*12+math.sin(tick*0.005)*5
         lat, lon = destination(fleet.lat,fleet.lon,fleet.radius*(0.18+index*0.125),bearing)
         fleet.ingest(dict(MessageType="ExtendedClassBPositionReport", MetaData=dict(MMSI=999000001+index),
@@ -236,6 +236,7 @@ def setup(message, state=None):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--search-city", metavar="NAME")
     parser.add_argument("--read-settings", action="store_true")
     parser.add_argument("--save-settings", action="store_true")
     parser.add_argument("--saved-settings", action="store_true")
@@ -246,6 +247,15 @@ def main(argv=None):
     parser.add_argument("--longitude", type=float)
     parser.add_argument("--radius", type=float, default=25)
     args = parser.parse_args(argv)
+    if args.search_city is not None:
+        try:
+            from geocoding import search
+            output(dict(ok=True, query=args.search_city, places=search(args.search_city)))
+            return 0
+        except (OSError, ValueError, TypeError):
+            output(dict(ok=False, query=args.search_city, error="City search unavailable. Check your connection and try again, or use coordinates."))
+            return 1
+    city_name = ""
     if args.read_settings or args.save_settings:
         try:
             values = settings.save(json.loads(sys.stdin.readline(16_384))) if args.save_settings else settings.public_settings()
@@ -259,6 +269,7 @@ def main(argv=None):
     if args.saved_settings:
         try:
             saved = settings.read()
+            city_name = saved["cityName"]
             args.radius, args.demo, args.auto_location = saved["radiusNm"], saved["demo"], saved["autoLocation"]
             args.latitude, args.longitude = (None,None) if args.auto_location else (saved["latitude"],saved["longitude"])
         except (OSError, ValueError, KeyError, TypeError):
@@ -271,7 +282,7 @@ def main(argv=None):
         except (OSError, ValueError, TypeError, AttributeError):
             return setup("Could not read your API key. Open Settings and save it again.")
         if not key and not args.prepare_runtime:
-            return setup("Open Settings to enter your AISStream API key, or try the Genova demo.")
+            return setup("Open Settings to enter your AISStream API key, or try the Genoa (Italy) demo.")
         try:
             from runtime import ensure_runtime
             ensure_runtime(lambda status,error: output(dict(status=status,error=error,ships=[],total=0)))
@@ -284,12 +295,12 @@ def main(argv=None):
     output(state)
     if args.demo:
         lat, lon = GENOVA
-        label = "Genova · simulated traffic"
+        label = "Genoa (Italy) · simulated traffic"
     elif args.latitude is not None or args.longitude is not None:
         lat, lon = args.latitude, args.longitude
         if not coordinates(lat,lon):
             return setup("Set both latitude and longitude within valid ranges.", state)
-        label = "Fixed position"
+        label = city_name or "Fixed position"
     elif args.auto_location:
         try:
             lat, lon, label = locate()

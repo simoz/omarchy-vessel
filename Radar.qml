@@ -5,6 +5,7 @@ import "Model.js" as Model
 // Positions are relative to the observer; vessel course controls the symbol orientation.
 Item {
     id: root
+    property bool scanning: false
     property var ships: []
     property var basemap: ({available: false, polygons: [], coastlines: []})
     property real radiusNm: 25
@@ -60,6 +61,35 @@ Item {
             });
             c.globalAlpha = 0.7; c.strokeStyle = coastColor; c.lineWidth = 1.2;
             c.lineJoin = "round"; c.stroke(); c.restore();
+        }
+    }
+    // Paint this faint sweep once, then rotate its texture on the render thread.
+    // No timer repaints the map or contacts; closing the panel stops animation.
+    Canvas {
+        id: sweep
+        anchors.fill: parent
+        visible: root.scanning
+        property color ink: Color.accent
+        onInkChanged: requestPaint()
+        onWidthChanged: requestPaint()
+        onHeightChanged: requestPaint()
+        onPaint: {
+            var c = getContext("2d"); c.reset();
+            var mid = width / 2, r = Math.max(0, mid - 24);
+            c.fillStyle = ink;
+            for (var i = 0; i < 20; i++) {
+                var start = (-130 + i * 2) * Math.PI / 180;
+                c.globalAlpha = 0.008 + i * 0.003;
+                c.beginPath(); c.moveTo(mid, mid);
+                c.arc(mid, mid, r, start, start + 2.1 * Math.PI / 180);
+                c.closePath(); c.fill();
+            }
+            c.globalAlpha = 0.2; c.strokeStyle = ink; c.lineWidth = 1;
+            c.beginPath(); c.moveTo(mid, mid); c.lineTo(mid, mid - r); c.stroke();
+        }
+        RotationAnimator on rotation {
+            from: 0; to: 360; duration: 12000; loops: Animation.Infinite
+            running: root.scanning && root.visible
         }
     }
     // Static grid: repaint for geometry or theme changes, not for every incoming position.

@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import tempfile
 
-DEFAULTS = dict(radiusNm=25, autoLocation=True, demo=False, unit="nm", latitude=None, longitude=None)
+DEFAULTS = dict(radiusNm=25, autoLocation=True, demo=False, unit="nm", latitude=None, longitude=None, cityName="")
 
 
 def path():
@@ -47,6 +47,10 @@ def save(values):
         result[key] = value
     if not result["demo"] and not result["autoLocation"] and any(result[k] is None for k in ("latitude", "longitude")):
         raise ValueError("Both coordinates are required")
+    city = result["cityName"]
+    if not isinstance(city, str) or len(city) > 250 or any(ord(char) < 32 for char in city):
+        raise ValueError("Invalid city name")
+    result["cityName"] = city.strip()
     key = values.get("apiKey", "")
     if not isinstance(key, str) or len(key) > 4096 or any(c in key for c in "\r\n\0"):
         raise ValueError("Invalid key")

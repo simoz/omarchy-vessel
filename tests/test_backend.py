@@ -189,6 +189,7 @@ class DemoTest(unittest.TestCase):
                 third = json.loads(process.stdout.readline())
                 self.assertEqual(first["status"],"LOCATING")
                 self.assertEqual(second["latitude"],g.GENOVA[0])
+                self.assertEqual(second["location"],"Genoa (Italy) · simulated traffic")
                 self.assertEqual(len(second["ships"]),6)
                 self.assertIn("basemap",second)
                 self.assertNotIn("basemap",third)

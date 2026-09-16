@@ -14,6 +14,9 @@ Vessel uses the active Omarchy palette, with a pixel-art lookout inspired by Out
 
 ## Features
 
+- Gentle radar sweep: one revolution every 12 seconds, paused when the radar is hidden.
+- City-name search with selectable results, plus optional manual coordinates.
+- Compact boat icon in the bar and pixel-art vessel markers on the radar.
 - Offline land and coastline layer, projected around your position and colored by your theme.
 - One AISStream connection shared across bar widgets on multiple monitors.
 - Approximate IP geolocation, or a fixed latitude/longitude of your choice.
@@ -28,7 +31,7 @@ AIS coverage is incomplete: boats without AIS and reports not received by AISStr
 
 ## Stylized map
 
-The radar includes a local **Natural Earth** basemap: lightly hatched land, a fine coastline and clear water, all using the current Omarchy palette. It follows the configured location and range, with the same projection as the vessel markers. The Genova demo keeps simulated boats on the sea side of the coast.
+The radar includes a local **Natural Earth** basemap: lightly hatched land, a fine coastline and clear water, all using the current Omarchy palette. It follows the configured location and range, with the same projection as the vessel markers. The Genoa (Italy) demo keeps simulated boats on the sea side of the coast.
 
 Map geometry is bundled with the plugin, requires no API key and works offline. Python prepares the nearby geography once per receiver start; QML retains it while live vessel snapshots continue. If the data file is unavailable, the radar still works and displays **BASEMAP UNAVAILABLE**.
 
@@ -44,7 +47,7 @@ On Omarchy 4 with plugin support:
 omarchy plugin add https://github.com/simoz/omarchy-vessel.git --enable
 ```
 
-Accept Omarchy's plugin trust prompt, then click the **pixel-art boat** widget.
+Accept Omarchy's plugin trust prompt, then click the **boat icon** widget.
 On a fresh installation it opens **Settings**. No manual `pip install`, gem installation, compiler, or Hyprland configuration is needed.
 
 **Requirements:** Omarchy's Quickshell shell (`qs.Commons` / `qs.Ui`, `quattro`
@@ -59,7 +62,7 @@ lives under `~/.local/share/omarchy-vessel/python/` (or `$XDG_DATA_HOME`) and is
 on later starts. A Python or dependency version change creates a fresh environment.
 The plugin folder stays free of installed dependencies and virtualenv symlinks.
 
-Settings and the Genova demo use only the standard library and work before the
+Settings and the Genoa (Italy) demo use only the standard library and work before the
 live dependency is installed. If setup fails, check the network and available
 disk space, then click **RECONNECT** to retry.
 
@@ -67,7 +70,7 @@ disk space, then click **RECONNECT** to retry.
 
 1. Open **Settings** from the Vessel panel.
 2. Paste your AISStream API key into the masked field.
-3. Choose approximate IP location, or enter a fixed latitude and longitude.
+3. Use approximate IP location, or disable it and type a city name. Click **SEARCH**, then select a result. **Enter coordinates instead** remains available.
 4. Set the radius (1–200 nautical miles) and your preferred display unit.
 5. Click **SAVE & CONNECT**. Changes apply immediately; no logout or shell restart.
 
@@ -83,7 +86,7 @@ variable remains a fallback when no key has been saved.
 
 Regular preferences live in the same file. They are shared across monitors and
 edited through Settings, rather than through the widget entry in `shell.json`.
-For an older installation, re-enter your preferences in Settings once.
+Existing saved coordinates remain supported; city search adds a readable location name.
 
 ### Get an AISStream API key
 
@@ -101,8 +104,8 @@ key or reconnect.
 
 ### Try it without a key
 
-In **Settings**, select **Offline demo · Genova**, then **SAVE & CONNECT**.
-Six clearly labelled simulated boats appear around Genova; demo mode makes no
+In **Settings**, select **Offline demo · Genoa (Italy)**, then **SAVE & CONNECT**.
+Six clearly labelled simulated boats appear around Genoa (Italy); demo mode makes no
 network requests. Uncheck demo and save to switch to live traffic.
 
 Click a contact on the radar or list to select it. Escape closes the radar panel;
@@ -116,20 +119,42 @@ python3 backend/vessel.py --demo
 python3 backend/vessel.py --saved-settings
 ```
 
-The first command always simulates Genova; the second uses your saved preferences
+The first command always simulates Genoa (Italy); the second uses your saved preferences
 and key. Both print JSON snapshots. Stop with Ctrl+C.
 
 ### Location
 
 Approximate location queries `https://ipwho.is/` once per connection. It estimates
 your public IP location, not GPS, and may point to your ISP or VPN exit. For an
-accurate lookout, disable that option and enter coordinates. Genova is
-`44.4056, 8.9463`. Fixed location and demo skip the IP lookup.
+fixed lookout, disable that option, enter a city and select a search result.
+Results include the country and region so you can distinguish cities with the
+same name. English names are requested; the demo is labelled **Genoa (Italy)**.
+Manual coordinates are available under **Enter coordinates instead**.
+Fixed location and demo skip the IP lookup.
+
+City searches use [Photon](https://github.com/komoot/photon) with
+[OpenStreetMap data](https://www.openstreetmap.org/copyright). Requests happen only
+when you press **SEARCH** or Enter; no requests are made while typing. Recent
+queries are cached for the session. The selected city and coordinates are saved
+locally, so reconnecting does not repeat the lookup. The public service may be
+unavailable or throttle requests; coordinates remain a fallback. Set
+`VESSEL_GEOCODER_URL` to a compatible HTTPS Photon endpoint to use another server.
+
+The radar sweep is a faint visual effect beneath the markers, not a source of
+position updates. Its texture is painted once and rotated on the render thread;
+it stops when the panel is closed or Settings is open. **SETTINGS** and
+**RECONNECT** share a single footer row.
 
 Reconnect after travelling to refresh the location. The radius always uses
 nautical miles, even when display units are kilometres (1 nm = 1.852 km).
 Contacts accumulate as reports arrive; names and destinations may arrive later.
 There is no stored history of vessel positions.
+
+### Update a Git installation
+
+```sh
+omarchy plugin update simoz.vessel
+```
 
 ### Local checkout and troubleshooting
 
@@ -184,8 +209,9 @@ Code comments are in English:
 - `backend/geometry.py`, `backend/basemap.py`: nautical calculations and the offline map.
 - `backend/runtime.py`: private virtualenv setup, dependency verification and process replacement.
 - `backend/settings.py`: validated settings and atomic, owner-only credential storage.
+- `backend/geocoding.py`: explicit Photon city searches, response validation and location labels.
 - `VesselService.qml`, `SettingsForm.qml`: shared receiver lifecycle and graphical configuration.
-- `Widget.qml`, `Radar.qml`, `PixelBoat.qml`, `Robot.qml`, `Model.js`: themed interface and sprites.
+- `Widget.qml`, `Radar.qml`, `PixelBoat.qml`, `BoatIcon.qml`, `Robot.qml`, `Model.js`: themed interface and sprites.
 - `tools/build_basemap.py`: rebuilds the bundled Natural Earth geometry.
 - `requirements.txt`: the single pinned, hash-verified live dependency.
 
@@ -197,6 +223,7 @@ milliseconds. Live positions are never extrapolated or stored on disk.
 
 - First live setup downloads the pinned WebSocket wheel from Python Package Index infrastructure.
 - Live mode connects to [AISStream](https://aisstream.io/documentation), sending the API key and geographic bounding boxes around your selected position.
+- City search sends the entered city name to Photon; it never sends the AISStream key. Selected coordinates are stored with your preferences.
 - Automatic location contacts [ipwho.is](https://ipwhois.io/documentation). Fixed coordinates and demo mode skip this request.
 - Demo uses no network. No telemetry or persistent position log is added.
 - Reported timestamps are used when present; otherwise the UI explicitly labels receipt time. An open connection doesn't guarantee complete coverage.

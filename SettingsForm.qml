@@ -7,6 +7,7 @@ import qs.Commons
 Column {
     id: root
     spacing: 12
+    property string cityName: ""
     property string family: "monospace"
     signal done()
     function populate() {
@@ -15,6 +16,9 @@ Column {
         radius.text = String(value.radiusNm || 25);
         latitude.text = value.latitude === null || value.latitude === undefined ? "" : String(value.latitude);
         longitude.text = value.longitude === null || value.longitude === undefined ? "" : String(value.longitude);
+        root.cityName = value.cityName || "";
+        city.text = root.cityName;
+        manual.checked = !root.cityName && latitude.text !== "" && longitude.text !== "";
         automatic.checked = value.autoLocation !== false;
         demo.checked = value.demo === true;
         kilometres.checked = value.unit === "km";
@@ -25,7 +29,7 @@ Column {
         function onSettingsSaved() { apiKey.text = ""; root.done(); }
         function onPreferencesChanged() { root.populate(); }
     }
-    onVisibleChanged: { if (visible) populate(); else apiKey.text = ""; }
+    onVisibleChanged: { if (visible) populate(); else { apiKey.text = ""; VesselService.clearCitySearch(); } }
     component Caption: Text {
         color: Color.foreground; font.family: root.family; font.pixelSize: 12
         textFormat: Text.PlainText; wrapMode: Text.WordWrap; width: parent.width
@@ -40,12 +44,12 @@ Column {
     }
     component Action: Button {
         font.family: root.family
-        contentItem: Text { text: parent.text; color: Color.accent; font: parent.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+        contentItem: Text { textFormat: Text.PlainText; text: parent.text; color: Color.accent; font: parent.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
         background: Rectangle { color: Color.background; border.color: Color.accent; radius: 3; opacity: parent.enabled ? 1 : 0.4 }
     }
     component Toggle: CheckBox {
         font.family: root.family
-        contentItem: Text { text: parent.text; color: Color.foreground; font: parent.font; leftPadding: 30; verticalAlignment: Text.AlignVCenter }
+        contentItem: Text { textFormat: Text.PlainText; text: parent.text; color: Color.foreground; font: parent.font; leftPadding: 30; verticalAlignment: Text.AlignVCenter }
         indicator: Rectangle {
             width: 18; height: 18; y: (parent.height - height) / 2
             color: Color.background; border.color: Color.accent
@@ -61,13 +65,69 @@ Column {
     }
     Action { text: "GET AN API KEY ↗"; onClicked: Qt.openUrlExternally("https://aisstream.io/account") }
     Caption { text: "Sign in with GitHub, create a key, then paste it above. Your key is stored locally with owner-only permissions."; color: Color.muted }
-    Toggle { id: demo; text: "Offline demo · Genova" }
+    Toggle { id: demo; text: "Offline demo · Genoa (Italy)" }
     Toggle { id: automatic; text: "Approximate location via IP"; enabled: !demo.checked }
-    Caption { text: "Fixed latitude / longitude"; visible: !automatic.checked && !demo.checked }
-    Row {
-        width: parent.width; spacing: 8; visible: !automatic.checked && !demo.checked
-        Field { id: latitude; width: (parent.width - 8) / 2; placeholderText: "44.4056" }
-        Field { id: longitude; width: (parent.width - 8) / 2; placeholderText: "8.9463" }
+    Column {
+        width: parent.width; spacing: 8
+        visible: !automatic.checked && !demo.checked
+        Caption { text: "City" }
+        Row {
+            width: parent.width; spacing: 8
+            visible: !manual.checked
+            Field {
+                id: city
+                width: parent.width - searchButton.width - parent.spacing
+                placeholderText: "Genoa, Italy"; maximumLength: 120
+                onTextEdited: {
+                    root.cityName = ""; latitude.text = ""; longitude.text = "";
+                    VesselService.clearCitySearch();
+                }
+                onAccepted: if (text.trim().length >= 2) VesselService.searchCity(text)
+            }
+            Action {
+                id: searchButton
+                height: city.height
+                text: VesselService.searchingCity ? "SEARCHING…" : "SEARCH"
+                enabled: !VesselService.searchingCity && city.text.trim().length >= 2
+                onClicked: VesselService.searchCity(city.text)
+            }
+        }
+        Repeater {
+            model: manual.checked ? [] : VesselService.cityResults
+            delegate: Action {
+                required property var modelData
+                width: parent.width
+                text: modelData.label + (modelData.detail ? " · " + modelData.detail : "")
+                contentItem: Text {
+                    text: parent.text; textFormat: Text.PlainText
+                    color: Color.foreground; font.family: root.family; font.pixelSize: 12
+                    wrapMode: Text.WordWrap
+                }
+                onClicked: {
+                    root.cityName = modelData.label;
+                    city.text = modelData.label;
+                    latitude.text = String(modelData.latitude);
+                    longitude.text = String(modelData.longitude);
+                    VesselService.clearCitySearch();
+                }
+            }
+        }
+        Caption { text: root.cityName ? "Selected: " + root.cityName : "Search, then choose a city from the results."; visible: !manual.checked; color: Color.muted }
+        Caption { text: VesselService.cityError; visible: !manual.checked && text.length > 0; color: Color.accent }
+        Caption {
+            text: "City search: Photon / © OpenStreetMap contributors ↗"
+            font.pixelSize: 10; color: Color.muted; visible: !manual.checked
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Qt.openUrlExternally("https://www.openstreetmap.org/copyright") }
+        }
+        Toggle {
+            id: manual; text: "Enter coordinates instead"
+            onToggled: { if (checked) root.cityName = ""; VesselService.clearCitySearch(); }
+        }
+        Row {
+            width: parent.width; spacing: 8; visible: manual.checked
+            Field { id: latitude; width: (parent.width - 8) / 2; placeholderText: "Latitude"; onTextEdited: root.cityName = "" }
+            Field { id: longitude; width: (parent.width - 8) / 2; placeholderText: "Longitude"; onTextEdited: root.cityName = "" }
+        }
     }
     Caption { text: "Radius in nautical miles (1–200)" }
     Field { id: radius; placeholderText: "25" }
@@ -77,10 +137,10 @@ Column {
         spacing: 12
         Action {
             text: VesselService.saving ? "SAVING…" : "SAVE & CONNECT"
-            enabled: !VesselService.saving
+            enabled: !VesselService.saving && (demo.checked || automatic.checked || manual.checked || root.cityName.length > 0)
             onClicked: {
                 VesselService.saveSettings({apiKey: apiKey.text, radiusNm: radius.text,
-                    latitude: latitude.text, longitude: longitude.text,
+                    latitude: latitude.text, longitude: longitude.text, cityName: root.cityName,
                     autoLocation: automatic.checked, demo: demo.checked,
                     unit: kilometres.checked ? "km" : "nm"});
                 apiKey.text = "";

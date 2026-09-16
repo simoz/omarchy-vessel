@@ -11,6 +11,12 @@ Item {
     property var basemap: ({available: false, polygons: [], coastlines: []})
     property var config: ({})
     property var preferences: ({radiusNm: 25, autoLocation: true, demo: false, unit: "nm", hasApiKey: false})
+    readonly property bool searchingCity: cityProcess.running
+    property var cityResults: []
+    property var cityCache: []
+    property string cityQuery: ""
+    property string cityError: ""
+    property double lastCitySearch: 0
     property bool saving: false
     property string settingsError: ""
     signal settingsSaved()
@@ -25,7 +31,7 @@ Item {
     function attach(settings) { users++; configure(settings); loadSettings(); }
     function detach() {
         users = Math.max(0, users - 1);
-        if (users === 0) { stopping = true; pendingRestart = false; process.running = false; }
+        if (users === 0) { stopping = true; pendingRestart = false; process.running = false; clearCitySearch(); }
     }
     // Compare only receiver settings so display-only changes do not reconnect the stream.
     function configure(settings) {
@@ -88,6 +94,50 @@ Item {
             payload = "";
             if (!received) root.settingsError = "Could not start settings helper. Check your Python executable.";
             root.saving = false;
+        }
+    }
+    function clearCitySearch() {
+        cityQuery = ""; cityResults = []; cityError = "";
+        if (cityProcess.running) cityProcess.running = false;
+    }
+    function searchCity(query) {
+        query = query.trim();
+        if (cityProcess.running || query.length < 2) return;
+        cityResults = []; cityError = ""; cityQuery = query;
+        // Session cache avoids repeat network requests; saved cities never need re-geocoding.
+        for (var i = 0; i < cityCache.length; i++) {
+            if (cityCache[i].query === query.toLowerCase()) {
+                cityResults = cityCache[i].places;
+                if (!cityResults.length) cityError = "No cities found. Try adding the country.";
+                return;
+            }
+        }
+        if (Date.now() - lastCitySearch < 1100) { cityError = "Please wait a moment before searching again."; return; }
+        lastCitySearch = Date.now();
+        cityProcess.received = false;
+        cityProcess.command = [config.pythonExecutable || "python3", "-B", helper, "--search-city", query];
+        cityProcess.running = true;
+    }
+    Process {
+        id: cityProcess
+        property bool received: false
+        stdout: SplitParser {
+            onRead: data => {
+                try {
+                    var reply = JSON.parse(data);
+                    // Ignore results after the user edits the query or leaves Settings.
+                    if (reply.query !== root.cityQuery) return;
+                    cityProcess.received = true;
+                    if (reply.ok && Array.isArray(reply.places)) {
+                        root.cityResults = reply.places;
+                        root.cityCache = root.cityCache.slice(-19).concat([{query: root.cityQuery.toLowerCase(), places: reply.places}]);
+                        if (!reply.places.length) root.cityError = "No cities found. Try adding the country.";
+                    } else root.cityError = reply.error || "City search unavailable.";
+                } catch (_) { root.cityError = "Could not read city search results."; }
+            }
+        }
+        onExited: {
+            if (!received && root.cityQuery) root.cityError = "City search stopped. Please try again.";
         }
     }
     Timer { id: startTimer; interval: 100; onTriggered: root.start() }

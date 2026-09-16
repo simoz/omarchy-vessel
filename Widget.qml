@@ -47,7 +47,7 @@ BarWidget {
             id: boatLabel
             anchors.centerIn: parent
             spacing: 6
-            PixelBoat { width: 18; height: 26; hullColor: button.foreground; deckColor: Color.background }
+            BoatIcon { width: Style.space(16); height: width; ink: button.foreground; anchors.verticalCenter: parent.verticalCenter }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: !root.vertical
@@ -115,6 +115,7 @@ BarWidget {
                         Radar {
                             anchors.horizontalCenter: parent.horizontalCenter
                             width: parent.height; height: width
+                            scanning: root.opened && !root.configuring
                             ships: root.ships; radiusNm: root.report.radius || 25
                             basemap: VesselService.basemap
                             selectedMmsi: root.selectedShip ? root.selectedShip.mmsi : ""
@@ -172,13 +173,16 @@ BarWidget {
                         }
                     }
                     Label { width: parent.width; wrapMode: Text.WordWrap; text: root.report.demo ? "SIMULATED TRAFFIC · no live positions" : "AISStream · received vessels only · not for navigation"; font.pixelSize: 10; color: Color.muted }
-                    Label {
-                        text: "SETTINGS"; color: Color.accent
-                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { root.configuring = true; VesselService.loadSettings(); } }
-                    }
-                    Label {
-                        text: "RECONNECT ↵"; color: Color.accent
-                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.refresh() }
+                    Row {
+                        spacing: 24
+                        Label {
+                            text: "SETTINGS"; color: Color.accent
+                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { root.configuring = true; VesselService.loadSettings(); } }
+                        }
+                        Label {
+                            text: "RECONNECT ↵"; color: Color.accent
+                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.refresh() }
+                        }
                     }
                 }
             }
