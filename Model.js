@@ -58,3 +58,18 @@ function cityLabels(cities, size, zoom, occupied) {
     });
     return labels;
 }
+
+// Keep a 16-pixel click radius around each tiny mark. Distance, not draw order,
+// resolves overlapping targets; contacts outside the current view are ignored.
+function closestContact(ships, x, y, size, radius) {
+    var nearest = null, best = 16 * 16;
+    ships.forEach(function(ship) {
+        if (ship.distance > radius) return;
+        var p = point(ship, size, radius);
+        var squared = Math.pow(x - p.x, 2) + Math.pow(y - p.y, 2);
+        if (squared <= best && (nearest === null || squared < best)) {
+            best = squared; nearest = ship;
+        }
+    });
+    return nearest;
+}

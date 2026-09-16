@@ -38,3 +38,13 @@ test('city label density respects markers and text collisions', () => {
   }
   assert.equal(m.cityLabels(cities,340,1,[{x:0,y:0,width:340,height:340}]).length,0);
 });
+
+test('small radar marks keep generous hit targets and select the closest contact', () => {
+  const near={mmsi:'near',bearing:90,distance:10};
+  const other={mmsi:'other',bearing:90,distance:11};
+  const p=m.point(near,340,25);
+  assert.equal(m.closestContact([near,other],p.x,p.y,340,25).mmsi,'near');
+  assert.equal(m.closestContact([near],p.x,p.y+15,340,25).mmsi,'near');
+  assert.equal(m.closestContact([near],p.x,p.y+17,340,25),null);
+  assert.equal(m.closestContact([near],p.x,p.y,340,5),null);
+});

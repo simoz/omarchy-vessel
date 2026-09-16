@@ -1,7 +1,7 @@
 import QtQuick
 import qs.Commons
 
-// A compact side-view icon for the bar; vessel markers keep their pixel sprites.
+// A compact side-view icon for the bar, separate from the radar contact markers.
 Canvas {
     id: root
     implicitWidth: 16

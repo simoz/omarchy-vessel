@@ -18,7 +18,7 @@ Vessel uses the active Omarchy palette, with a pixel-art lookout inspired by Out
 - Offline coastal city labels with collision avoidance and theme-aware text.
 - Gentle radar sweep: one revolution every 12 seconds, paused when the radar is hidden.
 - City-name search with selectable results, plus optional manual coordinates.
-- Compact boat icon in the bar and pixel-art vessel markers on the radar.
+- Compact boat icon in the bar and small directional markers on the radar.
 - Offline land and coastline layer, projected around your position and colored by your theme.
 - One AISStream connection shared across bar widgets on multiple monitors.
 - Approximate IP geolocation, or a fixed latitude/longitude of your choice.
@@ -30,6 +30,14 @@ Vessel uses the active Omarchy palette, with a pixel-art lookout inspired by Out
 - Offline demo with clearly labelled simulated vessels; no account required.
 
 AIS coverage is incomplete: boats without AIS and reports not received by AISStream won't appear. Empty results mean no contacts received, not an empty sea. Destination is reported by the vessel and may be missing or outdated. This is a desktop observation tool, not a navigation instrument.
+
+### Radar markers
+
+Vessels with a reported course use a small, oriented triangle (8 px). A dot (6 px)
+means the course is unknown. The selected contact has a thin ring and a brighter
+symbol; old positions remain dimmed. A generous invisible click area selects the
+nearest contact when targets overlap. The distance-sorted list remains available
+for contacts at exactly the same position. Pixel art is reserved for the lookout.
 
 ## Stylized map
 
@@ -231,7 +239,7 @@ Code comments are in English:
 - `backend/settings.py`: validated settings and atomic, owner-only credential storage.
 - `backend/geocoding.py`: explicit Photon city searches, response validation and location labels.
 - `VesselService.qml`, `SettingsForm.qml`: shared receiver lifecycle and graphical configuration.
-- `Widget.qml`, `Radar.qml`, `PixelBoat.qml`, `BoatIcon.qml`, `Robot.qml`, `Model.js`: themed interface and sprites.
+- `Widget.qml`, `Radar.qml`, `BoatIcon.qml`, `Robot.qml`, `Model.js`: themed interface and sprites.
 - `tools/build_basemap.py`: rebuilds the bundled Natural Earth geometry.
 - `tools/build_cities.py`: filters GeoNames settlements against the coastline for offline labels.
 - `requirements.txt`: the single pinned, hash-verified live dependency.
