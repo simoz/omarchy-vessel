@@ -34,13 +34,14 @@ Item {
         var center = Model.shipCenter(ship, radiusNm);
         setCenter(center.x, center.y);
     }
-    function recenter() { viewCenter = Qt.point(0, 0); }
+    // Restore the initial overview, including when zoomed without any panning.
+    function recenter() { zoomLevel = 0; viewCenter = Qt.point(0, 0); }
     onZoomChanged: setCenter(viewCenter.x, viewCenter.y)
     onBasemapChanged: recenter()
     // Keep the zoom local: changing the view must never reconnect the AIS feed.
     function zoomIn() { zoomLevel = Math.min(maxZoomLevel, zoomLevel + 1); }
     function zoomOut() { zoomLevel = Math.max(0, zoomLevel - 1); }
-    onRadiusNmChanged: { zoomLevel = 0; recenter(); }
+    onRadiusNmChanged: recenter()
     property string selectedMmsi: ""
     signal selected(string mmsi)
     implicitHeight: width
@@ -317,7 +318,7 @@ Item {
                 onClicked: parent.activated()
             }
         }
-        ZoomButton { id: centerButton; objectName: "recenter"; label: "⌖"; centerIcon: true; accessibleLabel: "Center on me"; available: root.panned; onActivated: root.recenter() }
+        ZoomButton { id: centerButton; objectName: "recenter"; label: "⌖"; centerIcon: true; accessibleLabel: "Reset view"; available: root.panned || root.zoomLevel > 0; onActivated: root.recenter() }
         ZoomButton { id: zoomOutButton; objectName: "zoomOut"; label: "−"; available: root.zoomLevel > 0; onActivated: root.zoomOut() }
         ZoomButton { id: zoomInButton; objectName: "zoomIn"; label: "+"; available: root.zoomLevel < root.maxZoomLevel; onActivated: root.zoomIn() }
     }

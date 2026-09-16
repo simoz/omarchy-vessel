@@ -286,7 +286,7 @@ regression tests and remaining limitations.
 
 Zoom in with **+**, then drag inside the radar to explore the loaded area.
 The view stays within the current AIS coverage; at full range it is already
-showing the whole area. Click **⌖** (Center on me) to return to your position.
+showing the whole area. Click **⌖** (Reset view) to return to your position and restore the initial 1× zoom.
 A short click still selects a vessel. Cities, coastline and the **YOU** marker
 move together; vessel distances remain relative to your location. The sweep
 keeps rotating at the center of the radar while you pan. Zooming out constrains the
