@@ -14,6 +14,8 @@ Vessel uses the active Omarchy palette, with a pixel-art lookout inspired by Out
 
 ## Features
 
+- Map zoom controls: 1×, 2×, 4× and 8× without reconnecting the AIS stream.
+- Offline coastal city labels with collision avoidance and theme-aware text.
 - Gentle radar sweep: one revolution every 12 seconds, paused when the radar is hidden.
 - City-name search with selectable results, plus optional manual coordinates.
 - Compact boat icon in the bar and pixel-art vessel markers on the radar.
@@ -35,9 +37,27 @@ The radar includes a local **Natural Earth** basemap: lightly hatched land, a fi
 
 Map geometry is bundled with the plugin, requires no API key and works offline. Python prepares the nearby geography once per receiver start; QML retains it while live vessel snapshots continue. If the data file is unavailable, the radar still works and displays **BASEMAP UNAVAILABLE**.
 
-Natural Earth's 1:10 million data is intentionally generalized. Docks, narrow channels, small islands and inland waters may be absent; this is a geographic backdrop, not a navigation chart. Dataset provenance and rebuild instructions are in [data/README.md](data/README.md). The data is public domain; the application code remains MIT.
+Natural Earth's 1:10 million data is intentionally generalized. Docks, narrow channels, small islands and inland waters may be absent; this is a geographic backdrop, not a navigation chart. Dataset provenance and rebuild instructions are in [data/README.md](data/README.md). Natural Earth data is public domain; the application code remains MIT.
 
 [View the light-theme demo](docs/demo-preview-light.png).
+
+Use **+** to zoom in and **−** to return toward the configured coverage radius.
+Zoom changes only the view: it scales land, coastline, cities and vessel positions
+together without changing the AIS subscription. **VIEW** shows the visible radius;
+the contact counter shows displayed contacts versus all received contacts in range.
+Contacts outside the view are hidden rather than moved onto the edge. The contact
+list continues to cover the full configured range.
+
+[See the zoomed-in radar](docs/zoom-preview.png).
+
+City names come from a bundled, approximately 400 KB GeoNames extract and work
+offline. The renderer prefers larger settlements and avoids overlapping names,
+vessels and the centre marker. Zoom in to reveal names that would otherwise crowd
+the chart. This is a selection of settlements near the generalized coastline,
+not an exhaustive list of every harbour or village. City data is licensed under
+[CC BY 4.0 by GeoNames](https://www.geonames.org/about.html); source, filtering and
+rebuild instructions are in [data/README.md](data/README.md).
+
 
 ## Install
 
@@ -213,6 +233,7 @@ Code comments are in English:
 - `VesselService.qml`, `SettingsForm.qml`: shared receiver lifecycle and graphical configuration.
 - `Widget.qml`, `Radar.qml`, `PixelBoat.qml`, `BoatIcon.qml`, `Robot.qml`, `Model.js`: themed interface and sprites.
 - `tools/build_basemap.py`: rebuilds the bundled Natural Earth geometry.
+- `tools/build_cities.py`: filters GeoNames settlements against the coastline for offline labels.
 - `requirements.txt`: the single pinned, hash-verified live dependency.
 
 The helper emits JSON snapshots; the first located snapshot also includes a static

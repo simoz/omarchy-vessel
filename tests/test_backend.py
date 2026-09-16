@@ -160,6 +160,14 @@ class BasemapTest(unittest.TestCase):
                 angle = math.radians(ship["bearing"])
                 self.assertFalse(self.land([math.sin(angle)*ship["distance"]/25,-math.cos(angle)*ship["distance"]/25],self.genova))
 
+    def test_offline_coastal_labels_are_geographically_projected(self):
+        cities=self.genova["cities"]
+        names={city["name"] for city in cities}
+        self.assertTrue({"Genoa","Savona","Rapallo"}.issubset(names))
+        self.assertTrue(all(math.hypot(city["x"],city["y"]) <= 1.000001 for city in cities))
+        self.assertEqual(cities,sorted(cities,key=lambda city:(-city["population"],city["name"])))
+        self.assertEqual(basemap.cities_at(44,9,25,path="/missing/cities"),[])
+
     def test_clipping_and_missing_map(self):
         self.assertEqual(basemap.clip_segment([-1,0],[3,2],[0,0,1,1]),[[0,0.5],[1,1]])
         ring = basemap.clip_ring([[-5,-5],[5,-5],[5,5],[-5,5]],[-1,-1,1,1])

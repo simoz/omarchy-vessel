@@ -20,3 +20,41 @@ function point(ship, size, radius) {
     // Canvas Y grows downwards, so north needs a negative cosine offset.
     return {x: size / 2 + Math.sin(angle) * r, y: size / 2 - Math.cos(angle) * r};
 }
+
+// Labels use the same normalized coordinates as land and the same zoom as ships.
+// Prefer larger settlements, reject collisions, and keep every text box inside
+// the circular chart. Widths come from Canvas text metrics, not guessed glyphs.
+function cityLabels(cities, size, zoom, occupied) {
+    var mid = size / 2, r = mid - 24;
+    var boxes = occupied.slice(), labels = [];
+    function overlaps(a, b) {
+        return a.x < b.x + b.width + 4 && a.x + a.width + 4 > b.x &&
+               a.y < b.y + b.height + 3 && a.y + a.height + 3 > b.y;
+    }
+    function inside(box) {
+        return [[box.x, box.y], [box.x + box.width, box.y],
+                [box.x, box.y + box.height], [box.x + box.width, box.y + box.height]].every(function(p) {
+            return Math.pow(p[0] - mid, 2) + Math.pow(p[1] - mid, 2) < Math.pow(r - 3, 2);
+        });
+    }
+    cities.forEach(function(city) {
+        if (labels.length >= 10 || Math.hypot(city.x, city.y) * zoom > 1) return;
+        var x = mid + city.x * zoom * r, y = mid + city.y * zoom * r;
+        var w = city.textWidth + 4, h = 14;
+        var choices = [{x: x + 5, y: y - 17, width: w, height: h},
+                       {x: x - w - 5, y: y - 17, width: w, height: h},
+                       {x: x + 5, y: y + 4, width: w, height: h},
+                       {x: x - w - 5, y: y + 4, width: w, height: h},
+                       {x: x + 5, y: y - 32, width: w, height: h},
+                       {x: x - w - 5, y: y - 32, width: w, height: h}];
+        for (var i = 0; i < choices.length; i++) {
+            var box = choices[i];
+            if (inside(box) && !boxes.some(function(other) { return overlaps(box, other); })) {
+                boxes.push(box);
+                labels.push({name: city.name, x: box.x + 2, y: box.y + 10, dotX: x, dotY: y});
+                break;
+            }
+        }
+    });
+    return labels;
+}

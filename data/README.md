@@ -20,3 +20,36 @@ python3 tools/build_basemap.py /path/to/ne_10m_land.geojson /path/to/ne_10m_coas
 The builder flattens multipart features, records bounding boxes, rounds coordinates to five decimal places and uses deterministic gzip output. It preserves polygon holes. No runtime download, map token, external tiles or extra Python package is needed.
 
 At startup, Python clips nearby geometry to geographic bounding boxes and projects it with the same distance/bearing functions used for vessels. QML receives only this local view once. Land fills and coastline strokes remain separate so clipping edges and polygon partition seams are not mistaken for shores.
+
+
+## Coastal city labels
+
+`coastal-cities.json.gz` is derived from [GeoNames cities5000.zip](https://download.geonames.org/export/dump/cities5000.zip),
+downloaded on 2026-09-16. Attribution: **GeoNames**, licensed under
+[Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/).
+See the [dataset description](https://download.geonames.org/export/dump/readme.txt).
+This license applies to city data; application code remains MIT and Natural Earth
+geometry remains public domain.
+
+Source archive SHA-256:
+`7f0e5c501823a24bf4c3cc7bc0bd9cd3f88247427964b6047e4acddf72604fc4`
+
+The extract contains 14,274 populated places within approximately 8 nautical miles
+of the bundled Natural Earth coastline. The source mainly includes settlements
+with population over 5,000, plus selected administrative seats. City sections,
+historical and abandoned settlements are excluded. Fields are reduced to name,
+identifier, coordinates, population and country. Genoa's name is normalized to
+English. Coast proximity is calculated against a generalized map, so this is an
+orientation layer rather than an authoritative classification of coastal towns.
+
+To rebuild with a downloaded source archive:
+
+```sh
+python3 tools/build_cities.py /path/to/cities5000.zip
+```
+
+The builder uses only Python's standard library and includes the source hash in
+the output. Population determines label priority; the UI hides colliding labels
+and projects them with the same coordinates and zoom as the map. Missing city data
+does not prevent vessel tracking or the basemap from working. No online geocoding
+is used to draw these labels.

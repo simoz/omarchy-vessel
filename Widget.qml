@@ -72,7 +72,7 @@ BarWidget {
         PanelKeyCatcher {
             id: keys
             anchors.fill: parent
-            blocked: root.configuring
+            blocked: root.configuring || radar.zoomControlsFocused
             onCloseRequested: root.close()
             onReturnRequested: root.refresh()
             // Allow the whole panel to scroll when the available screen height is limited.
@@ -113,23 +113,26 @@ BarWidget {
                         width: parent.width
                         height: Math.min(width, 340)
                         Radar {
+                            id: radar
+                            objectName: "radar"
                             anchors.horizontalCenter: parent.horizontalCenter
                             width: parent.height; height: width
                             scanning: root.opened && !root.configuring
                             ships: root.ships; radiusNm: root.report.radius || 25
                             basemap: VesselService.basemap
                             selectedMmsi: root.selectedShip ? root.selectedShip.mmsi : ""
+                            onCloseRequested: root.close()
                             onSelected: function(mmsi) { root.selectedMmsi = mmsi; }
                         }
                         Robot { width: 48; height: 48; anchors.right: parent.right; anchors.bottom: parent.bottom; awake: root.report.status === "LIVE" || root.report.demo === true; visible: root.opened }
                     }
                     Row {
                         width: parent.width
-                        Label { width: parent.width / 2; text: "RANGE / " + Model.distance(root.report.radius || 25, root.unit); color: Color.muted }
-                        Label { width: parent.width / 2; text: (root.report.total || 0) + " CONTACTS"; horizontalAlignment: Text.AlignRight; color: Color.accent }
+                        Label { width: parent.width / 2; text: "VIEW / " + Model.distance(radar.viewRadiusNm, root.unit); color: Color.muted }
+                        Label { width: parent.width / 2; text: radar.visibleShips.length + " / " + (root.report.total || 0) + " CONTACTS"; horizontalAlignment: Text.AlignRight; color: Color.accent }
                     }
                     Label {
-                        text: VesselService.basemap.available ? "NATURAL EARTH / SIMPLIFIED COASTLINE" : "BASEMAP UNAVAILABLE"
+                        text: VesselService.basemap.available ? "NATURAL EARTH · CITIES © GEONAMES" : "BASEMAP UNAVAILABLE"
                         font.pixelSize: 9; color: Color.muted
                     }
                     Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.3 }

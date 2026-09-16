@@ -74,8 +74,28 @@ def clip_line(points, box):
     return lines
 
 
+def cities_at(lat, lon, radius, path=PATH.with_name("coastal-cities.json.gz")):
+    """Project bundled coastal cities once; the UI handles zoom and label density."""
+    try:
+        with gzip.open(path,"rt") as source:
+            dataset=json.load(source)
+        if dataset["version"] != 1:
+            return []
+        cities=[]
+        for city in dataset["cities"]:
+            distance,bearing=distance_bearing(lat,lon,city["latitude"],city["longitude"])
+            if distance > radius:
+                continue
+            angle=math.radians(bearing)
+            cities.append(dict(name=city["name"],population=city["population"],
+                               x=math.sin(angle)*distance/radius,y=-math.cos(angle)*distance/radius))
+        return sorted(cities,key=lambda city:(-city["population"],city["name"]))
+    except (OSError,EOFError,ValueError,KeyError,TypeError):
+        return []
+
+
 def build(lat, lon, radius, path=PATH):
-    result = dict(key=f"{lat},{lon},{radius}", available=False, polygons=[], coastlines=[])
+    result = dict(key=f"{lat},{lon},{radius}", available=False, polygons=[], coastlines=[], cities=cities_at(lat,lon,radius))
     try:
         with gzip.open(path, "rt") as source:
             dataset = json.load(source)

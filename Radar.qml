@@ -9,6 +9,17 @@ Item {
     property var ships: []
     property var basemap: ({available: false, polygons: [], coastlines: []})
     property real radiusNm: 25
+    readonly property bool zoomControlsFocused: zoomInButton.activeFocus || zoomOutButton.activeFocus
+    signal closeRequested()
+    Keys.onEscapePressed: closeRequested()
+    property int zoomLevel: 0
+    readonly property real zoom: Math.pow(2, zoomLevel)
+    readonly property real viewRadiusNm: radiusNm / zoom
+    readonly property var visibleShips: ships.filter(function(ship) { return ship.distance <= viewRadiusNm; })
+    // Keep the zoom local: changing the view must never reconnect the AIS feed.
+    function zoomIn() { zoomLevel = Math.min(3, zoomLevel + 1); }
+    function zoomOut() { zoomLevel = Math.max(0, zoomLevel - 1); }
+    onRadiusNmChanged: zoomLevel = 0
     property string selectedMmsi: ""
     signal selected(string mmsi)
     implicitHeight: width
@@ -18,6 +29,8 @@ Item {
         id: mapLayer
         anchors.fill: parent
         property var geography: root.basemap
+        property real viewScale: root.zoom
+        onViewScaleChanged: requestPaint()
         property color coastColor: Color.accent
         property color landColor: Color.foreground
         onGeographyChanged: requestPaint()
@@ -36,8 +49,8 @@ Item {
                 c.beginPath();
                 rings.forEach(function(points) {
                     points.forEach(function(p, i) {
-                        if (i === 0) c.moveTo(mid + p[0] * r, mid + p[1] * r);
-                        else c.lineTo(mid + p[0] * r, mid + p[1] * r);
+                        if (i === 0) c.moveTo(mid + p[0] * r * viewScale, mid + p[1] * r * viewScale);
+                        else c.lineTo(mid + p[0] * r * viewScale, mid + p[1] * r * viewScale);
                     });
                     c.closePath();
                 });
@@ -55,8 +68,8 @@ Item {
             c.beginPath();
             (geography.coastlines || []).forEach(function(points) {
                 points.forEach(function(p, i) {
-                    if (i === 0) c.moveTo(mid + p[0] * r, mid + p[1] * r);
-                    else c.lineTo(mid + p[0] * r, mid + p[1] * r);
+                    if (i === 0) c.moveTo(mid + p[0] * r * viewScale, mid + p[1] * r * viewScale);
+                    else c.lineTo(mid + p[0] * r * viewScale, mid + p[1] * r * viewScale);
                 });
             });
             c.globalAlpha = 0.7; c.strokeStyle = coastColor; c.lineWidth = 1.2;
@@ -116,6 +129,42 @@ Item {
             }
         }
     }
+    Canvas {
+        id: cityLayer
+        anchors.fill: parent
+        property var geography: root.basemap
+        property var contacts: root.visibleShips
+        property real viewScale: root.zoom
+        property color ink: Color.muted
+        property color halo: Color.background
+        onGeographyChanged: requestPaint()
+        onContactsChanged: requestPaint()
+        onViewScaleChanged: requestPaint()
+        onInkChanged: requestPaint()
+        onHaloChanged: requestPaint()
+        onWidthChanged: requestPaint()
+        onHeightChanged: requestPaint()
+        onPaint: {
+            var c = getContext("2d"); c.reset();
+            c.font = "10px monospace";
+            var cities = (geography.cities || []).map(function(city) {
+                return {name: city.name, x: city.x, y: city.y, textWidth: c.measureText(city.name).width};
+            });
+            // Reserve space for YOU and vessel hit areas before placing labels.
+            var occupied = [{x: width / 2 - 14, y: height / 2 - 6, width: 28, height: 32}];
+            contacts.forEach(function(ship) {
+                var p = Model.point(ship, width, root.viewRadiusNm);
+                occupied.push({x: p.x - 16, y: p.y - 16, width: 32, height: 32});
+            });
+            var labels = Model.cityLabels(cities, width, viewScale, occupied);
+            c.lineJoin = "round"; c.strokeStyle = halo; c.fillStyle = ink;
+            labels.forEach(function(label) {
+                c.lineWidth = 3; c.strokeText(label.name, label.x, label.y);
+                c.fillText(label.name, label.x, label.y);
+                c.beginPath(); c.arc(label.dotX, label.dotY, 1.6, 0, Math.PI * 2); c.fill();
+            });
+        }
+    }
     Repeater {
         model: ["N", "E", "S", "W"]
         Text {
@@ -130,11 +179,11 @@ Item {
     Text { anchors.centerIn: parent; anchors.verticalCenterOffset: 17; text: "YOU"; font.pixelSize: 9; color: Color.muted }
     // Use separate items for contacts so each symbol has its own selection hit area.
     Repeater {
-        model: root.ships
+        model: root.visibleShips
         Item {
             id: target
             required property var modelData
-            readonly property var position: Model.point(modelData, root.width, root.radiusNm)
+            readonly property var position: Model.point(modelData, root.width, root.viewRadiusNm)
             x: position.x - 16; y: position.y - 16; width: 32; height: 32
             // Stale positions remain visible but subdued until the receiver expires them.
             opacity: modelData.stale ? 0.4 : 1
@@ -155,4 +204,32 @@ Item {
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.selected(target.modelData.mmsi) }
         }
     }
+    Row {
+        anchors.right: parent.right
+        anchors.top: parent.top
+        spacing: 4
+        component ZoomButton: Rectangle {
+            property string label
+            property bool available: true
+            signal activated()
+            width: 26; height: 26; radius: 3
+            color: Color.background; border.color: Color.muted
+            opacity: available ? 0.9 : 0.3
+            activeFocusOnTab: available
+            Accessible.role: Accessible.Button
+            Accessible.name: label === "+" ? "Zoom in" : "Zoom out"
+            Accessible.onPressAction: if (available) activated()
+            Text { anchors.centerIn: parent; text: parent.label; color: Color.foreground; font.pixelSize: 18 }
+            Keys.onReturnPressed: if (available) activated()
+            Keys.onSpacePressed: if (available) activated()
+            MouseArea {
+                anchors.fill: parent; enabled: parent.available
+                cursorShape: Qt.PointingHandCursor
+                onClicked: parent.activated()
+            }
+        }
+        ZoomButton { id: zoomOutButton; objectName: "zoomOut"; label: "−"; available: root.zoomLevel > 0; onActivated: root.zoomOut() }
+        ZoomButton { id: zoomInButton; objectName: "zoomIn"; label: "+"; available: root.zoomLevel < 3; onActivated: root.zoomIn() }
+    }
+
 }
