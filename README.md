@@ -67,6 +67,17 @@ Triangles indicate vessel course; dots indicate an unknown course. The selected 
 omarchy plugin update simoz.vessel --yes; omarchy-shell shell rescanPlugins
 ```
 
+## Remove
+
+```sh
+omarchy plugin remove simoz.vessel
+```
+
+Saved preferences and the API key remain in `~/.config/omarchy-vessel/`, and the
+Python runtime remains in `~/.local/share/omarchy-vessel/` (or the corresponding
+`$XDG_CONFIG_HOME` and `$XDG_DATA_HOME` locations). Remove these directories if
+you also want to delete Vessel's saved data.
+
 ## Data and privacy
 
 Vessel is built for watching nearby traffic. Coverage and reported destinations depend on AISStream and the vessels transmitting.
