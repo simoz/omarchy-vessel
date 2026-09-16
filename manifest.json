@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "simoz.vessel",
+  "name": "Vessel",
+  "version": "0.1.0",
+  "author": "simoz",
+  "license": "MIT",
+  "description": "A theme-aware marine radar. Discover vessels around you, with a little robot on watch.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Widget.qml"
+  },
+  "barWidget": {
+    "displayName": "Vessel",
+    "category": "Info",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {},
+    "schema": [
+      {
+        "key": "pythonExecutable",
+        "type": "string",
+        "label": "Python executable (default python3)"
+      }
+    ]
+  }
+}
