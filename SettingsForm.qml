@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import QtQuick.Controls.Basic
 import qs.Commons
 
@@ -10,6 +11,11 @@ Column {
     property string cityName: ""
     property string family: "monospace"
     signal done()
+    // Use Omarchy's session-aware launcher; Qt URL dispatch may not reach the
+    // browser from the shell process. Pass arguments directly, without a shell.
+    function openBrowser(url) {
+        Quickshell.execDetached(["omarchy-launch-browser", url]);
+    }
     function populate() {
         var value = VesselService.preferences;
         apiKey.text = "";
@@ -63,7 +69,7 @@ Column {
         placeholderText: VesselService.preferences.hasApiKey ? "Key saved · leave blank to keep it" : "Paste your API key"
         maximumLength: 4096
     }
-    Action { text: "GET AN API KEY ↗"; onClicked: Qt.openUrlExternally("https://aisstream.io/account") }
+    Action { objectName: "getApiKey"; text: "GET AN API KEY ↗"; onClicked: root.openBrowser("https://aisstream.io/account") }
     Caption { text: "Sign in with GitHub, create a key, then paste it above. Your key is stored locally with owner-only permissions."; color: Color.muted }
     Toggle { id: demo; text: "Offline demo · Genoa (Italy)" }
     Toggle { id: automatic; text: "Approximate location via IP"; enabled: !demo.checked }
@@ -117,7 +123,7 @@ Column {
         Caption {
             text: "City search: Photon / © OpenStreetMap contributors ↗"
             font.pixelSize: 10; color: Color.muted; visible: !manual.checked
-            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Qt.openUrlExternally("https://www.openstreetmap.org/copyright") }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.openBrowser("https://www.openstreetmap.org/copyright") }
         }
         Toggle {
             id: manual; text: "Enter coordinates instead"
