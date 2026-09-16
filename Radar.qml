@@ -277,6 +277,7 @@ Item {
         spacing: 4
         component ZoomButton: Rectangle {
             property string label
+            property bool centerIcon: false
             property string accessibleLabel: label === "+" ? "Zoom in" : "Zoom out"
             property bool available: true
             signal activated()
@@ -287,7 +288,18 @@ Item {
             Accessible.role: Accessible.Button
             Accessible.name: accessibleLabel
             Accessible.onPressAction: if (available) activated()
-            Text { anchors.centerIn: parent; text: parent.label; color: Color.foreground; font.pixelSize: 18 }
+            Text { anchors.centerIn: parent; visible: !parent.centerIcon; text: parent.label; color: Color.foreground; font.pixelSize: 18 }
+            // Draw the reticle geometrically so font metrics cannot shift its center.
+            Item {
+                anchors.centerIn: parent; width: 14; height: 14
+                visible: parent.centerIcon
+                Rectangle {
+                    anchors.centerIn: parent; width: 10; height: 10; radius: 5
+                    color: "transparent"; border.width: 1; border.color: Color.foreground
+                }
+                Rectangle { anchors.centerIn: parent; width: 14; height: 1; color: Color.foreground }
+                Rectangle { anchors.centerIn: parent; width: 1; height: 14; color: Color.foreground }
+            }
             Keys.onReturnPressed: if (available) activated()
             Keys.onSpacePressed: if (available) activated()
             MouseArea {
@@ -296,7 +308,7 @@ Item {
                 onClicked: parent.activated()
             }
         }
-        ZoomButton { id: centerButton; objectName: "recenter"; label: "⌖"; accessibleLabel: "Center on me"; available: root.panned; onActivated: root.recenter() }
+        ZoomButton { id: centerButton; objectName: "recenter"; label: "⌖"; centerIcon: true; accessibleLabel: "Center on me"; available: root.panned; onActivated: root.recenter() }
         ZoomButton { id: zoomOutButton; objectName: "zoomOut"; label: "−"; available: root.zoomLevel > 0; onActivated: root.zoomOut() }
         ZoomButton { id: zoomInButton; objectName: "zoomIn"; label: "+"; available: root.zoomLevel < 3; onActivated: root.zoomIn() }
     }
