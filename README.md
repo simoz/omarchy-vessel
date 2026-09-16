@@ -6,7 +6,7 @@ Released under the [MIT License](LICENSE).
 
 A theme-aware marine radar for Omarchy. See vessels around your location: sailing boats, fishing boats, ferries, cargo ships, tugs and other AIS-equipped traffic.
 
-Vessel uses the active Omarchy palette, with a pixel-art lookout inspired by Outpost. North stays at the top; distance rings surround your position. Select a vessel on the radar or in the distance-sorted list to see its details.
+Vessel uses the active Omarchy palette, with a pixel-art lookout inspired by [Outpost](https://github.com/simoz/omarchy-outpost-theme). North stays at the top; distance rings surround your position. Select a vessel on the radar or in the distance-sorted list to see its details.
 
 ![Vessel with simulated traffic](docs/demo-preview.png)
 
@@ -16,7 +16,7 @@ Vessel uses the active Omarchy palette, with a pixel-art lookout inspired by Out
 
 When I'm working by the sea, I see all sorts of boats passing by and always find myself wondering: What's that boat called? Where has it come from? Where is it going?
 
-I built Vessel out of that curiosity. I wanted a small widget I could glance at while working, connecting the boats on the horizon to the information they broadcast. I also wanted it to feel at home on my desktop, fitting naturally into my Outpost and Haven themes.
+I built Vessel out of that curiosity. I wanted a small widget I could glance at while working, connecting the boats on the horizon to the information they broadcast. I also wanted it to feel at home on my desktop, fitting naturally into my [Outpost](https://github.com/simoz/omarchy-outpost-theme) and [Haven](https://github.com/simoz/omarchy-haven-theme) themes.
 
 ## Features
 
