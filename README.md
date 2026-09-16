@@ -176,8 +176,8 @@ unavailable or throttle requests; coordinates remain a fallback. Set
 
 The radar sweep is a faint visual effect beneath the markers, not a source of
 position updates. Its texture is painted once and rotated on the render thread;
-it stops when the panel is closed or Settings is open. **SETTINGS** and
-**RECONNECT** share a single footer row.
+it stops when the panel is closed or Settings is open. **SETTINGS**, **PAUSE / RESUME** and
+**RECONNECT** share a single footer row. The bar shows only the boat icon.
 
 Reconnect after travelling to refresh the location. The radius always uses
 nautical miles, even when display units are kilometres (1 nm = 1.852 km).
@@ -259,7 +259,7 @@ Modules:
 - `backend/network.py`: bounded HTTPS JSON requests and HTTPS-only redirects for location services.
 - `VesselService.qml`, `SettingsForm.qml`: shared receiver lifecycle and graphical configuration.
 - `Widget.qml`, `Radar.qml`, `Model.js`: panel layout, map rendering and shared view geometry.
-- `ReceptionButton.qml`, `BoatIcon.qml`, `Robot.qml`: reception control and themed artwork.
+- `BoatIcon.qml`, `Robot.qml`: themed artwork; panel controls live in `Widget.qml`.
 - `tools/build_basemap.py`: rebuilds the bundled Natural Earth geometry.
 - `tools/build_cities.py`: filters GeoNames settlements against the coastline for offline labels.
 - `requirements.txt`: the single pinned, hash-verified live dependency.
@@ -292,11 +292,11 @@ view again, and a new location/map resets its center. Panning never reconnects A
 
 ![Panned radar view](docs/pan-preview.png)
 
-### Pause reception from the bar
+### Pause reception from the panel
 
-Click **⏸** beside the boat in the bar to stop the receiver and close its AIS
+Open the boat widget and click **PAUSE** in the footer to stop the receiver and close its AIS
 connection. The radar keeps the last positions and displays **PAUSED**; these
-positions are no longer live. The button changes to **▶** to resume reception.
+positions are no longer live. The button changes to **RESUME** to resume reception.
 Resuming starts a fresh connection and gathers new contacts. Opening or closing
 the panel does not change the pause state, and all monitors share one receiver.
 **RECONNECT** and **SAVE & CONNECT** also resume reception. Pause lasts for the

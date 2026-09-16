@@ -8,8 +8,8 @@ import "Model.js" as Model
 BarWidget {
     id: root
     moduleName: "simoz.vessel"
-    implicitWidth: root.vertical ? Math.max(button.implicitWidth, pauseButton.implicitWidth) : button.implicitWidth + pauseButton.implicitWidth
-    implicitHeight: root.vertical ? button.implicitHeight + pauseButton.implicitHeight : Math.max(button.implicitHeight, pauseButton.implicitHeight)
+    implicitWidth: button.implicitWidth
+    implicitHeight: button.implicitHeight
     property bool configuring: false
     property bool opened: false
     property bool attached: false
@@ -37,39 +37,20 @@ BarWidget {
 
     WidgetButton {
         id: button
-        anchors.left: parent.left
-        anchors.top: parent.top
-        width: root.vertical ? root.width : root.width - pauseButton.width
-        height: root.vertical ? root.height - pauseButton.height : root.height
+        anchors.fill: parent
         bar: root.bar
-        text: (root.report.demo ? "DEMO " : "") + root.ships.length + (root.ships.length ? " · " + Model.distance(root.ships[0].distance, root.unit) : "")
+        text: "Vessel"
         labelVisible: false
         hasVisualContent: true
-        fixedWidth: root.vertical ? -1 : boatLabel.implicitWidth + scaledHorizontalMargin * 2
-        Row {
-            id: boatLabel
+        fixedWidth: root.vertical ? -1 : Style.space(16) + scaledHorizontalMargin * 2
+        BoatIcon {
             anchors.centerIn: parent
-            spacing: 6
-            BoatIcon { width: Style.space(16); height: width; ink: button.foreground; anchors.verticalCenter: parent.verticalCenter }
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                visible: !root.vertical
-                text: button.text; color: button.foreground
-                font.family: button.fontFamily; font.pixelSize: button.fontSize
-            }
+            width: Style.space(16); height: width
+            ink: button.foreground
         }
         tooltipText: "Vessel · " + root.report.status
         dimmed: VesselService.paused || root.report.status === "RECONNECTING" || root.report.status === "STOPPED"
         onPressed: function(b) { if (b === Qt.MiddleButton) root.refresh(); else root.toggle(); }
-    }
-    ReceptionButton {
-        id: pauseButton
-        objectName: "pauseReception"
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        width: root.vertical ? root.width : implicitWidth
-        height: root.vertical ? implicitHeight : root.height
-        bar: root.bar
     }
     // Use the host panel for anchoring, focus and outside-click dismissal.
     KeyboardPanel {
@@ -84,7 +65,7 @@ BarWidget {
         PanelKeyCatcher {
             id: keys
             anchors.fill: parent
-            blocked: root.configuring || radar.zoomControlsFocused
+            blocked: root.configuring || radar.zoomControlsFocused || settingsAction.activeFocus || receptionAction.activeFocus || reconnectAction.activeFocus
             onCloseRequested: root.close()
             onReturnRequested: root.refresh()
             // Allow the whole panel to scroll when the available screen height is limited.
@@ -161,7 +142,7 @@ BarWidget {
                     }
                     Label {
                         width: parent.width; wrapMode: Text.WordWrap; visible: root.ships.length === 0
-                        text: VesselService.paused ? "Reception paused. Resume from the bar to receive vessel positions." : root.report.status === "SETUP" ? "Your lookout is ready for setup." : "Listening for vessels. New contacts appear as AIS reports arrive."
+                        text: VesselService.paused ? "Reception paused. Press RESUME below to receive vessel positions." : root.report.status === "SETUP" ? "Your lookout is ready for setup." : "Listening for vessels. New contacts appear as AIS reports arrive."
                         color: Color.muted
                     }
                     Label {
@@ -188,15 +169,55 @@ BarWidget {
                         }
                     }
                     Label { width: parent.width; wrapMode: Text.WordWrap; text: root.report.demo ? "SIMULATED TRAFFIC · no live positions" : "AISStream · received vessels only · not for navigation"; font.pixelSize: 10; color: Color.muted }
-                    Row {
-                        spacing: 24
+                    // Consistent hit-area heights and shared styling keep all panel
+                    // commands consistent, including the reception toggle.
+                    component Action: Rectangle {
+                        id: action
+                        property string text
+                        signal triggered()
+                        implicitWidth: actionLabel.implicitWidth + 16
+                        implicitHeight: 30
+                        radius: 3
+                        color: "transparent"
+                        border.width: 1
+                        border.color: activeFocus || pointer.containsMouse ? Color.accent : "transparent"
+                        activeFocusOnTab: true
+                        Accessible.role: Accessible.Button
+                        Accessible.name: text
+                        Accessible.onPressAction: triggered()
                         Label {
-                            text: "SETTINGS"; color: Color.accent
-                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { root.configuring = true; VesselService.loadSettings(); } }
+                            id: actionLabel
+                            anchors.centerIn: parent
+                            text: action.text; color: Color.accent
                         }
-                        Label {
-                            text: "RECONNECT ↵"; color: Color.accent
-                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.refresh() }
+                        Keys.onReturnPressed: triggered()
+                        Keys.onSpacePressed: triggered()
+                        Keys.onEscapePressed: root.close()
+                        MouseArea {
+                            id: pointer
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: action.triggered()
+                        }
+                    }
+                    Row {
+                        spacing: 12
+                        Action {
+                            id: settingsAction
+                            text: "SETTINGS"
+                            onTriggered: { root.configuring = true; VesselService.loadSettings(); }
+                        }
+                        Action {
+                            id: receptionAction
+                            objectName: "pauseReception"
+                            text: VesselService.paused ? "RESUME" : "PAUSE"
+                            onTriggered: VesselService.togglePaused()
+                        }
+                        Action {
+                            id: reconnectAction
+                            text: "RECONNECT"
+                            onTriggered: root.refresh()
                         }
                     }
                 }
