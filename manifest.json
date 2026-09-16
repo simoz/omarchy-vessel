@@ -5,7 +5,7 @@
   "version": "0.5.1",
   "author": "simoz",
   "license": "MIT",
-  "description": "A theme-aware marine radar. Discover vessels around you, with a little robot on watch.",
+  "description": "A marine radar for Omarchy. Put a name to the boats on your horizon, with a little robot keeping watch.",
   "kinds": [
     "bar-widget"
   ],

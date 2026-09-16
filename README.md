@@ -4,7 +4,7 @@ Released under the [MIT License](LICENSE).
 
 **A little robot. A wide horizon.**
 
-A theme-aware marine radar for Omarchy. See vessels around your location: sailing boats, fishing boats, ferries, cargo ships, tugs and other AIS-equipped traffic.
+A marine radar for Omarchy. Put a name to the boats on your horizon, with a little robot keeping watch. Track nearby AIS-equipped vessels: sailing boats, fishing boats, ferries, cargo ships, tugs and more.
 
 Vessel uses the active Omarchy palette, with a pixel-art lookout inspired by [Outpost](https://github.com/simoz/omarchy-outpost-theme). North stays at the top; distance rings surround your position. Select a vessel on the radar or in the distance-sorted list to see its details.
 
