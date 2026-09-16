@@ -17,12 +17,12 @@ Item {
     readonly property real zoom: Math.pow(2, zoomLevel)
     readonly property real viewRadiusNm: radiusNm / zoom
     property point viewCenter: Qt.point(0, 0)
-    readonly property real chartRadius: Math.max(1, width / 2 - 24)
+    readonly property real chartRadius: Model.radarRadius(width)
     readonly property point centerPixels: Qt.point(viewCenter.x * zoom * chartRadius, viewCenter.y * zoom * chartRadius)
     readonly property bool panned: Math.hypot(viewCenter.x, viewCenter.y) > 0.00001
     readonly property var visibleShips: ships.filter(function(ship) {
         var p = Model.point(ship, root.width, root.viewRadiusNm, root.centerPixels);
-        return Math.hypot(p.x - root.width / 2, p.y - root.width / 2) <= root.chartRadius;
+        return Model.inView(p, root.width);
     })
     function setCenter(x, y) {
         var p = Model.boundedCenter(x, y, zoom);
@@ -58,7 +58,7 @@ Item {
         onPaint: {
             var c = getContext("2d"); c.reset();
             if (!geography.available) return;
-            var mid = width / 2, r = mid - 24;
+            var mid = width / 2, r = root.chartRadius;
             c.save();
             c.beginPath(); c.arc(mid, mid, r, 0, Math.PI * 2); c.clip();
             var polygons = geography.polygons || [];
@@ -94,7 +94,8 @@ Item {
         }
     }
     // Paint this faint sweep once, then rotate its texture on the render thread.
-    // No timer repaints the map or contacts; closing the panel stops animation.
+    // Only the sweep texture rotates. Map data, zoom, pan and theme changes
+    // repaint their own layers; closing the panel stops the animation.
     Canvas {
         id: sweep
         anchors.fill: parent
@@ -105,7 +106,7 @@ Item {
         onHeightChanged: requestPaint()
         onPaint: {
             var c = getContext("2d"); c.reset();
-            var mid = width / 2, r = Math.max(0, mid - 24);
+            var mid = width / 2, r = root.chartRadius;
             c.fillStyle = ink;
             for (var i = 0; i < 20; i++) {
                 var start = (-130 + i * 2) * Math.PI / 180;
@@ -134,7 +135,7 @@ Item {
         onHeightChanged: requestPaint()
         onPaint: {
             var c = getContext("2d"); c.reset();
-            var mid = width / 2, r = mid - 24;
+            var mid = width / 2, r = root.chartRadius;
             c.strokeStyle = ink; c.lineWidth = 1; c.globalAlpha = 0.22;
             for (var i = 1; i <= 3; i++) { c.beginPath(); c.arc(mid, mid, r * i / 3, 0, Math.PI * 2); c.stroke(); }
             c.strokeStyle = muted; c.beginPath(); c.moveTo(mid, 24); c.lineTo(mid, width - 24); c.moveTo(24, mid); c.lineTo(width - 24, mid); c.stroke();

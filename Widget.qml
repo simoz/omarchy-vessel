@@ -62,9 +62,7 @@ BarWidget {
         dimmed: VesselService.paused || root.report.status === "RECONNECTING" || root.report.status === "STOPPED"
         onPressed: function(b) { if (b === Qt.MiddleButton) root.refresh(); else root.toggle(); }
     }
-    // A separate host button has its own hit target: toggling reception must
-    // never open the radar. The shared service synchronizes every monitor.
-    WidgetButton {
+    ReceptionButton {
         id: pauseButton
         objectName: "pauseReception"
         anchors.right: parent.right
@@ -72,34 +70,6 @@ BarWidget {
         width: root.vertical ? root.width : implicitWidth
         height: root.vertical ? implicitHeight : root.height
         bar: root.bar
-        fixedWidth: Style.space(16) + scaledHorizontalMargin * 2
-        labelVisible: false
-        hasVisualContent: true
-        tooltipText: VesselService.paused ? "AIS reception paused · Resume" : "Pause AIS reception"
-        Accessible.role: Accessible.Button
-        Accessible.name: tooltipText
-        Accessible.onPressAction: VesselService.togglePaused()
-        onPressed: function(b) { if (b === Qt.LeftButton) VesselService.togglePaused(); }
-        Item {
-            anchors.centerIn: parent; width: 12; height: 12
-            // Geometry keeps both symbols centered independently of font metrics.
-            Row {
-                anchors.centerIn: parent; spacing: 3
-                visible: !VesselService.paused
-                Rectangle { width: 3; height: 10; color: pauseButton.foreground }
-                Rectangle { width: 3; height: 10; color: pauseButton.foreground }
-            }
-            Canvas {
-                anchors.fill: parent; visible: VesselService.paused
-                property color ink: pauseButton.foreground
-                onInkChanged: requestPaint()
-                onPaint: {
-                    var c = getContext("2d"); c.reset();
-                    c.beginPath(); c.moveTo(2, 1); c.lineTo(11, 6); c.lineTo(2, 11); c.closePath();
-                    c.fillStyle = ink; c.fill();
-                }
-            }
-        }
     }
     // Use the host panel for anchoring, focus and outside-click dismissal.
     KeyboardPanel {

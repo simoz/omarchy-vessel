@@ -29,16 +29,35 @@ Item {
     readonly property var ships: report.ships || []
     // Resolve relative to this plugin, not the shell working directory; decode spaces in paths.
     readonly property string helper: decodeURIComponent(Qt.resolvedUrl("backend/vessel.py").toString().replace(/^file:\/\//, ""))
-    function attach(settings) { users++; configure(settings); loadSettings(); }
+    // All helpers use an argument list, never shell interpolation. Keep the
+    // credential-bearing save payload on stdin rather than the process list.
+    function helperCommand(extraArgs) {
+        return [config.pythonExecutable || "python3", "-B", helper].concat(extraArgs);
+    }
+    function attach(settings) {
+        users++;
+        configure(settings);
+        loadSettings();
+    }
+    function stopReceiver() {
+        stopping = true;
+        pendingRestart = false;
+        startTimer.stop();
+        startupWatch.stop();
+        process.running = false;
+    }
     function detach() {
         users = Math.max(0, users - 1);
-        if (users === 0) { stopping = true; pendingRestart = false; startTimer.stop(); startupWatch.stop(); process.running = false; clearCitySearch(); }
+        if (users === 0) {
+            stopReceiver();
+            clearCitySearch();
+        }
     }
     // Compare only receiver settings so display-only changes do not reconnect the stream.
     function configure(settings) {
         var next = {pythonExecutable: settings.pythonExecutable || "python3"};
         var key = JSON.stringify(next);
-        if (key === signature && (process.running || pendingRestart || paused)) return;
+        if (key === signature && (process.running || pendingRestart || startTimer.running || paused)) return;
         config = next; signature = key;
         if (!paused) restart();
     }
@@ -46,9 +65,8 @@ Item {
     // last snapshot and map so users can inspect them, clearly marked PAUSED.
     function pause() {
         if (paused) return;
-        paused = true; stopping = true; pendingRestart = false;
-        startTimer.stop(); startupWatch.stop();
-        process.running = false;
+        paused = true;
+        stopReceiver();
         var snapshot = Object.assign({}, report);
         snapshot.status = "PAUSED";
         report = snapshot;
@@ -70,21 +88,22 @@ Item {
         if (users === 0 || paused || stopping) return;
         pendingRestart = false;
         // Credentials are read by Python from user storage, never from argv.
-        var args = [config.pythonExecutable, "-B", helper, "--saved-settings"];
-        process.command = args;
+        process.command = helperCommand(["--saved-settings"]);
         process.running = true;
         startupWatch.restart();
     }
     function loadSettings() {
         if (settingsProcess.running) return;
-        settingsProcess.command = [config.pythonExecutable || "python3", "-B", helper, "--read-settings"];
+        settingsProcess.received = false;
+        settingsProcess.command = helperCommand(["--read-settings"]);
         settingsProcess.running = true;
     }
     function saveSettings(values) {
         if (settingsProcess.running) return;
         settingsError = ""; saving = true;
         settingsProcess.payload = JSON.stringify(values);
-        settingsProcess.command = [config.pythonExecutable || "python3", "-B", helper, "--save-settings"];
+        settingsProcess.received = false;
+        settingsProcess.command = helperCommand(["--save-settings"]);
         settingsProcess.running = true;
     }
     Process {
@@ -133,7 +152,7 @@ Item {
         if (Date.now() - lastCitySearch < 1100) { cityError = "Please wait a moment before searching again."; return; }
         lastCitySearch = Date.now();
         cityProcess.received = false;
-        cityProcess.command = [config.pythonExecutable || "python3", "-B", helper, "--search-city", query];
+        cityProcess.command = helperCommand(["--search-city", query]);
         cityProcess.running = true;
     }
     Process {

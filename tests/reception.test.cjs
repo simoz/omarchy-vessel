@@ -16,7 +16,7 @@ function service() {
     clearCitySearch() {}, loadSettings() {}
   });
   const source = fs.readFileSync(path.join(__dirname, '../VesselService.qml'), 'utf8');
-  for (const name of ['pause', 'togglePaused', 'restart', 'start', 'configure', 'detach']) {
+  for (const name of ['helperCommand', 'stopReceiver', 'pause', 'togglePaused', 'restart', 'start', 'configure', 'detach']) {
     const match = source.match(new RegExp('    function ' + name + '\\([^]*?\\n    }'));
     assert.ok(match, name);
     vm.runInContext(match[0], state);
@@ -58,4 +58,22 @@ test('another monitor or configuration refresh does not undo manual pause', () =
   assert.equal(s.report.status, 'PAUSED');
   s.detach(); s.start();
   assert.equal(s.process.running, false);
+});
+test('helper arguments preserve spaces and metacharacters without a shell', () => {
+  const s = service();
+  s.config.pythonExecutable = '/path with spaces/python3';
+  s.helper = '/plugin with spaces/backend/vessel.py';
+  const query = 'Genoa; echo example';
+  assert.deepEqual(Array.from(s.helperCommand(['--search-city', query])), [
+    '/path with spaces/python3', '-B', '/plugin with spaces/backend/vessel.py', '--search-city', query
+  ]);
+});
+test('a second monitor does not reset an already scheduled receiver start', () => {
+  const s = service();
+  s.process.running = false;
+  s.signature = JSON.stringify(s.config);
+  const snapshot = s.report;
+  s.configure({pythonExecutable: 'python3'});
+  assert.equal(s.report, snapshot);
+  assert.equal(s.startTimer.running, true);
 });

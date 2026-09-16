@@ -16,12 +16,13 @@ Item {
         "..aafffffffaaa..", "..aaffaffffaa...", "..aafffffffaa...",
         "....aaaaaaaa....", ".....aa..aa.....", "....aaa..aaa...."
     ]
+    readonly property string sprite: pixels.join("")
     // Flatten the rows into a pixel grid and scale it to the requested component size.
     Repeater {
-        model: root.pixels.join("").length
+        model: root.sprite.length
         Rectangle {
             required property int index
-            readonly property string pixel: root.pixels.join("")[index]
+            readonly property string pixel: root.sprite[index]
             x: (index % 16) * root.width / 16
             y: Math.floor(index / 16) * root.height / 16
             width: Math.ceil(root.width / 16)

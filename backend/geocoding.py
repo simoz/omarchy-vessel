@@ -1,16 +1,21 @@
 """Explicit city searches via Photon; no API key or extra dependency needed."""
-import json
+
 import os
 import re
 from urllib.parse import urlencode, urlsplit
-from urllib.request import Request, urlopen
+
 from geometry import coordinates
+from network import fetch_json
 
 ENDPOINT = "https://photon.komoot.io/api/"
 
 
 def text(value, limit=120):
-    return re.sub(r"[\x00-\x1f\x7f]", "", value).strip()[:limit] if isinstance(value, str) else ""
+    return (
+        re.sub(r"[\x00-\x1f\x7f]", "", value).strip()[:limit]
+        if isinstance(value, str)
+        else ""
+    )
 
 
 def places(payload):
@@ -21,24 +26,41 @@ def places(payload):
         if not isinstance(feature, dict):
             continue
         properties, point = feature.get("properties"), feature.get("geometry")
-        if not isinstance(properties, dict) or not isinstance(point, dict) or point.get("type") != "Point":
+        if (
+            not isinstance(properties, dict)
+            or not isinstance(point, dict)
+            or point.get("type") != "Point"
+        ):
             continue
         position = point.get("coordinates")
-        if not isinstance(position, list) or len(position) != 2 or not coordinates(position[1],position[0]):
+        if (
+            not isinstance(position, list)
+            or len(position) != 2
+            or not coordinates(position[1], position[0])
+        ):
             continue
         name, country = text(properties.get("name")), text(properties.get("country"))
         if not name:
             continue
         # Request English upstream; normalize this familiar local spelling too.
-        if name.casefold() == "genova" and text(properties.get("countrycode")).upper() == "IT":
+        if (
+            name.casefold() == "genova"
+            and text(properties.get("countrycode")).upper() == "IT"
+        ):
             name = "Genoa"
         label = f"{name} ({country})" if country else name
-        identity = (label, round(position[1],4), round(position[0],4))
+        identity = (label, round(position[1], 4), round(position[0], 4))
         if identity in seen:
             continue
         seen.add(identity)
-        result.append(dict(label=label, detail=text(properties.get("state")),
-                           latitude=position[1], longitude=position[0]))
+        result.append(
+            dict(
+                label=label,
+                detail=text(properties.get("state")),
+                latitude=position[1],
+                longitude=position[0],
+            )
+        )
         if len(result) == 6:
             break
     return result
@@ -55,10 +77,4 @@ def search(query):
     if parsed.scheme != "https" or not parsed.netloc or parsed.query or parsed.fragment:
         raise ValueError("Geocoder URL must be an HTTPS endpoint")
     url = endpoint + "?" + urlencode(dict(q=query, lang="en", limit=6, layer="city"))
-    request = Request(url, headers={"User-Agent":"omarchy-vessel/0.2 (https://github.com/simoz/omarchy-vessel)",
-                                   "Accept":"application/json"})
-    with urlopen(request, timeout=12) as response:
-        raw = response.read(262_145)
-    if len(raw) > 262_144:
-        raise ValueError("City response too large")
-    return places(json.loads(raw))
+    return places(fetch_json(url, max_bytes=262_144))

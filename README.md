@@ -159,7 +159,7 @@ and key. Both print JSON snapshots. Stop with Ctrl+C.
 ### Location
 
 Approximate location queries `https://ipwho.is/` once per connection. It estimates
-your public IP location, not GPS, and may point to your ISP or VPN exit. For an
+your public IP location, not GPS, and may point to your ISP or VPN exit. For a
 fixed lookout, disable that option, enter a city and select a search result.
 Results include the country and region so you can distinguish cities with the
 same name. English names are requested; the demo is labelled **Genoa (Italy)**.
@@ -187,7 +187,7 @@ There is no stored history of vessel positions.
 ### Update a Git installation
 
 ```sh
-omarchy plugin update simoz.vessel
+omarchy plugin update simoz.vessel --yes; omarchy-shell shell rescanPlugins
 ```
 
 ### Local checkout and troubleshooting
@@ -229,7 +229,9 @@ VENV_PYTHON="$(python3 -B -c 'import sys; sys.path.insert(0, "backend"); import 
 The tests cover AIS normalization, Class A/B merging, timestamps and expiry,
 dateline/polar geometry, offshore demo placement, settings validation and private
 file permissions. Local WebSocket tests exercise compressed binary messages,
-subscription rejection, reconnection, cancellation and rejection of untrusted TLS certificates without an AIS account. Bootstrap tests cover failed installation and path aliases.
+subscription rejection, reconnection, cancellation and rejection of untrusted TLS certificates without an AIS account. Bootstrap tests cover failed installation, cancellation and path aliases.
+Security regression tests cover oversized numeric values, malformed inputs,
+HTTPS redirects, public settings fields and interrupted credential writes.
 
 QML syntax and a Qt rendering harness are checked on macOS. Actual Quickshell
 integration, Hyprland popout behaviour and an authenticated AISStream session
@@ -237,15 +239,27 @@ still require testing on Omarchy. The host API targets the `quattro` branch.
 
 ## Code layout
 
-Code comments are in English:
+Code comments are in English. Python formatting and import checks use
+`ruff.toml`; Ruff is an optional development tool, not a plugin dependency:
 
-- `backend/vessel.py`: AIS parsing, fleet, async receiver, demo and command-line entry point.
+```sh
+ruff check backend tools tests
+ruff format --check backend tools tests
+```
+
+Modules:
+
+- `backend/vessel.py`: command-line entry point, location selection and offline demo.
+- `backend/ais.py`: AIS validation, Class A/B merging and bounded fleet snapshots.
+- `backend/receiver.py`: WebSocket subscription, status updates, cancellation and reconnection.
 - `backend/geometry.py`, `backend/basemap.py`: nautical calculations and the offline map.
 - `backend/runtime.py`: private virtualenv setup, dependency verification and process replacement.
 - `backend/settings.py`: validated settings and atomic, owner-only credential storage.
 - `backend/geocoding.py`: explicit Photon city searches, response validation and location labels.
+- `backend/network.py`: bounded HTTPS JSON requests and HTTPS-only redirects for location services.
 - `VesselService.qml`, `SettingsForm.qml`: shared receiver lifecycle and graphical configuration.
-- `Widget.qml`, `Radar.qml`, `BoatIcon.qml`, `Robot.qml`, `Model.js`: themed interface and sprites.
+- `Widget.qml`, `Radar.qml`, `Model.js`: panel layout, map rendering and shared view geometry.
+- `ReceptionButton.qml`, `BoatIcon.qml`, `Robot.qml`: reception control and themed artwork.
 - `tools/build_basemap.py`: rebuilds the bundled Natural Earth geometry.
 - `tools/build_cities.py`: filters GeoNames settlements against the coastline for offline labels.
 - `requirements.txt`: the single pinned, hash-verified live dependency.
@@ -255,6 +269,9 @@ basemap. Position timestamps use Unix seconds, while the QML display clock uses
 milliseconds. Live positions are never extrapolated or stored on disk.
 
 ## Data and privacy
+
+See [the security review](docs/security-review.md) for the reviewed boundaries,
+regression tests and remaining limitations.
 
 - First live setup downloads the pinned WebSocket wheel from Python Package Index infrastructure.
 - Live mode connects to [AISStream](https://aisstream.io/documentation), sending the API key and geographic bounding boxes around your selected position.

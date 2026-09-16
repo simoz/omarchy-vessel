@@ -1,3 +1,9 @@
+// All chart coordinates share the same margin; the outer space holds compass labels.
+function radarRadius(size) { return Math.max(1, size / 2 - 24); }
+function inView(position, size, margin) {
+    return Math.hypot(position.x - size / 2, position.y - size / 2) <= radarRadius(size) - (margin || 0);
+}
+
 // Backend timestamps use seconds; QML Date.now() uses milliseconds.
 function age(seconds, now) {
     if (typeof seconds !== "number" || !isFinite(seconds)) return "No signal yet";
@@ -13,10 +19,11 @@ function compass(bearing) {
 function distance(nm, unit) {
     return (unit === "km" ? nm * 1.852 : nm).toFixed(1) + " " + (unit === "km" ? "km" : "nm");
 }
-// Project relative bearing and range onto a north-up radar with a 24-pixel margin.
+// Project bearing/range into screen pixels. center is a pixel offset from the
+// observer, not the normalized geographic center used to constrain panning.
 function point(ship, size, radius, center) {
     var angle = ship.bearing * Math.PI / 180;
-    var r = (ship.distance / radius) * (size / 2 - 24);
+    var r = (ship.distance / radius) * radarRadius(size);
     // Canvas Y grows downwards, so north needs a negative cosine offset.
     center = center || {x: 0, y: 0};
     return {x: size / 2 + Math.sin(angle) * r - center.x, y: size / 2 - Math.cos(angle) * r - center.y};
@@ -26,7 +33,7 @@ function point(ship, size, radius, center) {
 // Prefer larger settlements, reject collisions, and keep every text box inside
 // the circular chart. Widths come from Canvas text metrics, not guessed glyphs.
 function cityLabels(cities, size, zoom, occupied) {
-    var mid = size / 2, r = mid - 24;
+    var mid = size / 2, r = radarRadius(size);
     var boxes = occupied.slice(), labels = [];
     function overlaps(a, b) {
         return a.x < b.x + b.width + 4 && a.x + a.width + 4 > b.x &&
@@ -66,7 +73,7 @@ function closestContact(ships, x, y, size, radius, center) {
     var nearest = null, best = 16 * 16;
     ships.forEach(function(ship) {
         var p = point(ship, size, radius, center);
-        if (Math.hypot(p.x - size / 2, p.y - size / 2) > size / 2 - 24) return;
+        if (!inView(p, size)) return;
         var squared = Math.pow(x - p.x, 2) + Math.pow(y - p.y, 2);
         if (squared <= best && (nearest === null || squared < best)) {
             best = squared; nearest = ship;
