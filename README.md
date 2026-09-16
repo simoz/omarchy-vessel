@@ -82,7 +82,7 @@ omarchy plugin add https://github.com/simoz/omarchy-vessel.git --enable
 ```
 
 Accept Omarchy's plugin trust prompt, then click the **boat icon** widget.
-On a fresh installation it opens **Settings**. No manual `pip install`, gem installation, compiler, or Hyprland configuration is needed.
+On a fresh installation it opens **Settings**.
 
 **Requirements:** Omarchy's Quickshell shell (`qs.Commons` / `qs.Ui`, `quattro`
 API) and Python 3.11+ with `venv`, OpenSSL and Zlib (provided by Omarchy's Python package).
