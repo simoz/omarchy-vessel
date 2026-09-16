@@ -14,7 +14,7 @@ Vessel uses the active Omarchy palette, with a pixel-art lookout inspired by Out
 
 ## Features
 
-- Map zoom controls: 1×, 2×, 4× and 8× without reconnecting the AIS stream.
+- Map zoom controls: 1×, 2×, 4×, 8×, 16×, 32× and 64× without reconnecting the AIS stream.
 - Offline coastal city labels with collision avoidance and theme-aware text.
 - Gentle radar sweep: one revolution every 12 seconds, paused when the radar is hidden.
 - City-name search with selectable results, plus optional manual coordinates.

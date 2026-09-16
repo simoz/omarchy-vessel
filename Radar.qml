@@ -13,6 +13,7 @@ Item {
     signal closeRequested()
     Keys.onEscapePressed: closeRequested()
     property int zoomLevel: 0
+    readonly property int maxZoomLevel: 6
     readonly property real zoom: Math.pow(2, zoomLevel)
     readonly property real viewRadiusNm: radiusNm / zoom
     property point viewCenter: Qt.point(0, 0)
@@ -31,7 +32,7 @@ Item {
     onZoomChanged: setCenter(viewCenter.x, viewCenter.y)
     onBasemapChanged: recenter()
     // Keep the zoom local: changing the view must never reconnect the AIS feed.
-    function zoomIn() { zoomLevel = Math.min(3, zoomLevel + 1); }
+    function zoomIn() { zoomLevel = Math.min(maxZoomLevel, zoomLevel + 1); }
     function zoomOut() { zoomLevel = Math.max(0, zoomLevel - 1); }
     onRadiusNmChanged: { zoomLevel = 0; recenter(); }
     property string selectedMmsi: ""
@@ -310,7 +311,7 @@ Item {
         }
         ZoomButton { id: centerButton; objectName: "recenter"; label: "⌖"; centerIcon: true; accessibleLabel: "Center on me"; available: root.panned; onActivated: root.recenter() }
         ZoomButton { id: zoomOutButton; objectName: "zoomOut"; label: "−"; available: root.zoomLevel > 0; onActivated: root.zoomOut() }
-        ZoomButton { id: zoomInButton; objectName: "zoomIn"; label: "+"; available: root.zoomLevel < 3; onActivated: root.zoomIn() }
+        ZoomButton { id: zoomInButton; objectName: "zoomIn"; label: "+"; available: root.zoomLevel < root.maxZoomLevel; onActivated: root.zoomIn() }
     }
 
 }
