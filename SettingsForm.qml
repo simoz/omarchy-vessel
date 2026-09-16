@@ -27,7 +27,9 @@ Column {
         manual.checked = !root.cityName && latitude.text !== "" && longitude.text !== "";
         automatic.checked = value.autoLocation !== false;
         demo.checked = value.demo === true;
+        nautical.checked = value.unit !== "km" && value.unit !== "mi";
         kilometres.checked = value.unit === "km";
+        miles.checked = value.unit === "mi";
     }
     Component.onCompleted: populate()
     Connections {
@@ -60,6 +62,22 @@ Column {
             width: 18; height: 18; y: (parent.height - height) / 2
             color: Color.background; border.color: Color.accent
             Rectangle { anchors.centerIn: parent; width: 10; height: 10; color: Color.accent; visible: parent.parent.checked }
+        }
+    }
+    // Sibling radio buttons keep the three unit choices mutually exclusive.
+    component UnitOption: RadioButton {
+        font.family: root.family
+        contentItem: Text {
+            text: parent.text; textFormat: Text.PlainText; color: Color.foreground
+            font: parent.font; leftPadding: 30; verticalAlignment: Text.AlignVCenter
+        }
+        indicator: Rectangle {
+            width: 18; height: 18; radius: 9; y: (parent.height - height) / 2
+            color: Color.background; border.color: Color.accent
+            Rectangle {
+                anchors.centerIn: parent; width: 8; height: 8; radius: 4
+                color: Color.accent; visible: parent.parent.checked
+            }
         }
     }
     Caption { text: "V E S S E L  /  SETTINGS"; color: Color.accent; font.bold: true }
@@ -137,7 +155,14 @@ Column {
     }
     Caption { text: "Radius in nautical miles (1–200)" }
     Field { id: radius; placeholderText: "25" }
-    Toggle { id: kilometres; text: "Display distances in kilometres" }
+    Caption { text: "Distance units" }
+    Column {
+        width: parent.width; spacing: 4
+        UnitOption { id: nautical; objectName: "unitNm"; text: "Nautical miles (nm)" }
+        UnitOption { id: kilometres; objectName: "unitKm"; text: "Kilometres (km)" }
+        UnitOption { id: miles; objectName: "unitMi"; text: "Miles (mi)" }
+    }
+    Caption { text: "Speed is shown in knots (kn)."; color: Color.muted }
     Caption { text: VesselService.settingsError; visible: text.length > 0; color: Color.accent }
     Row {
         spacing: 12
@@ -148,7 +173,7 @@ Column {
                 VesselService.saveSettings({apiKey: apiKey.text, radiusNm: radius.text,
                     latitude: latitude.text, longitude: longitude.text, cityName: root.cityName,
                     autoLocation: automatic.checked, demo: demo.checked,
-                    unit: kilometres.checked ? "km" : "nm"});
+                    unit: kilometres.checked ? "km" : miles.checked ? "mi" : "nm"});
                 apiKey.text = "";
             }
         }

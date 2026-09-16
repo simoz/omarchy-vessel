@@ -18,7 +18,10 @@ function compass(bearing) {
 }
 // Retain nautical miles internally and convert only the displayed label.
 function distance(nm, unit) {
-    return (unit === "km" ? nm * 1.852 : nm).toFixed(1) + " " + (unit === "km" ? "km" : "nm");
+    // One nautical mile is 1,852 metres; a statute mile is 1,609.344 metres.
+    if (unit === "km") return (nm * 1.852).toFixed(1) + " km";
+    if (unit === "mi") return (nm * 1852 / 1609.344).toFixed(1) + " mi";
+    return nm.toFixed(1) + " nm";
 }
 // Project bearing/range into screen pixels. center is a pixel offset from the
 // observer, not the normalized geographic center used to constrain panning.

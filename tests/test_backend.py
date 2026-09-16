@@ -154,6 +154,13 @@ class SettingsTest(unittest.TestCase):
         settings.save(dict(apiKey="replacement"))
         self.assertEqual(settings.api_key(), "replacement")
 
+    def test_all_distance_units_survive_save_and_reload(self):
+        for unit in ("nm", "km", "mi"):
+            saved = settings.save(dict(unit=unit, radiusNm=25))
+            self.assertEqual(saved["unit"], unit)
+            self.assertEqual(settings.read()["unit"], unit)
+            self.assertEqual(settings.read()["radiusNm"], 25)
+
     def test_invalid_settings_do_not_replace_saved_key(self):
         settings.save(dict(apiKey="original"))
         for bad in [

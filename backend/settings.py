@@ -61,7 +61,7 @@ def validate_preferences(values):
     """Return only known fields, with the same rules for saved files and edits."""
     result = {key: values.get(key, default) for key, default in DEFAULTS.items()}
     result["radiusNm"] = bounded_number(result["radiusNm"], 1, 200)
-    if result["unit"] not in ("nm", "km") or any(
+    if result["unit"] not in ("nm", "km", "mi") or any(
         type(result[key]) is not bool for key in ("demo", "autoLocation")
     ):
         raise ValueError("Invalid preferences")

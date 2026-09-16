@@ -77,3 +77,9 @@ test('selecting a vessel reveals it at every zoom, including the coverage bounda
     }
   }
 });
+test('distance units distinguish nautical miles, kilometres and statute miles', () => {
+  assert.equal(m.distance(10, 'nm'), '10.0 nm');
+  assert.equal(m.distance(10, 'km'), '18.5 km');
+  assert.equal(m.distance(10, 'mi'), '11.5 mi');
+  assert.equal(m.distance(0, 'mi'), '0.0 mi');
+});

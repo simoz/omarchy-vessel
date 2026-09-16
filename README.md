@@ -28,7 +28,7 @@ I built Vessel out of that curiosity. I wanted a small widget I could glance at 
 - Offline land and coastline layer, projected around your position and colored by your theme.
 - One AISStream connection shared across bar widgets on multiple monitors.
 - Approximate IP geolocation, or a fixed latitude/longitude of your choice.
-- Configurable 1–200 nautical mile radius; distances displayed in nm or km.
+- Configurable 1–200 nautical mile radius; distances displayed in nautical miles (nm), kilometres (km) or miles (mi).
 - Vessel name, category, bearing from you, speed, reported destination and signal age.
 - Class A and Class B position reports, with static vessel information merged as it arrives.
 - Positions older than five minutes fade; contacts disappear after 30 minutes.
@@ -105,7 +105,7 @@ disk space, then click **RECONNECT** to retry.
 1. Open **Settings** from the Vessel panel.
 2. Paste your AISStream API key into the masked field.
 3. Use approximate IP location, or disable it and type a city name. Click **SEARCH**, then select a result. **Enter coordinates instead** remains available.
-4. Set the radius (1–200 nautical miles) and your preferred display unit.
+4. Set the radius (1–200 nautical miles) and choose **Nautical miles (nm)**, **Kilometres (km)** or **Miles (mi)**. Speed remains in knots (kn).
 5. Click **SAVE & CONNECT**. Changes apply immediately; no logout or shell restart.
 
 An empty key field keeps the previously saved key. To replace it, paste the new
@@ -182,7 +182,9 @@ it stops when the panel is closed or Settings is open. **SETTINGS**, **PAUSE / R
 **RECONNECT** share a fixed footer that stays visible while the panel scrolls. The bar shows only the boat icon.
 
 Reconnect after travelling to refresh the location. The radius always uses
-nautical miles, even when display units are kilometres (1 nm = 1.852 km).
+nautical miles, regardless of the distance display unit (1 nm = 1.852 km ≈ 1.151 mi).
+Nautical miles are the default; the unit choice is shared across the radar scale,
+vessel details and contact list.
 Contacts accumulate as reports arrive; names and destinations may arrive later.
 There is no stored history of vessel positions.
 
