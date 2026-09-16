@@ -44,7 +44,7 @@ On Omarchy 4 with plugin support:
 omarchy plugin add https://github.com/simoz/omarchy-vessel.git --enable
 ```
 
-Accept Omarchy's plugin trust prompt, then click the **◈ Vessel** widget.
+Accept Omarchy's plugin trust prompt, then click the **pixel-art boat** widget.
 On a fresh installation it opens **Settings**. No manual `pip install`, gem installation, compiler, or Hyprland configuration is needed.
 
 **Requirements:** Omarchy's Quickshell shell (`qs.Commons` / `qs.Ui`, `quattro`
@@ -62,9 +62,6 @@ The plugin folder stays free of installed dependencies and virtualenv symlinks.
 Settings and the Genova demo use only the standard library and work before the
 live dependency is installed. If setup fails, check the network and available
 disk space, then click **RECONNECT** to retry.
-
-> The Git command requires this source to be committed and pushed to the repository.
-> For an unpublished checkout, use the local installation steps below.
 
 ### Configure from the widget
 
