@@ -94,12 +94,13 @@ Item {
         }
     }
     // Paint this faint sweep once, then rotate its texture on the render thread.
+    // The sweep stays centered on the viewport, including while the map is panned.
     // Only the sweep texture rotates. Map data, zoom, pan and theme changes
     // repaint their own layers; closing the panel stops the animation.
     Canvas {
         id: sweep
         anchors.fill: parent
-        visible: root.scanning && !root.panned
+        visible: root.scanning
         property color ink: Color.accent
         onInkChanged: requestPaint()
         onWidthChanged: requestPaint()
@@ -120,7 +121,7 @@ Item {
         }
         RotationAnimator on rotation {
             from: 0; to: 360; duration: 12000; loops: Animation.Infinite
-            running: root.scanning && root.visible && !root.panned
+            running: root.scanning && root.visible
         }
     }
     // Static grid: repaint for geometry or theme changes, not for every incoming position.

@@ -287,7 +287,7 @@ The view stays within the current AIS coverage; at full range it is already
 showing the whole area. Click **⌖** (Center on me) to return to your position.
 A short click still selects a vessel. Cities, coastline and the **YOU** marker
 move together; vessel distances remain relative to your location. The sweep
-pauses while the view is away from your position. Zooming out constrains the
+keeps rotating at the center of the radar while you pan. Zooming out constrains the
 view again, and a new location/map resets its center. Panning never reconnects AIS.
 
 ![Panned radar view](docs/pan-preview.png)
