@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "simoz.vessel",
   "name": "Vessel",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "author": "simoz",
   "license": "MIT",
   "description": "A theme-aware marine radar. Discover vessels around you, with a little robot on watch.",

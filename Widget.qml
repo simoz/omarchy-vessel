@@ -8,8 +8,8 @@ import "Model.js" as Model
 BarWidget {
     id: root
     moduleName: "simoz.vessel"
-    implicitWidth: button.implicitWidth
-    implicitHeight: button.implicitHeight
+    implicitWidth: root.vertical ? Math.max(button.implicitWidth, pauseButton.implicitWidth) : button.implicitWidth + pauseButton.implicitWidth
+    implicitHeight: root.vertical ? button.implicitHeight + pauseButton.implicitHeight : Math.max(button.implicitHeight, pauseButton.implicitHeight)
     property bool configuring: false
     property bool opened: false
     property bool attached: false
@@ -37,7 +37,10 @@ BarWidget {
 
     WidgetButton {
         id: button
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.top: parent.top
+        width: root.vertical ? root.width : root.width - pauseButton.width
+        height: root.vertical ? root.height - pauseButton.height : root.height
         bar: root.bar
         text: (root.report.demo ? "DEMO " : "") + root.ships.length + (root.ships.length ? " · " + Model.distance(root.ships[0].distance, root.unit) : "")
         labelVisible: false
@@ -56,8 +59,47 @@ BarWidget {
             }
         }
         tooltipText: "Vessel · " + root.report.status
-        dimmed: root.report.status === "RECONNECTING" || root.report.status === "STOPPED"
+        dimmed: VesselService.paused || root.report.status === "RECONNECTING" || root.report.status === "STOPPED"
         onPressed: function(b) { if (b === Qt.MiddleButton) root.refresh(); else root.toggle(); }
+    }
+    // A separate host button has its own hit target: toggling reception must
+    // never open the radar. The shared service synchronizes every monitor.
+    WidgetButton {
+        id: pauseButton
+        objectName: "pauseReception"
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        width: root.vertical ? root.width : implicitWidth
+        height: root.vertical ? implicitHeight : root.height
+        bar: root.bar
+        fixedWidth: Style.space(16) + scaledHorizontalMargin * 2
+        labelVisible: false
+        hasVisualContent: true
+        tooltipText: VesselService.paused ? "AIS reception paused · Resume" : "Pause AIS reception"
+        Accessible.role: Accessible.Button
+        Accessible.name: tooltipText
+        Accessible.onPressAction: VesselService.togglePaused()
+        onPressed: function(b) { if (b === Qt.LeftButton) VesselService.togglePaused(); }
+        Item {
+            anchors.centerIn: parent; width: 12; height: 12
+            // Geometry keeps both symbols centered independently of font metrics.
+            Row {
+                anchors.centerIn: parent; spacing: 3
+                visible: !VesselService.paused
+                Rectangle { width: 3; height: 10; color: pauseButton.foreground }
+                Rectangle { width: 3; height: 10; color: pauseButton.foreground }
+            }
+            Canvas {
+                anchors.fill: parent; visible: VesselService.paused
+                property color ink: pauseButton.foreground
+                onInkChanged: requestPaint()
+                onPaint: {
+                    var c = getContext("2d"); c.reset();
+                    c.beginPath(); c.moveTo(2, 1); c.lineTo(11, 6); c.lineTo(2, 11); c.closePath();
+                    c.fillStyle = ink; c.fill();
+                }
+            }
+        }
     }
     // Use the host panel for anchoring, focus and outside-click dismissal.
     KeyboardPanel {
@@ -101,7 +143,7 @@ BarWidget {
                     Row {
                         width: parent.width
                         Label { width: parent.width * 0.6; text: "V E S S E L  /  MARINE RADAR"; color: Color.accent; font.bold: true; font.pixelSize: 11 }
-                        Label { width: parent.width * 0.4; text: root.report.status; color: Color.muted; horizontalAlignment: Text.AlignRight }
+                        Label { width: parent.width * 0.4; text: VesselService.paused ? "PAUSED" : root.report.status; color: Color.muted; horizontalAlignment: Text.AlignRight }
                     }
                     Rectangle { width: parent.width; height: 1; color: Color.accent; opacity: 0.4 }
                     Label {
@@ -117,14 +159,14 @@ BarWidget {
                             objectName: "radar"
                             anchors.horizontalCenter: parent.horizontalCenter
                             width: parent.height; height: width
-                            scanning: root.opened && !root.configuring
+                            scanning: root.opened && !root.configuring && !VesselService.paused
                             ships: root.ships; radiusNm: root.report.radius || 25
                             basemap: VesselService.basemap
                             selectedMmsi: root.selectedShip ? root.selectedShip.mmsi : ""
                             onCloseRequested: root.close()
                             onSelected: function(mmsi) { root.selectedMmsi = mmsi; }
                         }
-                        Robot { width: 48; height: 48; anchors.right: parent.right; anchors.bottom: parent.bottom; awake: root.report.status === "LIVE" || root.report.demo === true; visible: root.opened }
+                        Robot { width: 48; height: 48; anchors.right: parent.right; anchors.bottom: parent.bottom; awake: !VesselService.paused && (root.report.status === "LIVE" || root.report.demo === true); visible: root.opened }
                     }
                     Row {
                         width: parent.width
@@ -149,7 +191,7 @@ BarWidget {
                     }
                     Label {
                         width: parent.width; wrapMode: Text.WordWrap; visible: root.ships.length === 0
-                        text: root.report.status === "SETUP" ? "Your lookout is ready for setup." : "Listening for vessels. New contacts appear as AIS reports arrive."
+                        text: VesselService.paused ? "Reception paused. Resume from the bar to receive vessel positions." : root.report.status === "SETUP" ? "Your lookout is ready for setup." : "Listening for vessels. New contacts appear as AIS reports arrive."
                         color: Color.muted
                     }
                     Label {

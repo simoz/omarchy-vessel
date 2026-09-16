@@ -25,23 +25,41 @@ Item {
     property int users: 0
     property bool pendingRestart: false
     property bool stopping: false
+    property bool paused: false
     readonly property var ships: report.ships || []
     // Resolve relative to this plugin, not the shell working directory; decode spaces in paths.
     readonly property string helper: decodeURIComponent(Qt.resolvedUrl("backend/vessel.py").toString().replace(/^file:\/\//, ""))
     function attach(settings) { users++; configure(settings); loadSettings(); }
     function detach() {
         users = Math.max(0, users - 1);
-        if (users === 0) { stopping = true; pendingRestart = false; process.running = false; clearCitySearch(); }
+        if (users === 0) { stopping = true; pendingRestart = false; startTimer.stop(); startupWatch.stop(); process.running = false; clearCitySearch(); }
     }
     // Compare only receiver settings so display-only changes do not reconnect the stream.
     function configure(settings) {
         var next = {pythonExecutable: settings.pythonExecutable || "python3"};
         var key = JSON.stringify(next);
-        if (key === signature && (process.running || pendingRestart)) return;
-        config = next; signature = key; restart();
+        if (key === signature && (process.running || pendingRestart || paused)) return;
+        config = next; signature = key;
+        if (!paused) restart();
+    }
+    // Pause closes the receiver, rather than merely hiding updates. Keep the
+    // last snapshot and map so users can inspect them, clearly marked PAUSED.
+    function pause() {
+        if (paused) return;
+        paused = true; stopping = true; pendingRestart = false;
+        startTimer.stop(); startupWatch.stop();
+        process.running = false;
+        var snapshot = Object.assign({}, report);
+        snapshot.status = "PAUSED";
+        report = snapshot;
+    }
+    function togglePaused() {
+        if (paused) restart();
+        else pause();
     }
     // Wait for the old process to exit before launching its replacement.
     function restart() {
+        paused = false;
         report = {status: "STARTING", ships: [], total: 0, error: ""};
         basemap = {available: false, polygons: [], coastlines: []};
         stopping = false;
@@ -49,7 +67,7 @@ Item {
         else startTimer.restart();
     }
     function start() {
-        if (users === 0) return;
+        if (users === 0 || paused || stopping) return;
         pendingRestart = false;
         // Credentials are read by Python from user storage, never from argv.
         var args = [config.pythonExecutable, "-B", helper, "--saved-settings"];
@@ -156,7 +174,7 @@ Item {
         stdout: SplitParser {
             onRead: data => {
                 // Discard trailing output from a receiver that is being replaced or stopped.
-                if (root.pendingRestart || root.stopping) return;
+                if (root.pendingRestart || root.stopping || root.paused) return;
                 try {
                     var next = JSON.parse(data);
                     if (next.status && Array.isArray(next.ships)) {

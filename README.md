@@ -209,7 +209,7 @@ Prepare the managed dependency once, then run the standard-library tests:
 ```sh
 python3 backend/vessel.py --prepare-runtime
 python3 -B -m unittest discover -s tests -p 'test_backend.py'
-node --test tests/model.test.cjs
+node --test tests/*.test.cjs
 omarchy plugin validate .
 ```
 
@@ -268,3 +268,13 @@ pauses while the view is away from your position. Zooming out constrains the
 view again, and a new location/map resets its center. Panning never reconnects AIS.
 
 ![Panned radar view](docs/pan-preview.png)
+
+### Pause reception from the bar
+
+Click **⏸** beside the boat in the bar to stop the receiver and close its AIS
+connection. The radar keeps the last positions and displays **PAUSED**; these
+positions are no longer live. The button changes to **▶** to resume reception.
+Resuming starts a fresh connection and gathers new contacts. Opening or closing
+the panel does not change the pause state, and all monitors share one receiver.
+**RECONNECT** and **SAVE & CONNECT** also resume reception. Pause lasts for the
+current shell session; it is not saved as a preference.
