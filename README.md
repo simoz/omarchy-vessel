@@ -12,6 +12,12 @@ Vessel uses the active Omarchy palette, with a pixel-art lookout inspired by Out
 
 *Qt-rendered demo with an example Outpost-like palette; Omarchy supplies your active theme and panel frame.*
 
+## Why I built Vessel
+
+When I'm working by the sea, I see all sorts of boats passing by and always find myself wondering: What's that boat called? Where has it come from? Where is it going?
+
+I built Vessel out of that curiosity. I wanted a small widget I could glance at while working, connecting the boats on the horizon to the information they broadcast. I also wanted it to feel at home on my desktop, fitting naturally into my Outpost and Haven themes.
+
 ## Features
 
 - Map zoom controls: 1×, 2×, 4×, 8×, 16×, 32× and 64× without reconnecting the AIS stream.
