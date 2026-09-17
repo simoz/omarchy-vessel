@@ -251,7 +251,23 @@ BarWidget {
                             implicitWidth: 30; implicitHeight: 30
                             iconOnly: true
                             onTriggered: root.expanded ? root.collapse() : root.expand()
-                            Label { anchors.centerIn: parent; text: root.expanded ? "↙" : "↗"; font.pixelSize: 20; color: Color.accent }
+                            // A stable, two-headed diagonal arrow identifies the toggle.
+                            Canvas {
+                                anchors.centerIn: parent
+                                width: 18; height: 18
+                                property color ink: Color.accent
+                                onInkChanged: requestPaint()
+                                onPaint: {
+                                    var c = getContext("2d"); c.reset();
+                                    c.strokeStyle = ink; c.lineWidth = 1.5;
+                                    c.lineCap = "round"; c.lineJoin = "round";
+                                    c.beginPath();
+                                    c.moveTo(3, 15); c.lineTo(15, 3);
+                                    c.moveTo(3, 9); c.lineTo(3, 15); c.lineTo(9, 15);
+                                    c.moveTo(9, 3); c.lineTo(15, 3); c.lineTo(15, 9);
+                                    c.stroke();
+                                }
+                            }
                         }
                         Action {
                             id: helpAction

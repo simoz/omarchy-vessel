@@ -43,7 +43,7 @@ For a preview, select **Offline demo · Genoa (Italy)** in Settings: six simulat
 | Control | Action |
 | --- | --- |
 | Boat icon | Open or close the panel. |
-| **↗ / ↙** | Toggle the expanded view from the header, preserving zoom and selection. The icon is highlighted while expanded. |
+| **⤢ Expand toggle** | Toggle the expanded view from the header, preserving zoom and selection. The icon is highlighted while expanded. |
 | **+ / −** | Zoom between 1× and 64×. |
 | Drag the map | Explore the loaded area after zooming in. |
 | **⌖** | Return to your position and restore the initial 1× zoom. |
