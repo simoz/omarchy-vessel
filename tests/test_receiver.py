@@ -56,7 +56,14 @@ class ReceiverTest(unittest.IsolatedAsyncioTestCase):
 
         async with serve(peer, "127.0.0.1", 0, compression="deflate") as server:
             url = f"ws://127.0.0.1:{server.sockets[0].getsockname()[1]}"
-            receiver = Receiver(Fleet(0, 0, 25), {}, "local-test-key", output, url=url)
+            receiver = Receiver(
+                Fleet(0, 0, 25),
+                {},
+                "local-test-key",
+                output,
+                url=url,
+                provider="aisstream",
+            )
             task = asyncio.create_task(receiver.run())
             try:
                 await asyncio.wait_for(arrived.wait(), 5)
@@ -87,6 +94,7 @@ class ReceiverTest(unittest.IsolatedAsyncioTestCase):
                 "secret-key",
                 snapshots.append,
                 url=f"ws://127.0.0.1:{server.sockets[0].getsockname()[1]}",
+                provider="aisstream",
             )
             await asyncio.wait_for(receiver.run(), 3)
         self.assertEqual(count, 1)
@@ -126,6 +134,7 @@ class ReceiverTest(unittest.IsolatedAsyncioTestCase):
                 snapshots.append,
                 retry_delay=0.02,
                 url=f"ws://127.0.0.1:{server.sockets[0].getsockname()[1]}",
+                provider="aisstream",
             )
             task = asyncio.create_task(receiver.run())
             try:

@@ -6,7 +6,7 @@ const vm = require('node:vm');
 
 function form(mode) {
   const saved = [];
-  const state = vm.createContext({canSave:true, locationMode:mode, cityName:'Genoa',
+  const state = vm.createContext({canSave:true, provider:'aisstream', locationMode:mode, cityName:'Genoa',
     apiKey:{text:'replacement'}, radius:{text:'25'}, latitude:{text:'44.4'}, longitude:{text:'8.9'},
     kilometres:{checked:false}, miles:{checked:false}, VesselService:{saveSettings(value) {saved.push(value);}}});
   const source = fs.readFileSync(path.join(__dirname, '../SettingsForm.qml'), 'utf8');
@@ -31,4 +31,12 @@ test('invalid or saving forms cannot submit; a blank key is passed through for p
   state.canSave=false;state.save();assert.equal(saved.length,0);
   state.canSave=true;state.apiKey.text='';state.kilometres.checked=true;state.save();
   assert.equal(saved[0].apiKey,'');assert.equal(saved[0].unit,'km');
+});
+
+test('OpenWaters saves its token separately and allows anonymous credentials', () => {
+  const {state,saved} = form('city');
+  state.provider='openwaters';state.apiKey.text='';state.save();
+  assert.equal(saved[0].provider,'openwaters');
+  assert.equal(saved[0].openwatersKey,'');
+  assert.equal(Object.hasOwn(saved[0],'apiKey'),false);
 });

@@ -135,7 +135,7 @@ def main():
      property var report: REPORT
      property var ships: report.ships
      property var basemap: MAP
-     property var preferences: ({unit:"nm",radiusNm:25,cityName:"Genoa",latitude:44.4056,longitude:8.9463,autoLocation:false,hasApiKey:true,demo:true})
+     property var preferences: ({provider:"openwaters",hasOpenwatersKey:false,unit:"nm",radiusNm:25,cityName:"Genoa",latitude:44.4056,longitude:8.9463,autoLocation:false,hasApiKey:true,demo:true})
      property bool paused:false
      property bool searchingCity:false
      property var cityResults:[]

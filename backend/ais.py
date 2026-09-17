@@ -32,11 +32,11 @@ TYPES = {
 }
 
 
-def clean(value):
+def clean(value, limit=80):
     """Discard AIS padding and control characters; never stringify structured data."""
     if not isinstance(value, str):
         return ""
-    return re.sub(r"[\x00-\x1f\x7f]", "", value).strip(" @")[:80]
+    return re.sub(r"[\x00-\x1f\x7f]", "", value).strip(" @")[:limit]
 
 
 def category(code):
@@ -112,6 +112,13 @@ class Fleet:
             if report_b.get("Valid") is True:
                 kind_code = report_b.get("ShipType")
         self.last_signal, ship["touched"] = now, now
+        source = clean(envelope.get("source")).split(":", 1)[0]
+        if source:
+            credits = dict(ship.get("credits", {}))
+            if source in credits or len(credits) < 8:
+                credits[source] = clean(envelope.get("attribution"), 600) or source
+            ship["credits"] = credits
+            ship["attribution"] = " · ".join(dict.fromkeys(credits.values()))
         if name:
             ship["name"] = name
         if type(kind_code) is int and kind_code > 0:

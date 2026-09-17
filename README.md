@@ -24,19 +24,19 @@ omarchy plugin add https://github.com/simoz/omarchy-vessel.git --enable
 
 Accept the plugin trust prompt and click the boat icon to open **Settings**. The live receiver's Python dependency is installed automatically on first use.
 
-### Get an API key and configure
+### Configure
 
 1. Under **LOCATION**, search for a **CITY** and select a result, or choose **IP LOCATION** or **COORDINATES**. Focusing the city field selects its text so you can replace it immediately.
 2. Under **COVERAGE**, set the radius (**1–200 nautical miles**) and distance units: **nm**, **km** or **mi**. Speed is shown in **knots (kn)**.
-3. Under **AIS CONNECTION**, click **GET AN API KEY** to open [AISStream Account](https://aisstream.io/account). Sign in with GitHub, create a key and paste it into the field.
+3. Under **AIS CONNECTION**, keep **OpenWaters** selected. No account or key is required. An optional [personal token](https://openwaters.io/ais/) raises the limits. To use **AISStream** instead, select it, click **GET AN API KEY**, and paste your AISStream key.
 4. Click **SAVE & CONNECT**. Save and Cancel stay visible while you scroll.
 
-Once a key is saved, use **CHANGE** to enter a replacement.
-An empty key field preserves the saved key. Paste a new key to replace it. Preferences and the key are stored in `~/.config/omarchy-vessel/settings.json` (or `$XDG_CONFIG_HOME/omarchy-vessel/settings.json`), with owner-only file permissions (`0600`). Keep this file out of public dotfile backups.
+OpenWaters loads recent positions immediately, then streams updates. Positions retain their original timestamps. Anonymous access allows 20 messages/second, two connections per IP and 100 square degrees of coverage; excess messages are thinned. Large radii at high latitudes may require a personal token or a smaller radius.
 
-For a preview, click **TRY DEMO · GENOA** at the bottom of Settings: six simulated boats appear around Genoa. This preserves the saved live location and API key; unsaved form edits are not applied. Save the settings to return to live reception.
+Once a credential is saved, use **CHANGE** to enter a replacement.
+An empty key field preserves the saved credential for that provider. OpenWaters tokens and AISStream keys are stored separately; existing AISStream keys remain available when you select AISStream. Paste a new key to replace it. Preferences and the key are stored in `~/.config/omarchy-vessel/settings.json` (or `$XDG_CONFIG_HOME/omarchy-vessel/settings.json`), with owner-only file permissions (`0600`). Keep this file out of public dotfile backups.
 
-[View Settings](docs/settings-preview.png) · [AISStream availability and limits](https://aisstream.io/documentation)
+[View Settings](docs/settings-preview.png) · [OpenWaters availability and limits](https://openwaters.io/ais/) · [AISStream documentation](https://aisstream.io/documentation)
 
 ## Use the radar
 
@@ -88,7 +88,7 @@ Triangles indicate vessel course; dots indicate an unknown course. The selected 
 
 **VIEW** shows the visible radius. The contact counter shows visible vessels versus all received vessels in range. The list covers the full configured range.
 
-**LIVE** indicates incoming reports, **LISTENING** an active connection awaiting reports, and **PAUSED** a saved view with reception stopped. Reception continues when you close the panel; click the status next to the location to pause it. Click **PAUSED** again to resume. The same control is reachable with Tab and activates with Enter or Space. **REJECTED** indicates an API key or account connection issue.
+**LIVE** indicates incoming reports, **LISTENING** an active connection awaiting reports, and **PAUSED** a saved view with reception stopped. Reception continues when you close the panel; click the status next to the location to pause it. Click **PAUSED** again to resume. The same control is reachable with Tab and activates with Enter or Space. **REJECTED** indicates a credential, subscription area or connection limit issue.
 
 [Light palette](docs/demo-preview-light.png) · [Zoomed radar](docs/zoom-preview.png) · [Panned map](docs/pan-preview.png) · [Keyboard guide](docs/keyboard-preview.png)
 
@@ -111,9 +111,10 @@ you also want to delete Vessel's saved data.
 
 ## Data and privacy
 
-Vessel is built for watching nearby traffic. Coverage and reported destinations depend on AISStream and the vessels transmitting. Destinations appear in vessel details only when reported; the text is shown as received and may contain abbreviations or port codes.
+Vessel is built for watching nearby traffic. Coverage and reported destinations depend on the selected provider, receiver coverage and the vessels transmitting. Destinations appear in vessel details only when reported; the text is shown as received and may contain abbreviations or port codes.
 
-- **AISStream** receives your API key and the geographic area to monitor.
+- **OpenWaters** (default) receives the geographic area to monitor and your optional OpenWaters token. It aggregates multiple AIS sources; the original attributions are preserved in vessel details. Source-specific terms apply: see [OpenWaters sources and licensing](https://openwaters.io/ais/).
+- **AISStream**, when selected, receives your AISStream API key and the geographic area to monitor. Provider switching is manual; credentials are never shared between services.
 - **Photon / OpenStreetMap** provides city search from the name you enter.
 - **ipwho.is** provides approximate location from your public IP when enabled.
 - **Natural Earth** coastlines and **GeoNames** city labels are bundled with the plugin.

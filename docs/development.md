@@ -39,11 +39,11 @@ VENV_PYTHON="$(python3 -B -c 'import sys; sys.path.insert(0, "backend"); import 
 The tests cover AIS normalization, Class A/B merging, timestamps and expiry,
 dateline/polar geometry, offshore demo placement, settings validation and private
 file permissions. Local WebSocket tests exercise compressed binary messages,
-subscription rejection, reconnection, cancellation and rejection of untrusted TLS certificates without an AIS account. Bootstrap tests cover failed installation, cancellation and path aliases.
+subscription rejection, reconnection, cancellation and rejection of untrusted TLS certificates without an AIS account. OpenWaters checks cover anonymous access, optional authentication, snapshot age, source attribution and isolation from saved AISStream credentials. Bootstrap tests cover failed installation, cancellation and path aliases.
 Security regression tests cover oversized numeric values, malformed inputs,
 HTTPS redirects, public settings fields and interrupted credential writes.
 
-QML syntax and a Qt rendering harness are checked on macOS. Actual Quickshell
+QML syntax and a Qt rendering harness are checked on macOS. The anonymous OpenWaters receiver has also been checked against live traffic around Genoa. Actual Quickshell
 integration, Hyprland popout behaviour and an authenticated AISStream session
 still require testing on Omarchy. The host API targets the `quattro` branch.
 
@@ -80,6 +80,10 @@ milliseconds. Live positions are never extrapolated or stored on disk.
 
 
 ## Preview images
+
+Simulation is internal only: run `python3 backend/vessel.py --demo` for the
+offline Genoa fixture. It is not exposed in Settings. The preview renderer uses
+the same fixture directly.
 
 With PySide6 installed in a development environment, regenerate the screenshots:
 

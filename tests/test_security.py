@@ -20,7 +20,7 @@ from receiver import Receiver
 class UntrustedInputTest(unittest.TestCase):
     def test_huge_numbers_cannot_crash_or_poison_the_fleet(self):
         fleet = ais.Fleet(0, 0, 25)
-        receiver = Receiver(fleet, {}, "test-key", lambda _: None)
+        receiver = Receiver(fleet, {}, "test-key", lambda _: None, provider="aisstream")
         for field in ("Latitude", "Longitude", "Sog", "Cog"):
             body = dict(Valid=True, Latitude=0, Longitude=0.1, Sog=4, Cog=90)
             body[field] = 10**400
@@ -90,7 +90,9 @@ class SettingsBoundaryTest(unittest.TestCase):
         saved = settings.read() | {"futurePrivateField": "private-value"}
         settings.path().write_text(json.dumps(saved))
         public = settings.public_settings()
-        self.assertEqual(set(public), set(settings.DEFAULTS) | {"hasApiKey"})
+        self.assertEqual(
+            set(public), set(settings.DEFAULTS) | {"hasApiKey", "hasOpenwatersKey"}
+        )
         self.assertNotIn("private-", json.dumps(public))
 
     def test_corrupt_saved_values_fail_validation_and_can_be_repaired(self):

@@ -411,6 +411,11 @@ BarWidget {
                                 text: root.selectedShip ? root.selectedShip.timeSource + " · " + Model.age(root.selectedShip.lastSeen, root.now) + (root.selectedShip.stale ? " · OLD POSITION" : "") : ""
                                 color: root.selectedShip && root.selectedShip.stale ? Color.accent : Color.muted
                             }
+                            Label {
+                                width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 9; color: Color.muted
+                                text: root.selectedShip ? (root.selectedShip.attribution || "") : ""
+                                visible: text.length > 0
+                            }
                         }
                         Label {
                             width: parent.width; wrapMode: Text.WordWrap; visible: root.ships.length === 0
@@ -453,7 +458,7 @@ BarWidget {
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.revealShip(modelData) }
                             }
                         }
-                        Label { width: parent.width; wrapMode: Text.WordWrap; text: root.report.demo ? "SIMULATED TRAFFIC · no live positions" : "AISStream · received vessels only · not for navigation"; font.pixelSize: 10; color: Color.muted }
+                        Label { width: parent.width; wrapMode: Text.WordWrap; text: root.report.demo ? "SIMULATED TRAFFIC · no live positions" : (root.report.provider === "aisstream" ? "AISStream" : "OpenWaters") + " · received vessels only · not for navigation"; font.pixelSize: 10; color: Color.muted }
                     }
                 }
             }

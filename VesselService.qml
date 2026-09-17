@@ -10,7 +10,7 @@ Item {
     // Retain static geography between snapshots without repainting it every second.
     property var basemap: ({available: false, polygons: [], coastlines: []})
     property var config: ({})
-    property var preferences: ({radiusNm: 25, autoLocation: true, demo: false, unit: "nm", hasApiKey: false})
+    property var preferences: ({provider: "openwaters", radiusNm: 25, autoLocation: true, demo: false, unit: "nm", hasApiKey: false, hasOpenwatersKey: false})
     readonly property bool searchingCity: cityProcess.running
     property var cityResults: []
     property var cityCache: []

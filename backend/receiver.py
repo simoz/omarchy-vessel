@@ -1,4 +1,4 @@
-"""Own one AISStream connection, with bounded messages and cancellable retries."""
+"""Own one AIS connection, with bounded messages and cancellable retries."""
 
 import asyncio
 import json
@@ -12,11 +12,25 @@ from geometry import bounding_boxes
 
 
 class Receiver:
-    URL = "wss://stream.aisstream.io/v0/stream"
+    URLS = {
+        "openwaters": "wss://ais.openwaters.io/v1/stream",
+        "aisstream": "wss://stream.aisstream.io/v0/stream",
+    }
 
-    def __init__(self, fleet, state, key, output, *, url=URL, retry_delay=2):
+    def __init__(
+        self,
+        fleet,
+        state,
+        key,
+        output,
+        *,
+        provider="openwaters",
+        url=None,
+        retry_delay=2,
+    ):
         self.fleet, self.state, self.key, self.output = fleet, state, key, output
-        self.url, self.retry_delay = url, retry_delay
+        self.provider = provider
+        self.url, self.retry_delay = url or self.URLS[provider], retry_delay
         self.confirmed, self.last_message = False, time.monotonic()
 
     def emit(self):
@@ -34,10 +48,31 @@ class Receiver:
         if "error" in envelope or "Error" in envelope:
             self.state.update(
                 status="REJECTED",
-                error="AISStream rejected the subscription. Check your key and account connection limit.",
+                error=(
+                    "OpenWaters rejected the subscription. Check your token, coverage radius and connection limits."
+                    if self.provider == "openwaters"
+                    else "AISStream rejected the subscription. Check your key and account connection limit."
+                ),
             )
             self.emit()
             return False
+        if self.provider == "openwaters":
+            if envelope.get("type") == "welcome":
+                self.confirmed, self.last_message = True, time.monotonic()
+                self.state.update(status="LISTENING", error="")
+                return True
+            if envelope.get("type") != "event":
+                return True
+            kind = envelope.get("msg_type")
+            if not isinstance(kind, str) or kind not in MESSAGE_TYPES:
+                return True
+            envelope = dict(
+                MessageType=kind,
+                MetaData=dict(MMSI=envelope.get("mmsi"), time_utc=envelope.get("time")),
+                Message={kind: envelope.get("message")},
+                source=envelope.get("source"),
+                attribution=envelope.get("attribution"),
+            )
         kind = envelope.get("MessageType")
         if kind == "SubscriptionConfirmation" or kind in MESSAGE_TYPES:
             self.confirmed, self.last_message = True, time.monotonic()
@@ -58,13 +93,16 @@ class Receiver:
         """Subscribe immediately, then consume reports until rejected or disconnected."""
         opened = time.monotonic()
         self.confirmed, self.last_message = False, opened
+        boxes = bounding_boxes(self.fleet.lat, self.fleet.lon, self.fleet.radius)
         subscription = dict(
             APIKey=self.key,
-            BoundingBoxes=bounding_boxes(
-                self.fleet.lat, self.fleet.lon, self.fleet.radius
-            ),
+            BoundingBoxes=boxes,
             FilterMessageTypes=MESSAGE_TYPES,
         )
+        if self.provider == "openwaters":
+            subscription = dict(
+                type="subscribe", bbox=[a + b for a, b in boxes], snapshot=True
+            )
         await socket.send(json.dumps(subscription))
         while True:
             now = time.monotonic()
@@ -86,7 +124,7 @@ class Receiver:
         # The library owns TLS, framing, compression, ping/pong and cancellation.
         # A private logger prevents server error text or payloads leaking a key.
         from websockets.asyncio.client import connect
-        from websockets.exceptions import WebSocketException
+        from websockets.exceptions import InvalidStatus, WebSocketException
 
         logger = logging.Logger("vessel.websocket", level=logging.CRITICAL + 1)
         logger.addHandler(logging.NullHandler())
@@ -100,6 +138,9 @@ class Receiver:
                 try:
                     async with connect(
                         self.url,
+                        additional_headers={"Authorization": "Bearer " + self.key}
+                        if self.provider == "openwaters" and self.key
+                        else None,
                         compression="deflate",
                         proxy=None,
                         open_timeout=15,
@@ -112,7 +153,14 @@ class Receiver:
                         opened = time.monotonic()
                         if not await self.listen(socket):
                             return
-                except (OSError, TimeoutError, WebSocketException):
+                except (OSError, TimeoutError, WebSocketException) as error:
+                    if isinstance(
+                        error, InvalidStatus
+                    ) and error.response.status_code in (401, 403):
+                        # Authentication can fail before a WebSocket exists.
+                        # Reuse the redacted, terminal subscription error.
+                        self.handle_message('{"error":true}')
+                        return
                     # The context manager closes the old socket before backoff:
                     # reconnecting cannot overlap two account subscriptions.
                     self.state.update(

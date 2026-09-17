@@ -11,8 +11,11 @@ Column {
     property string cityName: ""
     property string locationMode: "city"
     property bool editingKey: false
+    property string provider: "openwaters"
+    readonly property bool hasProviderKey: provider === "openwaters"
+        ? !!VesselService.preferences.hasOpenwatersKey : !!VesselService.preferences.hasApiKey
     readonly property bool canSave: !VesselService.saving
-        && (VesselService.preferences.hasApiKey || apiKey.text.trim().length > 0)
+        && (provider === "openwaters" || hasProviderKey || apiKey.text.trim().length > 0)
         && (locationMode === "ip" || (locationMode === "coordinates"
             ? latitude.text.trim().length > 0 && longitude.text.trim().length > 0 : cityName.length > 0))
     property string family: "monospace"
@@ -25,11 +28,13 @@ Column {
     }
     function save() {
         if (!canSave) return;
-        VesselService.saveSettings({apiKey: apiKey.text, radiusNm: radius.text,
+        var values = {provider: provider, radiusNm: radius.text,
             latitude: latitude.text, longitude: longitude.text,
             cityName: locationMode === "city" ? cityName : "",
             autoLocation: locationMode === "ip", demo: false,
-            unit: kilometres.checked ? "km" : miles.checked ? "mi" : "nm"});
+            unit: kilometres.checked ? "km" : miles.checked ? "mi" : "nm"};
+        values[provider === "openwaters" ? "openwatersKey" : "apiKey"] = apiKey.text;
+        VesselService.saveSettings(values);
         apiKey.text = "";
     }
     function cancel() { apiKey.text = ""; done(); }
@@ -45,15 +50,16 @@ Column {
     }
     function populate() {
         var value = VesselService.preferences;
+        root.provider = value.provider || "openwaters";
         apiKey.text = "";
         radius.text = String(value.radiusNm || 25);
         latitude.text = value.latitude === null || value.latitude === undefined ? "" : String(value.latitude);
         longitude.text = value.longitude === null || value.longitude === undefined ? "" : String(value.longitude);
         root.cityName = value.cityName || "";
         city.text = root.cityName;
-        root.locationMode = value.autoLocation !== false && value.hasApiKey ? "ip"
+        root.locationMode = value.autoLocation !== false ? "ip"
             : root.cityName ? "city" : latitude.text !== "" && longitude.text !== "" ? "coordinates" : "city";
-        root.editingKey = !value.hasApiKey;
+        root.editingKey = !root.hasProviderKey;
         nautical.checked = value.unit !== "km" && value.unit !== "mi";
         kilometres.checked = value.unit === "km";
         miles.checked = value.unit === "mi";
@@ -208,8 +214,25 @@ Column {
     Caption { text: "AIS CONNECTION"; color: Color.muted; font.pixelSize: 10 }
     Row {
         width: parent.width; spacing: 12
-        visible: VesselService.preferences.hasApiKey && !root.editingKey
-        Caption { width: parent.width - editKey.width - 12; text: "API key saved"; anchors.verticalCenter: parent.verticalCenter }
+        UnitOption {
+            text: "OpenWaters"; checked: root.provider === "openwaters"
+            onClicked: { root.provider = "openwaters"; apiKey.text = ""; root.editingKey = !root.hasProviderKey; }
+        }
+        UnitOption {
+            text: "AISStream"; checked: root.provider === "aisstream"
+            onClicked: { root.provider = "aisstream"; apiKey.text = ""; root.editingKey = !root.hasProviderKey; }
+        }
+    }
+    Caption {
+        text: root.provider === "openwaters"
+            ? "Ready without an account. An optional personal token raises the limits."
+            : "Sign in with GitHub to create a free AISStream key."
+        color: Color.muted
+    }
+    Row {
+        width: parent.width; spacing: 12
+        visible: root.hasProviderKey && !root.editingKey
+        Caption { width: parent.width - editKey.width - 12; text: "Credential saved"; anchors.verticalCenter: parent.verticalCenter }
         Action {
             id: editKey
             text: "CHANGE"
@@ -219,18 +242,14 @@ Column {
     Field {
         id: apiKey; objectName: "settingsApiKey"; echoMode: TextInput.Password
         visible: root.editingKey
-        placeholderText: VesselService.preferences.hasApiKey ? "Leave blank to keep the saved key" : "Paste your AISStream API key"
+        placeholderText: root.hasProviderKey ? "Leave blank to keep the saved credential"
+            : root.provider === "openwaters" ? "Optional OpenWaters token" : "Paste your AISStream API key"
         maximumLength: 4096
     }
-    Action { objectName: "getApiKey"; text: "GET AN API KEY ↗"; onClicked: root.openBrowser("https://aisstream.io/account") }
-    Caption { visible: !VesselService.preferences.hasApiKey; text: "Sign in with GitHub to create a free AISStream key. The key is stored locally."; color: Color.muted }
-    Caption { text: VesselService.settingsError; visible: text.length > 0; color: Color.accent }
-    Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.3 }
-    Caption { text: VesselService.preferences.demo ? "Demo is active. Save to switch to live reception." : "Try Vessel without an API key."; color: Color.muted }
     Action {
-        text: "TRY DEMO · GENOA"
-        enabled: !VesselService.saving
-        // Change only demo mode: keep the saved live location and credential.
-        onClicked: VesselService.saveSettings({demo: true})
+        objectName: "getApiKey"
+        text: root.provider === "openwaters" ? "OPENWATERS / TOKEN ↗" : "GET AN API KEY ↗"
+        onClicked: root.openBrowser(root.provider === "openwaters" ? "https://openwaters.io/ais/" : "https://aisstream.io/account")
     }
+    Caption { text: VesselService.settingsError; visible: text.length > 0; color: Color.accent }
 }

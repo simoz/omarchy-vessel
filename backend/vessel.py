@@ -90,7 +90,7 @@ def main(argv=None):
         action="store_true",
         help="Prepare the managed live dependency without connecting",
     )
-    parser.add_argument("--demo", action="store_true")
+    parser.add_argument("--demo", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--auto-location", action="store_true")
     parser.add_argument("--latitude", type=float)
     parser.add_argument("--longitude", type=float)
@@ -114,6 +114,7 @@ def main(argv=None):
             )
             return 1
     city_name = ""
+    provider = "openwaters"
     if args.read_settings or args.save_settings:
         try:
             values = (
@@ -138,6 +139,7 @@ def main(argv=None):
     if args.saved_settings:
         try:
             saved = settings.read()
+            provider = saved["provider"]
             city_name = saved["cityName"]
             args.radius, args.demo, args.auto_location = (
                 saved["radiusNm"],
@@ -157,14 +159,14 @@ def main(argv=None):
         return setup("Radius must be between 1 and 200 nautical miles.")
     if not args.demo:
         try:
-            key = settings.api_key()
+            key = settings.api_key(provider)
         except (OSError, ValueError, TypeError, AttributeError, RecursionError):
             return setup(
                 "Could not read your API key. Open Settings and save it again."
             )
-        if not key and not args.prepare_runtime:
+        if provider == "aisstream" and not key and not args.prepare_runtime:
             return setup(
-                "Open Settings to enter your AISStream API key, or try the Genoa (Italy) demo."
+                "Open Settings to enter your AISStream API key or select OpenWaters."
             )
         try:
             from runtime import ensure_runtime
@@ -189,6 +191,7 @@ def main(argv=None):
         total=0,
         demo=args.demo,
         radius=args.radius,
+        provider=provider,
     )
     output(state)
     if args.demo:
@@ -225,7 +228,7 @@ def main(argv=None):
             state.pop("basemap", None)
             tick += 1
             time.sleep(1)
-    asyncio.run(Receiver(fleet, state, key, output).run())
+    asyncio.run(Receiver(fleet, state, key, output, provider=provider).run())
     return 0
 
 

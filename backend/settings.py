@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 DEFAULTS = dict(
+    provider="openwaters",
     radiusNm=25,
     autoLocation=True,
     demo=False,
@@ -60,6 +61,8 @@ def bounded_number(value, low, high):
 def validate_preferences(values):
     """Return only known fields, with the same rules for saved files and edits."""
     result = {key: values.get(key, default) for key, default in DEFAULTS.items()}
+    if result["provider"] not in ("openwaters", "aisstream"):
+        raise ValueError("Invalid AIS provider")
     result["radiusNm"] = bounded_number(result["radiusNm"], 1, 200)
     if result["unit"] not in ("nm", "km", "mi") or any(
         type(result[key]) is not bool for key in ("demo", "autoLocation")
@@ -100,7 +103,8 @@ def validate_key(value):
 def read():
     saved = read_file()
     return validate_preferences(saved) | {
-        "apiKey": validate_key(saved.get("apiKey", ""))
+        "apiKey": validate_key(saved.get("apiKey", "")),
+        "openwatersKey": validate_key(saved.get("openwatersKey", "")),
     }
 
 
@@ -109,15 +113,17 @@ def effective_key(saved):
     return saved["apiKey"] or validate_key(os.environ.get("AISSTREAM_API_KEY", ""))
 
 
-def api_key():
-    return effective_key(read())
+def api_key(provider="aisstream"):
+    saved = read()
+    return saved["openwatersKey"] if provider == "openwaters" else effective_key(saved)
 
 
 def public_settings(saved=None):
     saved = read() if saved is None else saved
     # An explicit allowlist prevents future private fields from being echoed to QML.
     return {key: saved[key] for key in DEFAULTS} | {
-        "hasApiKey": bool(effective_key(saved))
+        "hasApiKey": bool(effective_key(saved)),
+        "hasOpenwatersKey": bool(saved["openwatersKey"]),
     }
 
 
@@ -130,6 +136,9 @@ def save(values):
     # A blank password field preserves the credential; a replacement can also
     # repair an invalid old key without first needing to validate that old value.
     result["apiKey"] = new_key or validate_key(saved.get("apiKey", ""))
+    result["openwatersKey"] = validate_key(
+        values.get("openwatersKey", "")
+    ) or validate_key(saved.get("openwatersKey", ""))
     public = public_settings(result)
     destination = path()
     destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
