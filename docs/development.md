@@ -78,3 +78,18 @@ The helper emits JSON snapshots; the first located snapshot also includes a stat
 basemap. Position timestamps use Unix seconds, while the QML display clock uses
 milliseconds. Live positions are never extrapolated or stored on disk.
 
+
+## Preview images
+
+With PySide6 installed in a development environment, regenerate the screenshots:
+
+```sh
+QT_QPA_PLATFORM=offscreen QT_SCALE_FACTOR=2 python3 tools/render_previews.py
+```
+
+The renderer uses the current QML interface, bundled geography and the offline
+Genoa demo. Only the Quickshell host and receiver are stubbed, so no API key or
+network connection is used. The main expanded preview is 2400 × 1600 pixels;
+settings use a narrower window. This checks Qt rendering, not Hyprland integration.
+The marketplace serves optimized copies of preview.png, so its catalog must
+refresh after the updated source image is pushed.

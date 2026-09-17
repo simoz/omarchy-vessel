@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Window
+import QtQuick.Controls.Basic as Controls
 import Quickshell
 import qs.Commons
 import qs.Ui
@@ -143,7 +144,7 @@ BarWidget {
         Keys.onReturnPressed: triggered()
         Keys.onEnterPressed: triggered()
         Keys.onSpacePressed: triggered()
-        Keys.onEscapePressed: root.close()
+        Keys.onEscapePressed: root.configuring ? form.cancel() : root.close()
         MouseArea {
             id: pointer
             anchors.fill: parent
@@ -186,7 +187,7 @@ BarWidget {
         open: root.opened
         focusTarget: keys
         contentWidth: fittedContentWidth(Style.space(440))
-        contentHeight: fittedContentHeight(root.configuring ? form.implicitHeight : body.implicitHeight + footer.height + 12)
+        contentHeight: fittedContentHeight((root.configuring ? form.implicitHeight : body.implicitHeight) + footer.height + 12)
         Item { id: panelSlot; anchors.fill: parent }
     }
     FloatingWindow {
@@ -224,7 +225,7 @@ BarWidget {
             enabled: !root.helpOpen
             objectName: "panelViewport"
             anchors.fill: parent
-            anchors.bottomMargin: root.configuring ? 0 : footer.height + 12
+            anchors.bottomMargin: footer.height + 12
             contentHeight: root.configuring ? form.implicitHeight : body.implicitHeight
             clip: true
             boundsBehavior: Flickable.StopAtBounds
@@ -294,7 +295,7 @@ BarWidget {
                     }
                 }
                 Item {
-                    width: parent.width; height: Math.max(locationLabel.implicitHeight, statusLabel.implicitHeight)
+                    width: parent.width; height: Math.max(locationLabel.implicitHeight, statusBadge.implicitHeight)
                     Label {
                         id: locationLabel
                         anchors.left: parent.left; anchors.right: statusBadge.left; anchors.rightMargin: 16
@@ -302,21 +303,37 @@ BarWidget {
                         text: root.report.location || "Finding your lookout…"
                         elide: Text.ElideRight; color: Color.muted
                     }
-                    Row {
+                    Action {
                         id: statusBadge
+                        objectName: "pauseReception"
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                        spacing: 6
+                        implicitWidth: statusContent.implicitWidth + 16
+                        implicitHeight: 28
+                        iconOnly: true
+                        checkable: true
+                        checked: !VesselService.paused
+                        text: VesselService.paused ? "Resume reception (P)" : "Pause reception (P)"
+                        color: "transparent"
+                        border.color: activeFocus ? Color.foreground : hovered ? Color.muted : "transparent"
+                        onTriggered: VesselService.togglePaused()
+                        Controls.ToolTip.visible: hovered
+                        Controls.ToolTip.delay: 500
+                        Controls.ToolTip.text: text
                         readonly property bool live: !VesselService.paused && root.report.status === "LIVE"
-                        Rectangle {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 6; height: 6; radius: 3
-                            color: statusBadge.live ? Color.accent : Color.muted
-                        }
-                        Label {
-                            id: statusLabel
-                            text: VesselService.paused ? "PAUSED" : root.report.status
-                            color: statusBadge.live ? Color.accent : Color.muted
-                            font.bold: true; font.pixelSize: 11
+                        Row {
+                            id: statusContent
+                            anchors.centerIn: parent
+                            spacing: 6
+                            Rectangle {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 6; height: 6; radius: 3
+                                color: statusBadge.live ? Color.accent : Color.muted
+                            }
+                            Label {
+                                text: VesselService.paused ? "PAUSED" : root.report.status
+                                color: statusBadge.live ? Color.accent : Color.muted
+                                font.bold: true; font.pixelSize: 11
+                            }
                         }
                     }
                 }
@@ -330,7 +347,7 @@ BarWidget {
                         spacing: 12
                         Item {
                             width: parent.width
-                            height: root.expanded ? Math.min(width, Math.max(300, keys.height - 170)) : Math.min(width, 340)
+                            height: root.expanded ? Math.min(width, Math.max(300, keys.height - 220)) : Math.min(width, 340)
                             Radar {
                                 id: radar
                                 objectName: "radar"
@@ -343,7 +360,14 @@ BarWidget {
                                 onCloseRequested: root.close()
                                 onSelected: function(mmsi) { root.selectedMmsi = mmsi; }
                             }
-                            Robot { width: 48; height: 48; anchors.right: parent.right; anchors.bottom: parent.bottom; awake: !VesselService.paused && (root.report.status === "LIVE" || root.report.status === "LISTENING" || root.report.demo === true); visible: root.viewing }
+                            Robot {
+                                objectName: "lookoutRobot"
+                                width: 48; height: 48
+                                anchors.right: parent.right; anchors.bottom: parent.bottom
+                                awake: !VesselService.paused && ["LIVE", "LISTENING", "DEMO"].indexOf(root.report.status) !== -1
+                                live: !VesselService.paused && root.report.status === "LIVE"
+                                visible: root.viewing
+                            }
                         }
                         Row {
                             width: parent.width
@@ -389,7 +413,7 @@ BarWidget {
                         }
                         Label {
                             width: parent.width; wrapMode: Text.WordWrap; visible: root.ships.length === 0
-                            text: VesselService.paused ? "Reception paused. Press RESUME below to receive vessel positions." : root.report.status === "SETUP" ? "Your lookout is ready for setup." : "Listening for vessels. New contacts appear as AIS reports arrive."
+                            text: VesselService.paused ? "Reception paused. Click PAUSED next to the location, or press P, to resume." : root.report.status === "SETUP" ? "Your lookout is ready for setup." : "Listening for vessels. New contacts appear as AIS reports arrive."
                             color: Color.muted
                         }
                         Label {
@@ -441,26 +465,37 @@ BarWidget {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             height: 43
-            visible: !root.configuring
             Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.3 }
             Row {
                 anchors.bottom: parent.bottom
                 spacing: 4
+                visible: !root.configuring
                 Action {
                     id: settingsAction
                     text: "SETTINGS"
                     onTriggered: root.showSettings()
                 }
                 Action {
-                    id: receptionAction
-                    objectName: "pauseReception"
-                    text: VesselService.paused ? "RESUME" : "PAUSE"
-                    onTriggered: VesselService.togglePaused()
-                }
-                Action {
                     id: reconnectAction
                     text: "RECONNECT"
                     onTriggered: root.refresh()
+                }
+            }
+            Row {
+                anchors.bottom: parent.bottom
+                spacing: 12
+                visible: root.configuring
+                Action {
+                    objectName: "saveSettings"
+                    text: VesselService.saving ? "SAVING…" : "SAVE & CONNECT"
+                    enabled: form.canSave
+                    opacity: enabled ? 1 : 0.4
+                    onTriggered: form.save()
+                }
+                Action {
+                    text: "CANCEL"
+                    enabled: !VesselService.saving
+                    onTriggered: form.cancel()
                 }
             }
         }

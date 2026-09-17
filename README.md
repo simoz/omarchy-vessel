@@ -6,7 +6,7 @@ A marine radar for Omarchy. Put a name to the boats on your horizon, with a litt
 
 See nearby AIS-equipped vessels, their names, speed and reported destinations on a map with coastlines and coastal cities. Vessel follows your Omarchy palette and lives behind a single boat icon in the bar.
 
-![Vessel with simulated traffic](docs/demo-preview.png)
+![Vessel expanded view with simulated traffic](docs/demo-preview.png)
 
 ## Why I built Vessel
 
@@ -26,15 +26,15 @@ Accept the plugin trust prompt and click the boat icon to open **Settings**. The
 
 ### Get an API key and configure
 
-1. Click **GET AN API KEY** to open [AISStream Account](https://aisstream.io/account).
-2. Sign in with GitHub, create a key and paste it into **AISStream API key** in the widget.
-3. Choose approximate IP location, search for a city, or enter coordinates.
-4. Set the coverage radius (**1–200 nautical miles**) and distance units: **nm**, **km** or **mi**. Speed is shown in **knots (kn)**.
-5. Click **SAVE & CONNECT**.
+1. Under **LOCATION**, search for a **CITY** and select a result, or choose **IP LOCATION** or **COORDINATES**. Focusing the city field selects its text so you can replace it immediately.
+2. Under **COVERAGE**, set the radius (**1–200 nautical miles**) and distance units: **nm**, **km** or **mi**. Speed is shown in **knots (kn)**.
+3. Under **AIS CONNECTION**, click **GET AN API KEY** to open [AISStream Account](https://aisstream.io/account). Sign in with GitHub, create a key and paste it into the field.
+4. Click **SAVE & CONNECT**. Save and Cancel stay visible while you scroll.
 
+Once a key is saved, use **CHANGE** to enter a replacement.
 An empty key field preserves the saved key. Paste a new key to replace it. Preferences and the key are stored in `~/.config/omarchy-vessel/settings.json` (or `$XDG_CONFIG_HOME/omarchy-vessel/settings.json`), with owner-only file permissions (`0600`). Keep this file out of public dotfile backups.
 
-For a preview, select **Offline demo · Genoa (Italy)** in Settings: six simulated boats appear around Genoa.
+For a preview, click **TRY DEMO · GENOA** at the bottom of Settings: six simulated boats appear around Genoa. This preserves the saved live location and API key; unsaved form edits are not applied. Save the settings to return to live reception.
 
 [View Settings](docs/settings-preview.png) · [AISStream availability and limits](https://aisstream.io/documentation)
 
@@ -50,7 +50,7 @@ For a preview, select **Offline demo · Genoa (Italy)** in Settings: six simulat
 | Drag the map | Explore the loaded area after zooming in. |
 | **⌖** | Return to your position and restore the initial 1× zoom. |
 | Click a vessel | Show its name, destination and details. Selecting from the list also brings it into view on the radar. |
-| **PAUSE / RESUME** | Stop reception while keeping the last positions, or reconnect and receive fresh reports. |
+| **Reception status next to the location** | Click LIVE, LISTENING or the current status to pause, then PAUSED to resume. Last positions remain visible while paused. |
 | **RECONNECT** | Restart reception and refresh your location. |
 | **SETTINGS** | Change location, API key, range and units. |
 | Keyboard icon / **? / F1** | Open the keyboard shortcut sheet. |
@@ -81,9 +81,9 @@ Triangles indicate vessel course; dots indicate an unknown course. The selected 
 
 **VIEW** shows the visible radius. The contact counter shows visible vessels versus all received vessels in range. The list covers the full configured range.
 
-**LIVE** indicates incoming reports, **LISTENING** an active connection awaiting reports, and **PAUSED** a saved view with reception stopped. Reception continues when you close the panel; use **PAUSE** to stop it. **REJECTED** indicates an API key or account connection issue.
+**LIVE** indicates incoming reports, **LISTENING** an active connection awaiting reports, and **PAUSED** a saved view with reception stopped. Reception continues when you close the panel; click the status next to the location to pause it. Click **PAUSED** again to resume. The same control is reachable with Tab and activates with Enter or Space. **REJECTED** indicates an API key or account connection issue.
 
-[Light palette](docs/demo-preview-light.png) · [Zoomed radar](docs/zoom-preview.png) · [Panned map](docs/pan-preview.png)
+[Light palette](docs/demo-preview-light.png) · [Zoomed radar](docs/zoom-preview.png) · [Panned map](docs/pan-preview.png) · [Keyboard guide](docs/keyboard-preview.png)
 
 ## Update
 

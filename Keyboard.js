@@ -5,7 +5,7 @@ var hints = [
     [["+", "−"], "Zoom (= too)"],
     [["0", "Home"], "Reset to your location"],
     [[",", "."], "Previous / next vessel"],
-    [["Space", "P"], "Pause / resume"],
+    [["Space", "P"], "Pause / resume reception"],
     [["R"], "Reconnect (Enter too)"],
     [["F"], "Expand / widget"],
     [["<"], "Settings"],

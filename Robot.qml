@@ -7,11 +7,14 @@ Item {
     implicitWidth: 112
     implicitHeight: 112
     property bool awake: true
-    property bool blink: false
+    property bool live: false
+    property bool eyesLit: false
     readonly property bool animated: visible && awake
+    readonly property bool flashing: animated && live
+    onFlashingChanged: eyesLit = flashing
     property real bob: 0
     onAnimatedChanged: {
-        if (!animated) { bob = 0; blink = false; blinkEnd.stop(); }
+        if (!animated) bob = 0;
     }
     // Sprite legend: dot = transparent, a = accent outline, f = body, b = eyes.
     readonly property var pixels: [
@@ -30,11 +33,11 @@ Item {
             readonly property string pixel: root.sprite[index]
             x: (index % 16) * root.width / 16
             y: Math.floor(index / 16) * root.height / 16 + root.bob
-                + (pixel === "b" && (root.blink || !root.awake) ? root.height / 32 : 0)
+                + (pixel === "b" && (!root.awake) ? root.height / 32 : 0)
             width: Math.ceil(root.width / 16)
-            height: pixel === "b" && (root.blink || !root.awake) ? 1 : Math.ceil(root.height / 16)
+            height: pixel === "b" && (!root.awake) ? 1 : Math.ceil(root.height / 16)
             visible: pixel !== "."
-            color: pixel === "a" ? Color.accent : pixel === "b" ? (root.blink || !root.awake ? Color.muted : Color.background) : Color.foreground
+            color: pixel === "a" ? Color.accent : pixel === "b" ? (!root.awake ? Color.muted : root.eyesLit ? Color.accent : Color.background) : Color.foreground
         }
     }
     // A gentle bob makes activity visible without distracting from the chart.
@@ -46,7 +49,12 @@ Item {
         NumberAnimation { from: -2; to: 0; duration: 1000; easing.type: Easing.InOutSine }
         PauseAnimation { duration: 900 }
     }
-    // Closed eyes are a short line instead of just a subtle color change.
-    Timer { interval: 3600; running: root.animated; repeat: true; onTriggered: { root.blink = true; blinkEnd.restart(); } }
-    Timer { id: blinkEnd; interval: 180; onTriggered: root.blink = false }
+    // Live reception lights both eyes in a steady on/off rhythm. Stopping or
+    // hiding the robot resets the lights immediately and stops the timer.
+    Timer {
+        interval: 900
+        running: root.flashing
+        repeat: true
+        onTriggered: root.eyesLit = !root.eyesLit
+    }
 }

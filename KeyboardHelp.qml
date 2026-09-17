@@ -23,38 +23,44 @@ FocusScope {
     Rectangle { anchors.fill: parent; color: Color.background; opacity: 0.8 }
     MouseArea { anchors.fill: parent; onClicked: root.closed() }
     Rectangle {
-        x: root.centered ? (parent.width - width) / 2 : 0
-        y: root.centered ? (parent.height - height) / 2 : 0
+        x: root.centered ? Math.round((parent.width - width) / 2) : 0
+        y: root.centered ? Math.round((parent.height - height) / 2) : 0
         width: Math.min(parent.width, 760)
-        height: Math.min(parent.height, contents.implicitHeight + 32)
+        height: Math.min(parent.height, contents.implicitHeight + 74)
         color: Color.background
         border.color: Color.muted
         MouseArea { anchors.fill: parent }
+        // Keep the close control outside the clipped, scrolling content.
+        Row {
+            id: header
+            anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+            anchors.margins: 16
+            height: 26
+            Text { width: parent.width - 70; text: "K E Y S"; color: Color.accent; font.family: root.family; font.bold: true; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            Rectangle {
+                id: closeButton
+                objectName: "closeKeyboardHelp"
+                width: 70; height: 26
+                color: "transparent"; border.color: activeFocus ? Color.accent : Color.muted
+                activeFocusOnTab: true
+                Accessible.role: Accessible.Button
+                Accessible.name: "Close keyboard shortcuts"
+                Accessible.onPressAction: root.closed()
+                Text { anchors.centerIn: parent; text: "ESC ×"; color: Color.foreground; font.family: root.family; font.pixelSize: 11 }
+                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.closed() }
+            }
+        }
         Flickable {
             id: scroll
-            anchors.fill: parent; anchors.margins: 16
+            anchors.top: header.bottom; anchors.bottom: parent.bottom
+            anchors.left: parent.left; anchors.right: parent.right
+            anchors.margins: 16
             clip: true
             contentHeight: contents.implicitHeight
             boundsBehavior: Flickable.StopAtBounds
             Column {
                 id: contents
                 width: parent.width; spacing: 16
-                Row {
-                    width: parent.width
-                    Text { width: parent.width - 70; text: "K E Y S"; color: Color.accent; font.family: root.family; font.bold: true; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
-                    Rectangle {
-                        id: closeButton
-                        objectName: "closeKeyboardHelp"
-                        width: 70; height: 26
-                        color: "transparent"; border.color: activeFocus ? Color.accent : Color.muted
-                        activeFocusOnTab: true
-                        Accessible.role: Accessible.Button
-                        Accessible.name: "Close keyboard shortcuts"
-                        Accessible.onPressAction: root.closed()
-                        Text { anchors.centerIn: parent; text: "ESC ×"; color: Color.foreground; font.family: root.family; font.pixelSize: 11 }
-                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.closed() }
-                    }
-                }
                 Grid {
                     width: parent.width
                     columns: width >= 620 ? 2 : 1
@@ -93,7 +99,7 @@ FocusScope {
                 Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.5 }
                 Text {
                     width: parent.width; wrapMode: Text.WordWrap
-                    text: "Zoom in to pan. In Settings, type normally and use Tab to move between controls.\nWith nothing else open, Esc closes the view."
+                    text: "Click the status beside the location to pause / resume. Zoom in to pan.\nIn Settings, type normally and use Tab to move between controls.\nWith nothing else open, Esc closes the view."
                     color: Color.muted; font.family: root.family; font.pixelSize: 10
                 }
             }
