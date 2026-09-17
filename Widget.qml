@@ -353,6 +353,7 @@ BarWidget {
                                 objectName: "radar"
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 width: parent.height; height: width
+                                controlsRightMargin: (width - parent.width) / 2
                                 scanning: root.viewing && !root.configuring && !VesselService.paused
                                 ships: root.ships; radiusNm: root.report.radius || 25
                                 basemap: VesselService.basemap
@@ -474,11 +475,6 @@ BarWidget {
                     id: settingsAction
                     text: "SETTINGS"
                     onTriggered: root.showSettings()
-                }
-                Action {
-                    id: reconnectAction
-                    text: "RECONNECT"
-                    onTriggered: root.refresh()
                 }
             }
             Row {

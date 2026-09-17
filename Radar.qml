@@ -12,6 +12,7 @@ Item {
     readonly property bool zoomControlsFocused: zoomInButton.activeFocus || zoomOutButton.activeFocus || centerButton.activeFocus
     signal closeRequested()
     Keys.onEscapePressed: closeRequested()
+    property real controlsRightMargin: 0
     property int zoomLevel: 0
     readonly property int maxZoomLevel: 6
     readonly property real zoom: Math.pow(2, zoomLevel)
@@ -290,6 +291,7 @@ Item {
     }
     Row {
         anchors.right: parent.right
+        anchors.rightMargin: root.controlsRightMargin
         anchors.top: parent.top
         spacing: 4
         component ZoomButton: Rectangle {
@@ -305,7 +307,12 @@ Item {
             Accessible.role: Accessible.Button
             Accessible.name: accessibleLabel
             Accessible.onPressAction: if (available) activated()
-            Text { anchors.centerIn: parent; visible: !parent.centerIcon; text: parent.label; color: Color.foreground; font.pixelSize: 18 }
+            Item {
+                anchors.centerIn: parent; width: 12; height: 12
+                visible: !parent.centerIcon
+                Rectangle { anchors.centerIn: parent; width: 12; height: 2; color: Color.foreground }
+                Rectangle { anchors.centerIn: parent; width: 2; height: 12; color: Color.foreground; visible: parent.parent.label === "+" }
+            }
             // Draw the reticle geometrically so font metrics cannot shift its center.
             Item {
                 anchors.centerIn: parent; width: 14; height: 14

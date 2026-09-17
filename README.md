@@ -44,38 +44,45 @@ For a preview, click **TRY DEMO · GENOA** at the bottom of Settings: six simula
 
 | Control | Action |
 | --- | --- |
-| Boat icon in the bar | Open or close the panel. |
+| Boat icon in the bar | Open or close the panel; return to the panel from the expanded window. |
 | Expand icon (diagonal arrows, top right) | Switch between the panel and expanded window, keeping zoom and selection. |
 | Zoom buttons (+ and −) | Zoom between 1× and 64×. |
 | Map drag | Move around the loaded area after zooming in. |
 | Center button (crosshair, beside zoom) | Return to your position and reset zoom to 1×. |
 | Vessel on the map or in the list | Select a vessel to see its details. Selecting from the list also brings it into view on the map. |
 | Status button beside the location | Click to pause reception; click again when it reads PAUSED to resume. Last positions remain visible while paused. |
-| Reconnect button in the footer | Restart reception and refresh your location. |
 | Settings button in the footer | Change location, API key, range and units. |
 | Keyboard icon (top right) | Open the shortcut guide. You can also press `?` or `F1`. |
 
 The expanded window places vessel details beside the radar when there is enough room. It can be maximized using your normal window-manager controls. Closing it leaves Vessel running in the bar.
 
-The footer controls stay visible while you scroll. **Escape** closes the panel; **Enter** in the radar panel or a middle-click on the boat reconnects.
+The Settings button stays visible in the footer while you scroll. To restart reception, press `R` in the radar view or middle-click the boat icon in the bar.
 
 ### Keyboard controls
 
-With the radar view focused, use **F** to expand or return to the widget,
-**W A S D / arrows / H J K L** to pan after zooming, **+ / = / −** to zoom and
-**0 / Home** to reset the view. **, / .** selects the previous or next vessel
-and brings it into view. **Space / P** pauses or resumes reception,
-**R** reconnects, and **<** opens Settings. **Page Up / Page Down** scrolls the panel.
+With the radar view focused:
 
-**Tab / Shift+Tab** moves between controls, with a visible focus border.
-**Enter / Space** activates the focused radar control; when the vessel list
-has focus, **Up / Down** selects vessels. In Settings, use Tab to reach fields,
-search results and buttons, type normally, and use Space to toggle options.
-Focused settings controls scroll into view automatically.
+| Key | Action |
+| --- | --- |
+| `W` `A` `S` `D` or arrow keys | Pan after zooming in. |
+| `+` / `=` / `−` | Zoom in or out. |
+| `0` / `Home` | Return to your position and reset zoom. |
+| `,` / `.` | Select and reveal the previous or next vessel. |
+| `Space` / `P` | Pause or resume reception. |
+| `R` | Restart reception. Enter also reconnects when no control consumes the key. |
+| `F` | Switch between the panel and expanded window. |
+| `<` | Open Settings. |
+| `Page Up` / `Page Down` | Scroll the panel. |
+| `Tab` / `Shift+Tab` | Focus the next or previous control. |
+| `Enter` / `Space` | Activate the focused control. |
+| `?` / `F1` | Open the keyboard guide. |
+| `Escape` | Close the guide first, then Settings, then the current view. |
 
-**? / F1** opens the shortcut sheet in either radar view. **Escape** closes
-help first, then Settings, then the current view. Letter shortcuts are inactive
-while editing Settings, and Ctrl/Alt/Super combinations are left to the desktop.
+When the vessel list has focus, `Up` / `Down` selects vessels. In Settings,
+use `Tab` to reach fields, search results and buttons, type normally, and use
+`Space` to activate options. Focused settings controls scroll into view automatically.
+Letter shortcuts are inactive while editing Settings, and Ctrl/Alt/Super
+combinations are left to the desktop.
 
 Triangles indicate vessel course; dots indicate an unknown course. The selected vessel has a ring. Positions fade after five minutes and expire after thirty minutes of active reception.
 
@@ -104,7 +111,7 @@ you also want to delete Vessel's saved data.
 
 ## Data and privacy
 
-Vessel is built for watching nearby traffic. Coverage and reported destinations depend on AISStream and the vessels transmitting.
+Vessel is built for watching nearby traffic. Coverage and reported destinations depend on AISStream and the vessels transmitting. Destinations appear in vessel details only when reported; the text is shown as received and may contain abbreviations or port codes.
 
 - **AISStream** receives your API key and the geographic area to monitor.
 - **Photon / OpenStreetMap** provides city search from the name you enter.

@@ -105,6 +105,7 @@ def main():
     from PySide6.QtCore import QMetaObject, QObject, QUrl
     from PySide6.QtGui import QGuiApplication
     from PySide6.QtQml import QQmlApplicationEngine
+    from PySide6.QtQuick import QQuickWindow
     from PySide6.QtTest import QTest
 
     sys.path.insert(0, str(Path.cwd() / "backend"))
@@ -171,7 +172,9 @@ def main():
 
     def shot(name):
         QTest.qWait(200)
-        assert window().grabWindow().save(str(Path.cwd() / name))
+        surface = window()
+        assert isinstance(surface, QQuickWindow)
+        assert surface.grabWindow().save(str(Path.cwd() / name))
 
     root.setProperty("selectedMmsi", "999000002")
     invoke("expand")
