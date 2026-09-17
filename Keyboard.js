@@ -2,14 +2,13 @@
 // to the desktop or text editor; Shift and keypad keys remain valid here.
 var hints = [
     [["W", "A", "S", "D"], "Pan (arrows too)"],
-    [["H", "J", "K", "L"], "Pan · alternative keys"],
     [["+", "−"], "Zoom (= too)"],
     [["0", "Home"], "Reset to your location"],
-    [["[", "]"], "Previous / next vessel"],
+    [[",", "."], "Previous / next vessel"],
     [["Space", "P"], "Pause / resume"],
     [["R"], "Reconnect (Enter too)"],
     [["F"], "Expand / widget"],
-    [[","], "Settings"],
+    [["<"], "Settings"],
     [["PgUp", "PgDn"], "Scroll panel"],
     [["Tab"], "Next control (Shift: previous)"],
     [["Enter", "Space"], "Activate focused control"],
@@ -31,7 +30,7 @@ function command(key, text, modifiers) {
     var commands = {"h":"left", "j":"down", "k":"up", "l":"right",
         "w":"up", "a":"left", "s":"down", "d":"right",
         "+":"zoomIn", "=":"zoomIn", "-":"zoomOut", "0":"center",
-        "[":"previous", "]":"next", " ":"pause", "p":"pause",
-        "r":"reconnect", ",":"settings", "f":"expand"};
+        ",":"previous", ".":"next", " ":"pause", "p":"pause",
+        "r":"reconnect", "<":"settings", "f":"expand"};
     return commands[(text || "").toLowerCase()] || "";
 }

@@ -61,9 +61,9 @@ The footer controls stay visible while you scroll. **Escape** closes the panel; 
 
 With the radar view focused, use **F** to expand or return to the widget,
 **W A S D / arrows / H J K L** to pan after zooming, **+ / = / −** to zoom and
-**0 / Home** to reset the view. **[ / ]** selects the previous or next vessel
+**0 / Home** to reset the view. **, / .** selects the previous or next vessel
 and brings it into view. **Space / P** pauses or resumes reception,
-**R** reconnects, and **comma (,)** opens Settings. **Page Up / Page Down** scrolls the panel.
+**R** reconnects, and **<** opens Settings. **Page Up / Page Down** scrolls the panel.
 
 **Tab / Shift+Tab** moves between controls, with a visible focus border.
 **Enter / Space** activates the focused radar control; when the vessel list

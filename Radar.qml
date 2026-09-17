@@ -103,12 +103,13 @@ Item {
             c.lineJoin = "round"; c.stroke(); c.restore();
         }
     }
-    // Paint this faint sweep once, then rotate its texture on the render thread.
+    // Paint this faint sweep once, then animate the item transform.
     // The sweep stays centered on the viewport, including while the map is panned.
     // Only the sweep texture rotates. Map data, zoom, pan and theme changes
     // repaint their own layers; closing the panel stops the animation.
     Canvas {
         id: sweep
+        objectName: "radarSweep"
         anchors.fill: parent
         visible: root.scanning
         property color ink: Color.accent
@@ -129,7 +130,9 @@ Item {
             c.globalAlpha = 0.2; c.strokeStyle = ink; c.lineWidth = 1;
             c.beginPath(); c.moveTo(mid, mid); c.lineTo(mid, mid - r); c.stroke();
         }
-        RotationAnimator on rotation {
+        // Property animation survives moving this scene between panel and window;
+        // a render-thread Animator can remain attached to the old scene graph.
+        NumberAnimation on rotation {
             from: 0; to: 360; duration: 12000; loops: Animation.Infinite
             running: root.scanning && root.visible
         }

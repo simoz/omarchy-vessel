@@ -33,8 +33,8 @@ BarWidget {
     readonly property string family: bar ? bar.fontFamily : "monospace"
     function open() { if (!expanded) opened = true; }
     function close() { helpOpen = false; opened = false; expanded = false; configuring = false; }
-    function expand() { expanded = true; opened = false; Qt.callLater(() => keys.forceActiveFocus()); }
-    function collapse() { expanded = false; opened = true; Qt.callLater(() => keys.forceActiveFocus()); }
+    function expand() { expanded = true; opened = false; Qt.callLater(() => root.configuring ? form.focusFirst() : radar.forceActiveFocus()); }
+    function collapse() { expanded = false; opened = true; Qt.callLater(() => root.configuring ? form.focusFirst() : radar.forceActiveFocus()); }
     function toggle() { if (expanded) { collapse(); return; } if (!opened && report.status === "SETUP") configuring = true; opened = !opened; }
     function refresh() { VesselService.restart(); }
     function revealShip(ship) {
@@ -122,7 +122,10 @@ BarWidget {
         radius: 3
         color: checked ? Qt.alpha(Color.accent, 0.15) : "transparent"
         border.width: 1
-        border.color: checked || activeFocus || pointer.containsMouse ? Color.accent : "transparent"
+        // Selection, keyboard focus and hover must not look like the same state.
+        // Hover can remain stale when this item moves between window surfaces.
+        border.color: checked ? Color.accent : activeFocus ? Color.foreground
+            : !checkable && pointer.containsMouse ? Color.muted : "transparent"
         activeFocusOnTab: true
         Accessible.role: Accessible.Button
         Accessible.name: text
@@ -456,6 +459,7 @@ BarWidget {
             anchors.fill: parent
             z: 10
             visible: root.helpOpen
+            centered: root.expanded
             family: root.family
             onClosed: root.hideHelp()
         }

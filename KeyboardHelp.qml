@@ -6,6 +6,7 @@ import "Keyboard.js" as Keyboard
 FocusScope {
     id: root
     property string family: "monospace"
+    property bool centered: false
     signal closed()
     onVisibleChanged: if (visible) scroll.contentY = 0
     Keys.priority: Keys.BeforeItem
@@ -22,8 +23,8 @@ FocusScope {
     Rectangle { anchors.fill: parent; color: Color.background; opacity: 0.8 }
     MouseArea { anchors.fill: parent; onClicked: root.closed() }
     Rectangle {
-        anchors.left: parent.left
-        anchors.top: parent.top
+        x: root.centered ? (parent.width - width) / 2 : 0
+        y: root.centered ? (parent.height - height) / 2 : 0
         width: Math.min(parent.width, 760)
         height: Math.min(parent.height, contents.implicitHeight + 32)
         color: Color.background
