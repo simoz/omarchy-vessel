@@ -114,16 +114,20 @@ BarWidget {
         id: action
         property string text
         property bool iconOnly: false
+        property bool checkable: false
+        property bool checked: false
         signal triggered()
         implicitWidth: actionLabel.implicitWidth + 16
         implicitHeight: 30
         radius: 3
-        color: "transparent"
+        color: checked ? Qt.alpha(Color.accent, 0.15) : "transparent"
         border.width: 1
-        border.color: activeFocus || pointer.containsMouse ? Color.accent : "transparent"
+        border.color: checked || activeFocus || pointer.containsMouse ? Color.accent : "transparent"
         activeFocusOnTab: true
         Accessible.role: Accessible.Button
         Accessible.name: text
+        Accessible.checkable: checkable
+        Accessible.checked: checked
         Accessible.onPressAction: triggered()
         Label {
             id: actionLabel
@@ -226,26 +230,68 @@ BarWidget {
                 visible: !root.configuring
                 width: parent.width
                 spacing: 12
-                Row {
-                    width: parent.width
-                    Label { width: parent.width - 120; text: "V E S S E L  /  MARINE RADAR"; color: Color.accent; font.bold: true; font.pixelSize: 11 }
-                    Label { width: 80; text: VesselService.paused ? "PAUSED" : root.report.status; color: Color.muted; horizontalAlignment: Text.AlignRight }
-                    Action {
-                        id: helpAction
-                        objectName: "keyboardHelp"
-                        text: "Keyboard shortcuts (?)"
-                        implicitWidth: 40; implicitHeight: 26
-                        iconOnly: true
-                        onTriggered: root.showHelp()
-                        KeyboardIcon { anchors.centerIn: parent; ink: Color.accent }
+                Item {
+                    width: parent.width; height: 30
+                    Label {
+                        anchors.left: parent.left; anchors.right: headerActions.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "VESSEL / MARINE RADAR"; elide: Text.ElideRight
+                        color: Color.accent; font.bold: true; font.pixelSize: 11
+                    }
+                    Row {
+                        id: headerActions
+                        anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+                        spacing: 4
+                        Action {
+                            id: expandAction
+                            objectName: "expandView"
+                            text: "Expanded view (F)"
+                            checkable: true
+                            checked: root.expanded
+                            implicitWidth: 30; implicitHeight: 30
+                            iconOnly: true
+                            onTriggered: root.expanded ? root.collapse() : root.expand()
+                            Label { anchors.centerIn: parent; text: root.expanded ? "↙" : "↗"; font.pixelSize: 20; color: Color.accent }
+                        }
+                        Action {
+                            id: helpAction
+                            objectName: "keyboardHelp"
+                            text: "Keyboard shortcuts (?)"
+                            implicitWidth: 30; implicitHeight: 30
+                            iconOnly: true
+                            onTriggered: root.showHelp()
+                            KeyboardIcon { anchors.centerIn: parent; ink: Color.accent }
+                        }
+                    }
+                }
+                Item {
+                    width: parent.width; height: Math.max(locationLabel.implicitHeight, statusLabel.implicitHeight)
+                    Label {
+                        id: locationLabel
+                        anchors.left: parent.left; anchors.right: statusBadge.left; anchors.rightMargin: 16
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root.report.location || "Finding your lookout…"
+                        elide: Text.ElideRight; color: Color.muted
+                    }
+                    Row {
+                        id: statusBadge
+                        anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+                        spacing: 6
+                        readonly property bool live: !VesselService.paused && root.report.status === "LIVE"
+                        Rectangle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 6; height: 6; radius: 3
+                            color: statusBadge.live ? Color.accent : Color.muted
+                        }
+                        Label {
+                            id: statusLabel
+                            text: VesselService.paused ? "PAUSED" : root.report.status
+                            color: statusBadge.live ? Color.accent : Color.muted
+                            font.bold: true; font.pixelSize: 11
+                        }
                     }
                 }
                 Rectangle { width: parent.width; height: 1; color: Color.accent; opacity: 0.4 }
-                Label {
-                    width: parent.width; wrapMode: Text.WordWrap
-                    text: root.report.location || "Finding your lookout…"
-                    color: Color.muted
-                }
                 Grid {
                     width: parent.width
                     columns: keys.wide ? 2 : 1
@@ -380,12 +426,6 @@ BarWidget {
                     objectName: "pauseReception"
                     text: VesselService.paused ? "RESUME" : "PAUSE"
                     onTriggered: VesselService.togglePaused()
-                }
-                Action {
-                    id: expandAction
-                    objectName: "expandView"
-                    text: root.expanded ? "↙ WIDGET" : "↗ EXPAND"
-                    onTriggered: root.expanded ? root.collapse() : root.expand()
                 }
                 Action {
                     id: reconnectAction

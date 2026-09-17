@@ -43,7 +43,7 @@ For a preview, select **Offline demo · Genoa (Italy)** in Settings: six simulat
 | Control | Action |
 | --- | --- |
 | Boat icon | Open or close the panel. |
-| **↗ EXPAND / ↙ WIDGET** | Move the radar into a resizable window or back to the bar panel, preserving zoom and selection. |
+| **↗ / ↙** | Toggle the expanded view from the header, preserving zoom and selection. The icon is highlighted while expanded. |
 | **+ / −** | Zoom between 1× and 64×. |
 | Drag the map | Explore the loaded area after zooming in. |
 | **⌖** | Return to your position and restore the initial 1× zoom. |
@@ -60,10 +60,10 @@ The footer controls stay visible while you scroll. **Escape** closes the panel; 
 ### Keyboard controls
 
 With the radar view focused, use **F** to expand or return to the widget,
-**arrows / H J K L** to pan after zooming, **+ / = / −** to zoom and
+**W A S D / arrows / H J K L** to pan after zooming, **+ / = / −** to zoom and
 **0 / Home** to reset the view. **[ / ]** selects the previous or next vessel
 and brings it into view. **Space / P** pauses or resumes reception,
-**R** reconnects, and **S** opens Settings. **Page Up / Page Down** scrolls the panel.
+**R** reconnects, and **comma (,)** opens Settings. **Page Up / Page Down** scrolls the panel.
 
 **Tab / Shift+Tab** moves between controls, with a visible focus border.
 **Enter / Space** activates the focused radar control; when the vessel list

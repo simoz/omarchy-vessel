@@ -1,19 +1,19 @@
 // Keep the help sheet and shortcut dispatch together. Modified shortcuts belong
 // to the desktop or text editor; Shift and keypad keys remain valid here.
 var hints = [
-    ["? / F1", "Keyboard shortcuts"],
-    ["F", "Expand / return to widget"],
-    ["← ↑ ↓ → / H J K L", "Pan map (zoom in first)"],
-    ["+ / = / −", "Zoom in / out"],
-    ["0 / Home", "Reset view to your location"],
-    ["[ / ]", "Previous / next vessel"],
-    ["Space / P", "Pause / resume reception"],
-    ["R / Enter", "Reconnect"],
-    ["S", "Settings"],
-    ["PgUp / PgDn", "Scroll panel"],
-    ["Tab / Shift+Tab", "Next / previous control"],
-    ["Enter / Space", "Activate focused control"],
-    ["Esc", "Close help, settings or view"]
+    [["W", "A", "S", "D"], "Pan (arrows too)"],
+    [["H", "J", "K", "L"], "Pan · alternative keys"],
+    [["+", "−"], "Zoom (= too)"],
+    [["0", "Home"], "Reset to your location"],
+    [["[", "]"], "Previous / next vessel"],
+    [["Space", "P"], "Pause / resume"],
+    [["R"], "Reconnect (Enter too)"],
+    [["F"], "Expand / widget"],
+    [[","], "Settings"],
+    [["PgUp", "PgDn"], "Scroll panel"],
+    [["Tab"], "Next control (Shift: previous)"],
+    [["Enter", "Space"], "Activate focused control"],
+    [["?", "F1"], "This sheet · Esc closes"]
 ];
 
 function command(key, text, modifiers) {
@@ -29,8 +29,9 @@ function command(key, text, modifiers) {
     if (key === Qt.Key_PageDown) return "pageDown";
     if (key === Qt.Key_Return || key === Qt.Key_Enter) return "reconnect";
     var commands = {"h":"left", "j":"down", "k":"up", "l":"right",
+        "w":"up", "a":"left", "s":"down", "d":"right",
         "+":"zoomIn", "=":"zoomIn", "-":"zoomOut", "0":"center",
         "[":"previous", "]":"next", " ":"pause", "p":"pause",
-        "r":"reconnect", "s":"settings", "f":"expand"};
+        "r":"reconnect", ",":"settings", "f":"expand"};
     return commands[(text || "").toLowerCase()] || "";
 }

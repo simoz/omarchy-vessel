@@ -22,8 +22,9 @@ FocusScope {
     Rectangle { anchors.fill: parent; color: Color.background; opacity: 0.8 }
     MouseArea { anchors.fill: parent; onClicked: root.closed() }
     Rectangle {
-        anchors.centerIn: parent
-        width: Math.min(parent.width, 720)
+        anchors.left: parent.left
+        anchors.top: parent.top
+        width: Math.min(parent.width, 760)
         height: Math.min(parent.height, contents.implicitHeight + 32)
         color: Color.background
         border.color: Color.muted
@@ -36,10 +37,10 @@ FocusScope {
             boundsBehavior: Flickable.StopAtBounds
             Column {
                 id: contents
-                width: parent.width; spacing: 18
+                width: parent.width; spacing: 16
                 Row {
                     width: parent.width
-                    Text { width: parent.width - 70; text: "K E Y S"; color: Color.accent; font.family: root.family; font.bold: true; font.pixelSize: 13 }
+                    Text { width: parent.width - 70; text: "K E Y S"; color: Color.accent; font.family: root.family; font.bold: true; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
                     Rectangle {
                         id: closeButton
                         objectName: "closeKeyboardHelp"
@@ -56,26 +57,42 @@ FocusScope {
                 Grid {
                     width: parent.width
                     columns: width >= 620 ? 2 : 1
-                    columnSpacing: 20; rowSpacing: 10
+                    columnSpacing: 24; rowSpacing: 8
                     Repeater {
                         model: Keyboard.hints
                         Row {
                             required property var modelData
                             width: (parent.width - (parent.columns - 1) * parent.columnSpacing) / parent.columns
                             spacing: 10
-                            Rectangle {
-                                width: 126; height: Math.max(24, shortcut.implicitHeight + 8)
-                                color: "transparent"; border.color: Color.muted
-                                Text { id: shortcut; anchors.centerIn: parent; width: parent.width - 8; text: modelData[0]; wrapMode: Text.WordWrap; color: Color.foreground; font.family: root.family; font.pixelSize: 10 }
+                            Row {
+                                width: 130; spacing: 4
+                                Repeater {
+                                    model: modelData[0]
+                                    Rectangle {
+                                        required property string modelData
+                                        width: Math.max(18, keyLabel.implicitWidth + 8); height: 18
+                                        color: "transparent"; border.color: Color.muted
+                                        Text {
+                                            id: keyLabel
+                                            anchors.centerIn: parent
+                                            text: modelData; color: Color.foreground
+                                            font.family: root.family; font.pixelSize: 10
+                                        }
+                                    }
+                                }
                             }
-                            Text { width: parent.width - 136; text: modelData[1]; wrapMode: Text.WordWrap; color: Color.foreground; font.family: root.family; font.pixelSize: 11 }
+                            Text {
+                                width: parent.width - 140
+                                text: modelData[1]; wrapMode: Text.WordWrap
+                                color: Color.foreground; font.family: root.family; font.pixelSize: 11
+                            }
                         }
                     }
                 }
                 Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.5 }
                 Text {
                     width: parent.width; wrapMode: Text.WordWrap
-                    text: "In Settings, type normally and use Tab to reach every field and button. Shortcuts apply to the radar view. Escape closes this sheet first."
+                    text: "Zoom in to pan. In Settings, type normally and use Tab to move between controls.\nWith nothing else open, Esc closes the view."
                     color: Color.muted; font.family: root.family; font.pixelSize: 10
                 }
             }

@@ -13,7 +13,7 @@ test('keyboard shortcuts accept shifted punctuation, uppercase and keypad input'
     [0, '?', Qt.ShiftModifier, 'help'], [Qt.Key_F1, '', 0, 'help'],
     [0, '+', Qt.ShiftModifier, 'zoomIn'], [0, '=', 0, 'zoomIn'],
     [0, '+', Qt.KeypadModifier, 'zoomIn'], [0, '-', 0, 'zoomOut'],
-    [0, 'F', Qt.ShiftModifier, 'expand'], [0, 's', 0, 'settings'],
+    [0, 'F', Qt.ShiftModifier, 'expand'], [0, ',', 0, 'settings'],
     [0, '[', 0, 'previous'], [0, ']', 0, 'next'],
     [0, ' ', 0, 'pause'], [0, 'p', 0, 'pause'],
     [0, 'r', 0, 'reconnect'], [Qt.Key_Return, '', 0, 'reconnect'],
@@ -29,7 +29,7 @@ test('desktop and editor modifier combinations never trigger radar actions', () 
     assert.equal(keyboard.command(Qt.Key_Left, '', modifier), '');
   }
   assert.equal(keyboard.command(0, '\t', 0), '');
-  assert.equal(keyboard.command(0, 'a', 0), '');
+  assert.equal(keyboard.command(0, 'z', 0), '');
 });
 test('arrow and vim movement agree; page keys scroll instead of panning', () => {
   for (const [key, text, command] of [['Left','h','left'], ['Right','l','right'], ['Up','k','up'], ['Down','j','down']]) {
@@ -49,4 +49,12 @@ test('keyboard vessel navigation wraps and survives a missing selection or empty
   state.selectedShip = {mmsi:'a'}; state.selectVessel(-1); assert.equal(selected.pop(), 'c');
   state.selectedShip = null; state.selectVessel(1); assert.equal(selected.pop(), 'b');
   state.ships = []; state.selectVessel(1); assert.equal(selected.length, 0);
+});
+
+test('WASD pans in both cases and comma opens settings without a conflict', () => {
+  for (const [key, direction] of [['w', 'up'], ['a', 'left'], ['s', 'down'], ['d', 'right']]) {
+    assert.equal(keyboard.command(0, key, 0), direction);
+    assert.equal(keyboard.command(0, key.toUpperCase(), Qt.ShiftModifier), direction);
+  }
+  assert.equal(keyboard.command(0, ',', 0), 'settings');
 });
