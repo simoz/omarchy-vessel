@@ -8,6 +8,11 @@ Item {
     implicitHeight: 112
     property bool awake: true
     property bool blink: false
+    readonly property bool animated: visible && awake
+    property real bob: 0
+    onAnimatedChanged: {
+        if (!animated) { bob = 0; blink = false; blinkEnd.stop(); }
+    }
     // Sprite legend: dot = transparent, a = accent outline, f = body, b = eyes.
     readonly property var pixels: [
         "........aa......", ".........a......", "....aaaaaaaa....",
@@ -24,14 +29,24 @@ Item {
             required property int index
             readonly property string pixel: root.sprite[index]
             x: (index % 16) * root.width / 16
-            y: Math.floor(index / 16) * root.height / 16
+            y: Math.floor(index / 16) * root.height / 16 + root.bob
+                + (pixel === "b" && (root.blink || !root.awake) ? root.height / 32 : 0)
             width: Math.ceil(root.width / 16)
-            height: Math.ceil(root.height / 16)
+            height: pixel === "b" && (root.blink || !root.awake) ? 1 : Math.ceil(root.height / 16)
             visible: pixel !== "."
             color: pixel === "a" ? Color.accent : pixel === "b" ? (root.blink || !root.awake ? Color.muted : Color.background) : Color.foreground
         }
     }
-    // Blink only while the robot is visible and awake; keep the rest of the sprite still.
-    Timer { interval: 4800; running: root.visible && root.awake; repeat: true; onTriggered: { root.blink = true; blinkEnd.restart(); } }
-    Timer { id: blinkEnd; interval: 140; onTriggered: root.blink = false }
+    // A gentle bob makes activity visible without distracting from the chart.
+    // Animate a QML property so moving between windows cannot strand an animator.
+    SequentialAnimation on bob {
+        running: root.animated
+        loops: Animation.Infinite
+        NumberAnimation { from: 0; to: -2; duration: 1000; easing.type: Easing.InOutSine }
+        NumberAnimation { from: -2; to: 0; duration: 1000; easing.type: Easing.InOutSine }
+        PauseAnimation { duration: 900 }
+    }
+    // Closed eyes are a short line instead of just a subtle color change.
+    Timer { interval: 3600; running: root.animated; repeat: true; onTriggered: { root.blink = true; blinkEnd.restart(); } }
+    Timer { id: blinkEnd; interval: 180; onTriggered: root.blink = false }
 }

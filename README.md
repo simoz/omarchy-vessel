@@ -40,6 +40,8 @@ For a preview, select **Offline demo · Genoa (Italy)** in Settings: six simulat
 
 ## Use the radar
 
+**Rivers and inland waterways:** Vessel is designed for coastal viewing. The offline map contains generalized land and coastlines, without a dedicated river layer, so riverbanks and narrow channels—such as the Thames through London—may be missing. AIS-equipped vessels can still appear where reception is available, but they may look as if they are on land. Zooming in does not add the missing map detail.
+
 | Control | Action |
 | --- | --- |
 | Boat icon | Open or close the panel. |

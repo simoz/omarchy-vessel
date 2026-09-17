@@ -333,7 +333,7 @@ BarWidget {
                                 onCloseRequested: root.close()
                                 onSelected: function(mmsi) { root.selectedMmsi = mmsi; }
                             }
-                            Robot { width: 48; height: 48; anchors.right: parent.right; anchors.bottom: parent.bottom; awake: !VesselService.paused && (root.report.status === "LIVE" || root.report.demo === true); visible: root.viewing }
+                            Robot { width: 48; height: 48; anchors.right: parent.right; anchors.bottom: parent.bottom; awake: !VesselService.paused && (root.report.status === "LIVE" || root.report.status === "LISTENING" || root.report.demo === true); visible: root.viewing }
                         }
                         Row {
                             width: parent.width
@@ -356,15 +356,16 @@ BarWidget {
                                 font.pixelSize: 22; font.bold: true
                                 text: root.selectedShip ? (root.selectedShip.name || "MMSI " + root.selectedShip.mmsi) : ""
                             }
-                            Label { text: "DESTINATION"; font.pixelSize: 9; color: Color.muted }
-                            Label {
-                                width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 16
-                                text: root.selectedShip ? (root.selectedShip.destination || "Not reported") : ""
-                                color: root.selectedShip && root.selectedShip.destination ? Color.accent : Color.muted
-                            }
                             Label {
                                 width: parent.width; wrapMode: Text.WordWrap
                                 text: root.selectedShip ? Model.distance(root.selectedShip.distance, root.unit) + " " + Model.compass(root.selectedShip.bearing) + " · " + Math.round(root.selectedShip.bearing) + "° from you" + "  /  " + (root.selectedShip.speed === null ? "Speed unknown" : root.selectedShip.speed.toFixed(1) + " kn") : ""
+                            }
+                            Label {
+                                readonly property string destination: root.selectedShip ? (root.selectedShip.destination || "").trim() : ""
+                                visible: destination.length > 0
+                                width: parent.width; elide: Text.ElideRight
+                                font.pixelSize: 11; color: Color.muted
+                                text: "Destination · " + destination
                             }
                             Label {
                                 width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 10; color: Color.muted
