@@ -1,6 +1,8 @@
 # Security review
 
-Reviewed on 2026-09-16 for Vessel 0.5.1.
+Reviewed on 2026-09-17 for Vessel 0.7.0, commit
+`73d801fb89b6743286fceac20b1fc9ba89adad9e`.
+This report update is subsequent to the reviewed commit.
 
 ## Scope and result
 
@@ -10,11 +12,21 @@ and existing tests. It combined source inspection with regression tests and loca
 WebSocket peers. It is not a penetration test of Omarchy or AISStream, nor a
 security certification.
 
-A malformed numeric AIS field could terminate the receiver. That reproducible
-availability bug is fixed. The review also tightened settings and HTTPS boundaries
-without adding production dependencies or changing the normal UI workflow.
+No new exploitable vulnerability was identified in the inspected paths. No runtime
+code changes were made for this review. This result is limited to source inspection
+and the checks below; it does not establish that the plugin is vulnerability-free.
 
-## Changes made
+The current pass rechecked credential storage and disclosure, process arguments,
+installer execution, untrusted AIS/location data, HTTPS/TLS boundaries, and the
+updated settings and keyboard UI. Expanded-window controls, the status pause toggle,
+help sheet and icon rendering introduce no new network endpoint or shell command.
+The settings editor clears the entered key on save, cancel and hiding the form,
+and continues to use password rendering and stdin for submission.
+
+## Earlier fixes rechecked
+
+The following changes were made during the 2026-09-16 review of 0.5.1,
+not during this review. Their regression coverage still passes.
 
 | Area | Finding | Resolution |
 | --- | --- | --- |
@@ -65,10 +77,28 @@ included in that package advisory query.
 
 ## Verification and limits
 
-The automated suite (38 Python tests and 13 JavaScript tests) covers malformed AIS data, private settings, atomic-write
-failure, HTTPS redirects, TLS rejection, binary/compressed messages, reconnection,
-cancellation, geometry, demo startup and installer failures. Qt checks exercise
-settings, zoom, drag, recenter and pause/resume with a mock Omarchy host.
+The automated suite passed: **39 Python tests and 22 JavaScript tests**, run on
+macOS with Python 3.14.5 and the pinned websockets 17.1 dependency. It covers malformed
+AIS data, private settings, atomic-write failure, HTTPS redirects, TLS rejection,
+binary/compressed messages, reconnection, cancellation, geometry, demo startup,
+installer failures, keyboard dispatch and settings submission. The negative TLS
+test produced a local server handshake-reset diagnostic while passing its assertions.
+
+An additional one-off input matrix passed **224 malformed-field cases** through
+`Receiver.handle_message()` and fleet JSON serialization: nulls, booleans, structured
+values, huge numbers, infinity and hostile-looking text across envelope, metadata
+and position fields. This is targeted robustness checking, not exhaustive fuzzing.
+
+Commands used for the regression suites (uv is a review tool, not a runtime dependency):
+
+```sh
+uv run --with-requirements requirements.txt python -B -m unittest discover -s tests -p 'test_*.py'
+node --test tests/*.test.cjs
+```
+
+Earlier Qt checks exercised settings, zoom, drag, recenter and pause/resume with a
+mock Omarchy host. Those UI interaction checks were not repeated as part of this
+security pass.
 
 Remaining trust boundaries:
 
@@ -81,6 +111,9 @@ Remaining trust boundaries:
 - AISStream receives the API key and the selected geographic bounding boxes.
   Photon receives city searches, and IP geolocation reveals the caller's public
   IP to its provider. HTTPS protects transport, not the provider's use of data.
+- Location HTTP requests have response-size limits and socket timeouts, but no
+  separate end-to-end deadline; a provider that sends data very slowly can keep a
+  location helper occupied longer than 12 seconds. No AIS key is sent on this path.
 - AIS content and reported destinations are not authenticated by Vessel and may
   be wrong or stale. The plugin is not a navigation instrument.
 - An authenticated AISStream session and the real Quickshell/Hyprland integration
