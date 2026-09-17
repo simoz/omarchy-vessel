@@ -116,16 +116,18 @@ BarWidget {
         property bool iconOnly: false
         property bool checkable: false
         property bool checked: false
+        property bool hoverOnly: false
+        property bool hovered: false
         signal triggered()
         implicitWidth: actionLabel.implicitWidth + 16
         implicitHeight: 30
         radius: 3
-        color: checked ? Qt.alpha(Color.accent, 0.15) : "transparent"
+        color: checked && !hoverOnly ? Qt.alpha(Color.accent, 0.15) : "transparent"
         border.width: 1
-        // Selection, keyboard focus and hover must not look like the same state.
-        // Hover can remain stale when this item moves between window surfaces.
-        border.color: checked ? Color.accent : activeFocus ? Color.foreground
-            : !checkable && pointer.containsMouse ? Color.muted : "transparent"
+        // Expansion keeps its accessible state without a persistent visual selection.
+        border.color: hoverOnly ? (hovered ? Color.accent : "transparent")
+            : checked ? Color.accent : activeFocus ? Color.foreground
+            : hovered ? Color.muted : "transparent"
         activeFocusOnTab: true
         Accessible.role: Accessible.Button
         Accessible.name: text
@@ -147,7 +149,14 @@ BarWidget {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: action.triggered()
+            onEntered: action.hovered = true
+            onExited: action.hovered = false
+            onPositionChanged: action.hovered = containsMouse
+            onClicked: {
+                // Moving the control to another window may not emit an exit event.
+                action.hovered = false;
+                action.triggered();
+            }
         }
     }
 
@@ -251,6 +260,7 @@ BarWidget {
                             text: "Expanded view (F)"
                             checkable: true
                             checked: root.expanded
+                            hoverOnly: true
                             implicitWidth: 30; implicitHeight: 30
                             iconOnly: true
                             onTriggered: root.expanded ? root.collapse() : root.expand()
