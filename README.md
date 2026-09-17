@@ -43,6 +43,7 @@ For a preview, select **Offline demo · Genoa (Italy)** in Settings: six simulat
 | Control | Action |
 | --- | --- |
 | Boat icon | Open or close the panel. |
+| **↗ EXPAND / ↙ WIDGET** | Move the radar into a resizable window or back to the bar panel, preserving zoom and selection. |
 | **+ / −** | Zoom between 1× and 64×. |
 | Drag the map | Explore the loaded area after zooming in. |
 | **⌖** | Return to your position and restore the initial 1× zoom. |
@@ -50,6 +51,8 @@ For a preview, select **Offline demo · Genoa (Italy)** in Settings: six simulat
 | **PAUSE / RESUME** | Stop reception while keeping the last positions, or reconnect and receive fresh reports. |
 | **RECONNECT** | Restart reception and refresh your location. |
 | **SETTINGS** | Change location, API key, range and units. |
+
+The expanded window places vessel details beside the radar when there is enough room. It can be maximized using your normal window-manager controls. Closing it leaves Vessel running in the bar.
 
 The footer controls stay visible while you scroll. **Escape** closes the panel; **Enter** in the radar panel or a middle-click on the boat reconnects.
 
