@@ -382,7 +382,7 @@ BarWidget {
                     Column {
                         width: keys.wide ? 320 : parent.width
                         spacing: 12
-                        Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.3 }
+                        Rectangle { visible: !keys.wide; width: parent.width; height: 1; color: Color.muted; opacity: 0.3 }
                         Column {
                             width: parent.width; spacing: 6; visible: root.selectedShip !== null
                             Label {

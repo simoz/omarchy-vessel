@@ -44,16 +44,16 @@ For a preview, click **TRY DEMO · GENOA** at the bottom of Settings: six simula
 
 | Control | Action |
 | --- | --- |
-| Boat icon | Open or close the panel. |
-| **⤢ Expand toggle** | Toggle the expanded view from the header, preserving zoom and selection. The icon highlights only on hover. |
-| **+ / −** | Zoom between 1× and 64×. |
-| Drag the map | Explore the loaded area after zooming in. |
-| **⌖** | Return to your position and restore the initial 1× zoom. |
-| Click a vessel | Show its name, destination and details. Selecting from the list also brings it into view on the radar. |
-| **Reception status next to the location** | Click LIVE, LISTENING or the current status to pause, then PAUSED to resume. Last positions remain visible while paused. |
-| **RECONNECT** | Restart reception and refresh your location. |
-| **SETTINGS** | Change location, API key, range and units. |
-| Keyboard icon / **? / F1** | Open the keyboard shortcut sheet. |
+| Boat icon in the bar | Open or close the panel. |
+| Expand icon (diagonal arrows, top right) | Switch between the panel and expanded window, keeping zoom and selection. |
+| Zoom buttons (+ and −) | Zoom between 1× and 64×. |
+| Map drag | Move around the loaded area after zooming in. |
+| Center button (crosshair, beside zoom) | Return to your position and reset zoom to 1×. |
+| Vessel on the map or in the list | Select a vessel to see its details. Selecting from the list also brings it into view on the map. |
+| Status button beside the location | Click to pause reception; click again when it reads PAUSED to resume. Last positions remain visible while paused. |
+| Reconnect button in the footer | Restart reception and refresh your location. |
+| Settings button in the footer | Change location, API key, range and units. |
+| Keyboard icon (top right) | Open the shortcut guide. You can also press `?` or `F1`. |
 
 The expanded window places vessel details beside the radar when there is enough room. It can be maximized using your normal window-manager controls. Closing it leaves Vessel running in the bar.
 

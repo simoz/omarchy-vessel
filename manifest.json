@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "simoz.vessel",
   "name": "Vessel",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "author": "simoz",
   "license": "MIT",
   "description": "A marine radar for Omarchy. Put a name to the boats on your horizon, with a little robot keeping watch.",
