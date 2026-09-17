@@ -51,10 +51,29 @@ For a preview, select **Offline demo · Genoa (Italy)** in Settings: six simulat
 | **PAUSE / RESUME** | Stop reception while keeping the last positions, or reconnect and receive fresh reports. |
 | **RECONNECT** | Restart reception and refresh your location. |
 | **SETTINGS** | Change location, API key, range and units. |
+| Keyboard icon / **? / F1** | Open the keyboard shortcut sheet. |
 
 The expanded window places vessel details beside the radar when there is enough room. It can be maximized using your normal window-manager controls. Closing it leaves Vessel running in the bar.
 
 The footer controls stay visible while you scroll. **Escape** closes the panel; **Enter** in the radar panel or a middle-click on the boat reconnects.
+
+### Keyboard controls
+
+With the radar view focused, use **F** to expand or return to the widget,
+**arrows / H J K L** to pan after zooming, **+ / = / −** to zoom and
+**0 / Home** to reset the view. **[ / ]** selects the previous or next vessel
+and brings it into view. **Space / P** pauses or resumes reception,
+**R** reconnects, and **S** opens Settings. **Page Up / Page Down** scrolls the panel.
+
+**Tab / Shift+Tab** moves between controls, with a visible focus border.
+**Enter / Space** activates the focused radar control; when the vessel list
+has focus, **Up / Down** selects vessels. In Settings, use Tab to reach fields,
+search results and buttons, type normally, and use Space to toggle options.
+Focused settings controls scroll into view automatically.
+
+**? / F1** opens the shortcut sheet in either radar view. **Escape** closes
+help first, then Settings, then the current view. Letter shortcuts are inactive
+while editing Settings, and Ctrl/Alt/Super combinations are left to the desktop.
 
 Triangles indicate vessel course; dots indicate an unknown course. The selected vessel has a ring. Positions fade after five minutes and expire after thirty minutes of active reception.
 

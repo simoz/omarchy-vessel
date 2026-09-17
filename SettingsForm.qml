@@ -11,6 +11,8 @@ Column {
     property string cityName: ""
     property string family: "monospace"
     signal done()
+    signal focusRequested(var item)
+    function focusFirst() { apiKey.forceActiveFocus(); }
     // Use Omarchy's session-aware launcher; Qt URL dispatch may not reach the
     // browser from the shell process. Pass arguments directly, without a shell.
     function openBrowser(url) {
@@ -43,6 +45,8 @@ Column {
         textFormat: Text.PlainText; wrapMode: Text.WordWrap; width: parent.width
     }
     component Field: TextField {
+        focusPolicy: Qt.StrongFocus
+        onActiveFocusChanged: if (activeFocus) root.focusRequested(this)
         width: parent.width; height: 38
         color: Color.foreground; placeholderTextColor: Color.muted
         font.family: root.family; font.pixelSize: 13
@@ -51,21 +55,27 @@ Column {
         background: Rectangle { color: Color.background; border.color: parent.activeFocus ? Color.accent : Color.muted; radius: 3 }
     }
     component Action: Button {
+        focusPolicy: Qt.StrongFocus
+        onActiveFocusChanged: if (activeFocus) root.focusRequested(this)
         font.family: root.family
         contentItem: Text { textFormat: Text.PlainText; text: parent.text; color: Color.accent; font: parent.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-        background: Rectangle { color: Color.background; border.color: Color.accent; radius: 3; opacity: parent.enabled ? 1 : 0.4 }
+        background: Rectangle { color: Color.background; border.color: parent.activeFocus ? Color.foreground : Color.accent; border.width: parent.activeFocus ? 2 : 1; radius: 3; opacity: parent.enabled ? 1 : 0.4 }
     }
     component Toggle: CheckBox {
+        focusPolicy: Qt.StrongFocus
+        onActiveFocusChanged: if (activeFocus) root.focusRequested(this)
         font.family: root.family
         contentItem: Text { textFormat: Text.PlainText; text: parent.text; color: Color.foreground; font: parent.font; leftPadding: 30; verticalAlignment: Text.AlignVCenter }
         indicator: Rectangle {
             width: 18; height: 18; y: (parent.height - height) / 2
-            color: Color.background; border.color: Color.accent
+            color: Color.background; border.color: parent.activeFocus ? Color.foreground : Color.accent
             Rectangle { anchors.centerIn: parent; width: 10; height: 10; color: Color.accent; visible: parent.parent.checked }
         }
     }
     // Sibling radio buttons keep the three unit choices mutually exclusive.
     component UnitOption: RadioButton {
+        focusPolicy: Qt.StrongFocus
+        onActiveFocusChanged: if (activeFocus) root.focusRequested(this)
         font.family: root.family
         contentItem: Text {
             text: parent.text; textFormat: Text.PlainText; color: Color.foreground
@@ -73,7 +83,7 @@ Column {
         }
         indicator: Rectangle {
             width: 18; height: 18; radius: 9; y: (parent.height - height) / 2
-            color: Color.background; border.color: Color.accent
+            color: Color.background; border.color: parent.activeFocus ? Color.foreground : Color.accent
             Rectangle {
                 anchors.centerIn: parent; width: 8; height: 8; radius: 4
                 color: Color.accent; visible: parent.parent.checked
@@ -83,7 +93,7 @@ Column {
     Caption { text: "V E S S E L  /  SETTINGS"; color: Color.accent; font.bold: true }
     Caption { text: "AISStream API key" }
     Field {
-        id: apiKey; echoMode: TextInput.Password
+        id: apiKey; objectName: "settingsApiKey"; echoMode: TextInput.Password
         placeholderText: VesselService.preferences.hasApiKey ? "Key saved · leave blank to keep it" : "Paste your API key"
         maximumLength: 4096
     }
@@ -138,10 +148,10 @@ Column {
         }
         Caption { text: root.cityName ? "Selected: " + root.cityName : "Search, then choose a city from the results."; visible: !manual.checked; color: Color.muted }
         Caption { text: VesselService.cityError; visible: !manual.checked && text.length > 0; color: Color.accent }
-        Caption {
+        Action {
             text: "City search: Photon / © OpenStreetMap contributors ↗"
-            font.pixelSize: 10; color: Color.muted; visible: !manual.checked
-            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.openBrowser("https://www.openstreetmap.org/copyright") }
+            font.pixelSize: 10; visible: !manual.checked
+            onClicked: root.openBrowser("https://www.openstreetmap.org/copyright")
         }
         Toggle {
             id: manual; text: "Enter coordinates instead"

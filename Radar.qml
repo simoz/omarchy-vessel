@@ -28,6 +28,9 @@ Item {
         var p = Model.boundedCenter(x, y, zoom);
         viewCenter = Qt.point(p.x, p.y);
     }
+    function pan(dx, dy) {
+        setCenter(viewCenter.x + dx * 0.15 / zoom, viewCenter.y + dy * 0.15 / zoom);
+    }
     // Recenter only on an explicit list selection, never on each AIS update.
     // Preserve zoom; the coverage constraint keeps the loaded map under the view.
     function focusShip(ship) {
@@ -264,6 +267,7 @@ Item {
             if (Math.hypot(mouse.x - width / 2, mouse.y - height / 2) > root.chartRadius) {
                 mouse.accepted = false; return;
             }
+            root.forceActiveFocus();
             pressPoint = Qt.point(mouse.x, mouse.y);
             pressCenter = root.viewCenter;
             moved = false;
@@ -292,7 +296,7 @@ Item {
             property bool available: true
             signal activated()
             width: 26; height: 26; radius: 3
-            color: Color.background; border.color: Color.muted
+            color: Color.background; border.color: activeFocus ? Color.accent : Color.muted
             opacity: available ? 0.9 : 0.3
             activeFocusOnTab: available
             Accessible.role: Accessible.Button
@@ -311,6 +315,7 @@ Item {
                 Rectangle { anchors.centerIn: parent; width: 1; height: 14; color: Color.foreground }
             }
             Keys.onReturnPressed: if (available) activated()
+            Keys.onEnterPressed: if (available) activated()
             Keys.onSpacePressed: if (available) activated()
             MouseArea {
                 anchors.fill: parent; enabled: parent.available

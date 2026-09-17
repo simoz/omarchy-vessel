@@ -1,9 +1,11 @@
 import QtQuick
+import QtQuick.Window
 import Quickshell
 import qs.Commons
 import qs.Ui
 import "."
 import "Model.js" as Model
+import "Keyboard.js" as Keyboard
 
 // Omarchy injects the bar and per-widget settings into this entry point.
 BarWidget {
@@ -12,6 +14,8 @@ BarWidget {
     implicitWidth: button.implicitWidth
     implicitHeight: button.implicitHeight
     property bool configuring: false
+    property bool helpOpen: false
+    property var helpPreviousFocus: null
     property bool opened: false
     property bool expanded: false
     readonly property bool viewing: opened || expanded
@@ -28,7 +32,7 @@ BarWidget {
     }
     readonly property string family: bar ? bar.fontFamily : "monospace"
     function open() { if (!expanded) opened = true; }
-    function close() { opened = false; expanded = false; configuring = false; }
+    function close() { helpOpen = false; opened = false; expanded = false; configuring = false; }
     function expand() { expanded = true; opened = false; Qt.callLater(() => keys.forceActiveFocus()); }
     function collapse() { expanded = false; opened = true; Qt.callLater(() => keys.forceActiveFocus()); }
     function toggle() { if (expanded) { collapse(); return; } if (!opened && report.status === "SETUP") configuring = true; opened = !opened; }
@@ -39,7 +43,60 @@ BarWidget {
         // A list click must reveal the chart as well as the geographic contact.
         viewport.contentY = 0;
     }
-    onConfiguringChanged: viewport.contentY = 0
+    function showHelp() {
+        helpPreviousFocus = keys.Window.window ? keys.Window.window.activeFocusItem : null;
+        helpOpen = true;
+        help.forceActiveFocus();
+    }
+    function hideHelp() {
+        helpOpen = false;
+        if (helpPreviousFocus && helpPreviousFocus.visible && helpPreviousFocus.enabled) helpPreviousFocus.forceActiveFocus();
+        else keys.forceActiveFocus();
+    }
+    function showSettings() {
+        configuring = true;
+        VesselService.loadSettings();
+        Qt.callLater(() => form.focusFirst());
+    }
+    function selectVessel(step) {
+        if (!ships.length) return;
+        var index = ships.findIndex(ship => ship.mmsi === (selectedShip ? selectedShip.mmsi : ""));
+        index = (Math.max(0, index) + step + ships.length) % ships.length;
+        revealShip(ships[index]);
+        contacts.positionViewAtIndex(index, ListView.Contain);
+    }
+    function ensureVisible(item) {
+        var point = item.mapToItem(viewport.contentItem, 0, 0);
+        var target = viewport.contentY;
+        if (point.y < target) target = point.y;
+        else if (point.y + item.height > target + viewport.height) target = point.y + item.height - viewport.height;
+        viewport.contentY = Math.max(0, Math.min(target, Math.max(0, viewport.contentHeight - viewport.height)));
+    }
+    function runCommand(command) {
+        switch (command) {
+        case "help": showHelp(); break;
+        case "dismiss": close(); break;
+        case "left": radar.pan(-1, 0); break;
+        case "right": radar.pan(1, 0); break;
+        case "up": radar.pan(0, -1); break;
+        case "down": radar.pan(0, 1); break;
+        case "zoomIn": radar.zoomIn(); break;
+        case "zoomOut": radar.zoomOut(); break;
+        case "center": radar.recenter(); break;
+        case "previous": selectVessel(-1); break;
+        case "next": selectVessel(1); break;
+        case "pause": VesselService.togglePaused(); break;
+        case "reconnect": refresh(); break;
+        case "settings": showSettings(); break;
+        case "expand": expanded ? collapse() : expand(); break;
+        case "pageUp": viewport.contentY = Math.max(0, viewport.contentY - viewport.height * 0.8); break;
+        case "pageDown": viewport.contentY = Math.min(Math.max(0, viewport.contentHeight - viewport.height), viewport.contentY + viewport.height * 0.8); break;
+        }
+    }
+    onConfiguringChanged: {
+        viewport.contentY = 0;
+        Qt.callLater(() => configuring ? form.focusFirst() : keys.forceActiveFocus());
+    }
     // Attach once per monitor while the singleton owns the shared network process.
     onSettingsChanged: if (attached) VesselService.configure(settings)
     Component.onCompleted: { attached = true; VesselService.attach(settings); }
@@ -56,6 +113,7 @@ BarWidget {
     component Action: Rectangle {
         id: action
         property string text
+        property bool iconOnly: false
         signal triggered()
         implicitWidth: actionLabel.implicitWidth + 16
         implicitHeight: 30
@@ -70,9 +128,11 @@ BarWidget {
         Label {
             id: actionLabel
             anchors.centerIn: parent
+            visible: !action.iconOnly
             text: action.text; color: Color.accent
         }
         Keys.onReturnPressed: triggered()
+        Keys.onEnterPressed: triggered()
         Keys.onSpacePressed: triggered()
         Keys.onEscapePressed: root.close()
         MouseArea {
@@ -125,17 +185,27 @@ BarWidget {
         Item { id: windowSlot; anchors.fill: parent; anchors.margins: 20 }
     }
     // Move the existing scene between surfaces to preserve map and form state.
-    PanelKeyCatcher {
+    FocusScope {
         id: keys
         parent: root.expanded ? windowSlot : panelSlot
         readonly property bool wide: root.expanded && width >= 760
         anchors.fill: parent
-        blocked: root.configuring || radar.zoomControlsFocused || settingsAction.activeFocus || receptionAction.activeFocus || reconnectAction.activeFocus || expandAction.activeFocus
-        onCloseRequested: root.close()
-        onReturnRequested: root.refresh()
+        focus: true
+        // Descendants get activation and editing keys first; native Tab traversal
+        // stays intact instead of being swallowed by the host key dispatcher.
+        Keys.priority: Keys.AfterItem
+        Keys.onPressed: function(event) {
+            if (!root.viewing || root.helpOpen || root.configuring) return;
+            var command = Keyboard.command(event.key, event.text, event.modifiers);
+            if (!command) return;
+            event.accepted = true;
+            if (event.isAutoRepeat && ["help", "pause", "expand", "settings", "reconnect", "dismiss"].indexOf(command) !== -1) return;
+            root.runCommand(command);
+        }
         // Only the body scrolls; reception controls remain reachable on short screens.
         Flickable {
             id: viewport
+            enabled: !root.helpOpen
             objectName: "panelViewport"
             anchors.fill: parent
             anchors.bottomMargin: root.configuring ? 0 : footer.height + 12
@@ -147,6 +217,7 @@ BarWidget {
                 width: parent.width
                 family: root.family
                 visible: root.configuring
+                onFocusRequested: function(item) { root.ensureVisible(item); }
                 onDone: root.configuring = false
                 Keys.onEscapePressed: root.configuring = false
             }
@@ -157,8 +228,17 @@ BarWidget {
                 spacing: 12
                 Row {
                     width: parent.width
-                    Label { width: parent.width * 0.6; text: "V E S S E L  /  MARINE RADAR"; color: Color.accent; font.bold: true; font.pixelSize: 11 }
-                    Label { width: parent.width * 0.4; text: VesselService.paused ? "PAUSED" : root.report.status; color: Color.muted; horizontalAlignment: Text.AlignRight }
+                    Label { width: parent.width - 120; text: "V E S S E L  /  MARINE RADAR"; color: Color.accent; font.bold: true; font.pixelSize: 11 }
+                    Label { width: 80; text: VesselService.paused ? "PAUSED" : root.report.status; color: Color.muted; horizontalAlignment: Text.AlignRight }
+                    Action {
+                        id: helpAction
+                        objectName: "keyboardHelp"
+                        text: "Keyboard shortcuts (?)"
+                        implicitWidth: 40; implicitHeight: 26
+                        iconOnly: true
+                        onTriggered: root.showHelp()
+                        KeyboardIcon { anchors.centerIn: parent; ink: Color.accent }
+                    }
                 }
                 Rectangle { width: parent.width; height: 1; color: Color.accent; opacity: 0.4 }
                 Label {
@@ -242,6 +322,18 @@ BarWidget {
                         }
                         // Bound the contact list height; the receiver already sorts by distance.
                         ListView {
+                            id: contacts
+                            objectName: "contacts"
+                            activeFocusOnTab: true
+                            Accessible.role: Accessible.List
+                            Accessible.name: "Vessels; use Up and Down to select"
+                            onActiveFocusChanged: if (activeFocus) root.ensureVisible(contacts)
+                            Keys.onUpPressed: root.selectVessel(-1)
+                            Keys.onDownPressed: root.selectVessel(1)
+                            Keys.onReturnPressed: if (root.selectedShip) root.revealShip(root.selectedShip)
+                            Keys.onEnterPressed: if (root.selectedShip) root.revealShip(root.selectedShip)
+                            Keys.onSpacePressed: if (root.selectedShip) root.revealShip(root.selectedShip)
+                            Rectangle { anchors.fill: parent; color: "transparent"; border.color: Color.accent; visible: contacts.activeFocus; z: 2 }
                             width: parent.width
                             height: Math.min(contentHeight, keys.wide ? Math.max(144, keys.height - 380) : 144)
                             clip: true
@@ -267,6 +359,7 @@ BarWidget {
         }
         Item {
             id: footer
+            enabled: !root.helpOpen
             objectName: "panelFooter"
             anchors.left: parent.left
             anchors.right: parent.right
@@ -280,7 +373,7 @@ BarWidget {
                 Action {
                     id: settingsAction
                     text: "SETTINGS"
-                    onTriggered: { root.configuring = true; VesselService.loadSettings(); }
+                    onTriggered: root.showSettings()
                 }
                 Action {
                     id: receptionAction
@@ -300,6 +393,15 @@ BarWidget {
                     onTriggered: root.refresh()
                 }
             }
+        }
+        KeyboardHelp {
+            id: help
+            objectName: "keyboardHelpSheet"
+            anchors.fill: parent
+            z: 10
+            visible: root.helpOpen
+            family: root.family
+            onClosed: root.hideHelp()
         }
     }
 }
