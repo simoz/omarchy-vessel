@@ -23,6 +23,8 @@ BarWidget {
     property bool attached: false
     property string selectedMmsi: ""
     property double now: Date.now()
+    readonly property int textSize: expanded ? 15 : 14
+    readonly property int smallTextSize: expanded ? 12 : 11
     readonly property var report: VesselService.report
     readonly property var ships: VesselService.ships
     readonly property string unit: VesselService.preferences.unit || "nm"
@@ -106,7 +108,7 @@ BarWidget {
     Timer { interval: 1000; running: root.viewing; repeat: true; onTriggered: root.now = Date.now() }
 
     component Label: Text {
-        color: Color.foreground; font.family: root.family; font.pixelSize: 12
+        color: Color.foreground; font.family: root.family; font.pixelSize: root.textSize
         textFormat: Text.PlainText
     }
     // Consistent hit-area heights and shared styling keep all panel
@@ -249,7 +251,7 @@ BarWidget {
                         anchors.left: parent.left; anchors.right: headerActions.left
                         anchors.verticalCenter: parent.verticalCenter
                         text: "VESSEL / MARINE RADAR"; elide: Text.ElideRight
-                        color: Color.accent; font.bold: true; font.pixelSize: 11
+                        color: Color.accent; font.bold: true; font.pixelSize: root.smallTextSize + 1
                     }
                     Row {
                         id: headerActions
@@ -332,7 +334,7 @@ BarWidget {
                             Label {
                                 text: VesselService.paused ? "PAUSED" : root.report.status
                                 color: statusBadge.live ? Color.accent : Color.muted
-                                font.bold: true; font.pixelSize: 11
+                                font.bold: true; font.pixelSize: root.smallTextSize + 1
                             }
                         }
                     }
@@ -347,7 +349,7 @@ BarWidget {
                         spacing: 12
                         Item {
                             width: parent.width
-                            height: root.expanded ? Math.min(width, Math.max(300, keys.height - 220)) : Math.min(width, 340)
+                            height: root.expanded ? Math.min(width, Math.max(300, keys.height - 260)) : Math.min(width, 380)
                             Radar {
                                 id: radar
                                 objectName: "radar"
@@ -355,6 +357,7 @@ BarWidget {
                                 width: parent.height; height: width
                                 controlsRightMargin: (width - parent.width) / 2
                                 scanning: root.viewing && !root.configuring && !VesselService.paused
+                                markerSize: root.expanded ? 14 : 12
                                 ships: root.ships; radiusNm: root.report.radius || 25
                                 basemap: VesselService.basemap
                                 selectedMmsi: root.selectedShip ? root.selectedShip.mmsi : ""
@@ -377,12 +380,12 @@ BarWidget {
                         }
                         Label {
                             text: VesselService.basemap.available ? "NATURAL EARTH · CITIES © GEONAMES" : "BASEMAP UNAVAILABLE"
-                            font.pixelSize: 9; color: Color.muted
+                            font.pixelSize: root.smallTextSize; color: Color.muted
                         }
                         Label {
                             width: parent.width; wrapMode: Text.WordWrap
-                            text: "● STATIONARY · ▲/◆ MOVING · ○ SPEED UNKNOWN"
-                            font.pixelSize: 9; color: Color.muted
+                            text: "● STATIONARY · ▲ MOVING · ○ SPEED UNKNOWN"
+                            font.pixelSize: root.smallTextSize; color: Color.muted
                         }
                     }
                     Column {
@@ -404,20 +407,20 @@ BarWidget {
                                 readonly property string destination: root.selectedShip ? (root.selectedShip.destination || "").trim() : ""
                                 visible: destination.length > 0
                                 width: parent.width; elide: Text.ElideRight
-                                font.pixelSize: 11; color: Color.muted
+                                font.pixelSize: root.smallTextSize + 1; color: Color.muted
                                 text: "Destination · " + destination
                             }
                             Label {
-                                width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 10; color: Color.muted
+                                width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: root.smallTextSize; color: Color.muted
                                 text: root.selectedShip ? root.selectedShip.type + " · MMSI " + root.selectedShip.mmsi : ""
                             }
                             Label {
-                                width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 10
+                                width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: root.smallTextSize
                                 text: root.selectedShip ? root.selectedShip.timeSource + " · " + Model.age(root.selectedShip.lastSeen, root.now) + (root.selectedShip.stale ? " · OLD POSITION" : "") : ""
                                 color: root.selectedShip && root.selectedShip.stale ? Color.accent : Color.muted
                             }
                             Label {
-                                width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 9; color: Color.muted
+                                width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: root.smallTextSize; color: Color.muted
                                 text: root.selectedShip ? (root.selectedShip.attribution || "") : ""
                                 visible: text.length > 0
                             }
@@ -455,7 +458,7 @@ BarWidget {
                                 required property var ship
                                 readonly property var modelData: ship
                                 objectName: "vessel-" + modelData.mmsi
-                                width: ListView.view.width; height: 32
+                                width: ListView.view.width; height: 38
                                 color: Color.background
                                 border.width: root.selectedShip && root.selectedShip.mmsi === modelData.mmsi ? 1 : 0
                                 border.color: Color.accent
@@ -465,7 +468,7 @@ BarWidget {
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.revealShip(modelData) }
                             }
                         }
-                        Label { width: parent.width; wrapMode: Text.WordWrap; text: root.report.demo ? "SIMULATED TRAFFIC · no live positions" : (root.report.provider === "aisstream" ? "AISStream" : "OpenWaters") + " · received vessels only · not for navigation"; font.pixelSize: 10; color: Color.muted }
+                        Label { width: parent.width; wrapMode: Text.WordWrap; text: root.report.demo ? "SIMULATED TRAFFIC · no live positions" : (root.report.provider === "aisstream" ? "AISStream" : "OpenWaters") + " · received vessels only · not for navigation"; font.pixelSize: root.smallTextSize; color: Color.muted }
                     }
                 }
             }

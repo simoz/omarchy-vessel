@@ -6,6 +6,7 @@ import "Model.js" as Model
 Item {
     id: root
     property bool scanning: false
+    property real markerSize: 12
     property var ships: []
     property var basemap: ({available: false, polygons: [], coastlines: []})
     property real radiusNm: 25
@@ -183,7 +184,7 @@ Item {
         onHeightChanged: requestPaint()
         onPaint: {
             var c = getContext("2d"); c.reset();
-            c.font = "10px monospace";
+            c.font = "12px monospace";
             var cities = (geography.cities || []).map(function(city) {
                 return {name: city.name, x: city.x - root.viewCenter.x, y: city.y - root.viewCenter.y, textWidth: c.measureText(city.name).width};
             });
@@ -191,7 +192,7 @@ Item {
             var occupied = [{x: width / 2 - offset.x - 14, y: height / 2 - offset.y - 6, width: 28, height: 32}];
             contacts.forEach(function(ship) {
                 var p = Model.point(ship, width, root.viewRadiusNm, root.centerPixels);
-                var margin = ship.mmsi === selection ? 10 : 6;
+                var margin = ship.mmsi === selection ? root.markerSize / 2 + 6 : root.markerSize / 2 + 2;
                 occupied.push({x: p.x - margin, y: p.y - margin, width: margin * 2, height: margin * 2});
             });
             var labels = Model.cityLabels(cities, width, viewScale, occupied);
@@ -210,13 +211,13 @@ Item {
             required property string modelData
             x: index === 1 ? root.width - width : index === 3 ? 0 : (root.width - width) / 2
             y: index === 0 ? 0 : index === 2 ? root.height - height : (root.height - height) / 2
-            text: modelData; color: Color.muted; font.pixelSize: 11; font.family: "monospace"
+            text: modelData; color: Color.muted; font.pixelSize: 12; font.family: "monospace"
         }
     }
     Rectangle { anchors.centerIn: parent; anchors.horizontalCenterOffset: -root.centerPixels.x; anchors.verticalCenterOffset: -root.centerPixels.y; visible: Math.hypot(root.centerPixels.x, root.centerPixels.y) < root.chartRadius - 4; width: 7; height: 7; radius: 4; color: Color.foreground }
-    Text { anchors.centerIn: parent; anchors.horizontalCenterOffset: -root.centerPixels.x; anchors.verticalCenterOffset: 17 - root.centerPixels.y; visible: Math.hypot(root.centerPixels.x, 17 - root.centerPixels.y) < root.chartRadius - 16; text: "YOU"; font.pixelSize: 9; color: Color.muted }
-    // Stationary contacts are dots; moving contacts use their course arrow, or
-    // a diamond when course is unavailable. Unknown speed is a hollow circle.
+    Text { anchors.centerIn: parent; anchors.horizontalCenterOffset: -root.centerPixels.x; anchors.verticalCenterOffset: 17 - root.centerPixels.y; visible: Math.hypot(root.centerPixels.x, 17 - root.centerPixels.y) < root.chartRadius - 16; text: "YOU"; font.pixelSize: 11; color: Color.muted }
+    // Stationary contacts are dots; moving contacts use a triangle, oriented by
+    // course when available. Unknown speed is a hollow circle.
     ShipModel { id: markerModel; ships: root.ships }
     Repeater {
         model: markerModel
@@ -235,36 +236,34 @@ Item {
             z: chosen ? 2 : 1
             opacity: modelData.stale ? 0.4 : 1
             Rectangle {
-                anchors.centerIn: parent; width: 18; height: 18; radius: 9
+                anchors.centerIn: parent; width: root.markerSize + 10; height: width; radius: width / 2
                 color: "transparent"; border.width: 1; border.color: Color.accent
                 visible: target.chosen
             }
             Canvas {
-                anchors.centerIn: parent; width: 8; height: 8
-                visible: target.motion === "moving" && target.hasCourse
+                anchors.centerIn: parent; width: root.markerSize; height: width
+                visible: target.motion === "moving"
                 rotation: target.hasCourse ? target.modelData.course : 0
                 property color ink: target.ink
                 property color outline: Color.background
+                onWidthChanged: requestPaint()
+                onHeightChanged: requestPaint()
                 onInkChanged: requestPaint()
                 onOutlineChanged: requestPaint()
                 onPaint: {
                     var c = getContext("2d"); c.reset();
+                    c.scale(width / 8, height / 8);
                     c.beginPath(); c.moveTo(4, 0.5); c.lineTo(7.5, 7.5); c.lineTo(0.5, 7.5); c.closePath();
                     c.fillStyle = ink; c.fill();
                     c.lineWidth = 0.6; c.strokeStyle = outline; c.stroke();
                 }
             }
             Rectangle {
-                anchors.centerIn: parent; width: 6; height: 6; radius: 3
+                anchors.centerIn: parent; width: root.markerSize * 0.75; height: width; radius: width / 2
                 visible: target.motion !== "moving"
                 color: target.motion === "stationary" ? target.ink : Color.background
                 border.width: target.motion === "stationary" ? 0.6 : 1
                 border.color: target.motion === "stationary" ? Color.background : target.ink
-            }
-            Rectangle {
-                anchors.centerIn: parent; width: 6; height: 6; rotation: 45
-                visible: target.motion === "moving" && !target.hasCourse
-                color: target.ink; border.width: 0.6; border.color: Color.background
             }
         }
     }
@@ -312,7 +311,7 @@ Item {
             property string accessibleLabel: label === "+" ? "Zoom in" : "Zoom out"
             property bool available: true
             signal activated()
-            width: 26; height: 26; radius: 3
+            width: 32; height: 32; radius: 3
             color: Color.background; border.color: activeFocus ? Color.accent : Color.muted
             opacity: available ? 0.9 : 0.3
             activeFocusOnTab: available

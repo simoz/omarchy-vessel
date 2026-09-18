@@ -84,7 +84,7 @@ use `Tab` to reach fields, search results and buttons, type normally, and use
 Letter shortcuts are inactive while editing Settings, and Ctrl/Alt/Super
 combinations are left to the desktop.
 
-Filled dots indicate stationary vessels (reported speed below 0.5 knots). Moving vessels use a triangle pointing along their course, or a diamond when course is unknown. Hollow circles indicate unknown speed. Stationary does not necessarily mean moored or anchored. The selected vessel has a ring. Positions fade after five minutes and expire after thirty minutes of active reception.
+Filled dots indicate stationary vessels (reported speed below 0.5 knots). Moving vessels use a triangle, rotated to the reported course when available. Without a reported course, its default orientation does not indicate direction. Hollow circles indicate unknown speed. Stationary does not necessarily mean moored or anchored. The selected vessel has a ring. Positions fade after five minutes and expire after thirty minutes of active reception.
 
 **VIEW** shows the visible radius. The contact counter shows visible vessels versus all received vessels in range. The list covers the full configured range.
 
