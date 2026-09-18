@@ -167,13 +167,14 @@ BarWidget {
         id: button
         anchors.fill: parent
         bar: root.bar
-        text: "Vessel"
+        // Measure one Nerd Font icon, just like the built-in bar buttons.
+        // The hidden label supplies the standard slot; BoatIcon paints it.
+        text: "\uf21a"
         labelVisible: false
         hasVisualContent: true
-        fixedWidth: root.vertical ? -1 : Style.space(20) + scaledHorizontalMargin * 2
         BoatIcon {
             anchors.centerIn: parent
-            width: Style.space(20); height: width
+            width: Style.space(16); height: width
             ink: button.foreground
         }
         tooltipText: "Vessel · " + root.report.status
