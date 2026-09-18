@@ -379,6 +379,11 @@ BarWidget {
                             text: VesselService.basemap.available ? "NATURAL EARTH · CITIES © GEONAMES" : "BASEMAP UNAVAILABLE"
                             font.pixelSize: 9; color: Color.muted
                         }
+                        Label {
+                            width: parent.width; wrapMode: Text.WordWrap
+                            text: "● STATIONARY · ▲/◆ MOVING · ○ SPEED UNKNOWN"
+                            font.pixelSize: 9; color: Color.muted
+                        }
                     }
                     Column {
                         width: keys.wide ? 320 : parent.width
@@ -426,6 +431,7 @@ BarWidget {
                             width: parent.width; wrapMode: Text.WordWrap; visible: !!root.report.error
                             text: root.report.error || ""; color: Color.accent
                         }
+                        ShipModel { id: contactModel; ships: root.ships }
                         // Bound the contact list height; the receiver already sorts by distance.
                         ListView {
                             id: contacts
@@ -443,10 +449,11 @@ BarWidget {
                             width: parent.width
                             height: Math.min(contentHeight, keys.wide ? Math.max(144, keys.height - 380) : 144)
                             clip: true
-                            model: root.ships
+                            model: contactModel
                             spacing: 4
                             delegate: Rectangle {
-                                required property var modelData
+                                required property var ship
+                                readonly property var modelData: ship
                                 objectName: "vessel-" + modelData.mmsi
                                 width: ListView.view.width; height: 32
                                 color: Color.background

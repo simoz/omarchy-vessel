@@ -25,6 +25,7 @@ def main():
         "Radar.qml",
         "Robot.qml",
         "Model.js",
+        "ShipModel.qml",
         "qmldir",
         "Keyboard.js",
         "KeyboardIcon.qml",

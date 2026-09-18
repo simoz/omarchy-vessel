@@ -215,16 +215,21 @@ Item {
     }
     Rectangle { anchors.centerIn: parent; anchors.horizontalCenterOffset: -root.centerPixels.x; anchors.verticalCenterOffset: -root.centerPixels.y; visible: Math.hypot(root.centerPixels.x, root.centerPixels.y) < root.chartRadius - 4; width: 7; height: 7; radius: 4; color: Color.foreground }
     Text { anchors.centerIn: parent; anchors.horizontalCenterOffset: -root.centerPixels.x; anchors.verticalCenterOffset: 17 - root.centerPixels.y; visible: Math.hypot(root.centerPixels.x, 17 - root.centerPixels.y) < root.chartRadius - 16; text: "YOU"; font.pixelSize: 9; color: Color.muted }
-    // Small, solid marks keep crowded harbours legible. Course changes rotate
-    // the triangle without repainting its Canvas; unknown course is a plain dot.
+    // Stationary contacts are dots; moving contacts use their course arrow, or
+    // a diamond when course is unavailable. Unknown speed is a hollow circle.
+    ShipModel { id: markerModel; ships: root.ships }
     Repeater {
-        model: root.visibleShips
+        model: markerModel
         Item {
             id: target
-            required property var modelData
+            required property var ship
+            readonly property var modelData: ship
+            objectName: "vessel-marker-" + modelData.mmsi
             readonly property var position: Model.point(modelData, root.width, root.viewRadiusNm, root.centerPixels)
+            visible: Model.inView(position, root.width)
             readonly property bool chosen: root.selectedMmsi === modelData.mmsi
             readonly property bool hasCourse: typeof modelData.course === "number" && isFinite(modelData.course) && modelData.course >= 0 && modelData.course < 360
+            readonly property string motion: Model.motion(modelData)
             readonly property color ink: chosen ? Color.foreground : Color.accent
             x: position.x - 16; y: position.y - 16; width: 32; height: 32
             z: chosen ? 2 : 1
@@ -236,7 +241,7 @@ Item {
             }
             Canvas {
                 anchors.centerIn: parent; width: 8; height: 8
-                visible: target.hasCourse
+                visible: target.motion === "moving" && target.hasCourse
                 rotation: target.hasCourse ? target.modelData.course : 0
                 property color ink: target.ink
                 property color outline: Color.background
@@ -251,8 +256,15 @@ Item {
             }
             Rectangle {
                 anchors.centerIn: parent; width: 6; height: 6; radius: 3
-                visible: !target.hasCourse; color: target.ink
-                border.width: 0.6; border.color: Color.background
+                visible: target.motion !== "moving"
+                color: target.motion === "stationary" ? target.ink : Color.background
+                border.width: target.motion === "stationary" ? 0.6 : 1
+                border.color: target.motion === "stationary" ? Color.background : target.ink
+            }
+            Rectangle {
+                anchors.centerIn: parent; width: 6; height: 6; rotation: 45
+                visible: target.motion === "moving" && !target.hasCourse
+                color: target.ink; border.width: 0.6; border.color: Color.background
             }
         }
     }

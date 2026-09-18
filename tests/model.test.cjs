@@ -83,3 +83,41 @@ test('distance units distinguish nautical miles, kilometres and statute miles', 
   assert.equal(m.distance(10, 'mi'), '11.5 mi');
   assert.equal(m.distance(0, 'mi'), '0.0 mi');
 });
+
+test('snapshot reconciliation preserves rows through updates, sorting and expiry', () => {
+  const rows = [], operations = [];
+  const model = {
+    get count() { return rows.length; },
+    get(i) { return rows[i]; },
+    insert(i, row) { operations.push('insert'); rows.splice(i, 0, row); },
+    remove(i) { operations.push('remove'); rows.splice(i, 1); },
+    move(from, to) { operations.push('move'); rows.splice(to, 0, rows.splice(from, 1)[0]); },
+    setProperty(i, key, value) { operations.push(key); rows[i][key] = value; }
+  };
+  const a = {mmsi:'123456789', distance:1, course:null};
+  const b = {mmsi:'987654321', distance:2, course:90};
+  m.syncShips(model, [a,b]);
+  const first = rows[0], second = rows[1];
+  operations.length = 0;
+  m.syncShips(model, JSON.parse(JSON.stringify([a,b])));
+  assert.deepEqual(operations, []);
+  m.syncShips(model, [{...b,distance:0.5,course:null},a]);
+  assert.equal(rows[0], second);
+  assert.equal(rows[1], first);
+  assert.equal(rows[0].ship.course, null);
+  assert.equal(rows[0].ship.distance, 0.5);
+  assert.deepEqual(operations, ['move','ship','signature']);
+  operations.length = 0;
+  m.syncShips(model, [a,{mmsi:'555555555',distance:3}]);
+  assert.equal(rows[0], first);
+  assert.deepEqual(operations, ['remove','insert']);
+  m.syncShips(model, []);
+  assert.equal(model.count, 0);
+});
+
+test('motion icons use reported speed, including zero and unknown values', () => {
+  for (const speed of [0, 0.1, 0.499]) assert.equal(m.motion({speed}), 'stationary');
+  for (const speed of [0.5, 2, 30]) assert.equal(m.motion({speed}), 'moving');
+  for (const speed of [null, undefined, '0', -1, NaN, Infinity])
+    assert.equal(m.motion({speed}), 'unknown');
+});

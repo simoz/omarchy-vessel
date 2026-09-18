@@ -1,5 +1,34 @@
 // All chart coordinates share the same margin; the outer space holds compass labels.
+// Reconcile snapshots by MMSI so Qt keeps existing delegates and Canvas textures.
+// Sorting moves rows; only new/expired vessels create or destroy delegates.
+function syncShips(model, ships) {
+    var wanted = {};
+    ships.forEach(function(ship) { wanted[ship.mmsi] = true; });
+    for (var i = model.count - 1; i >= 0; i--) {
+        if (!wanted[model.get(i).mmsi]) model.remove(i);
+    }
+    ships.forEach(function(ship, index) {
+        var position = index;
+        while (position < model.count && model.get(position).mmsi !== ship.mmsi) position++;
+        var signature = JSON.stringify(ship);
+        if (position === model.count) {
+            model.insert(index, {mmsi: ship.mmsi, ship: ship, signature: signature});
+        } else {
+            if (position !== index) model.move(position, index, 1);
+            if (model.get(index).signature !== signature) {
+                model.setProperty(index, "ship", ship);
+                model.setProperty(index, "signature", signature);
+            }
+        }
+    });
+}
+
 function radarRadius(size) { return Math.max(1, size / 2 - 24); }
+// Low AIS speed means stationary, not necessarily moored or anchored.
+function motion(ship) {
+    if (typeof ship.speed !== "number" || !isFinite(ship.speed) || ship.speed < 0) return "unknown";
+    return ship.speed < 0.5 ? "stationary" : "moving";
+}
 function inView(position, size, margin) {
     // Absorb floating-point rounding at the range ring, especially at high zoom.
     return Math.hypot(position.x - size / 2, position.y - size / 2) <= radarRadius(size) - (margin || 0) + 0.000001;
