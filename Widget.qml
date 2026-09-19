@@ -396,6 +396,7 @@ BarWidget {
                         width: keys.wide ? parent.width - 340 : parent.width
                         spacing: 12
                         Item {
+                            id: radarFrame
                             width: parent.width
                             height: root.expanded ? Math.min(width, Math.max(300, keys.height - 260)) : Math.min(width, 380)
                             Radar {
@@ -430,11 +431,12 @@ BarWidget {
                             font.pixelSize: root.smallTextSize; color: Color.muted
                         }
                         Item {
+                            id: chartFooter
                             width: parent.width
-                            height: Math.max(chartNotes.implicitHeight, lookout.height)
+                            height: root.expanded ? Math.max(chartNotes.implicitHeight, lookout.height) : chartNotes.implicitHeight
                             Column {
                                 id: chartNotes
-                                width: parent.width - lookout.width - 12
+                                width: parent.width - (root.expanded ? lookout.width + 12 : 0)
                                 anchors.left: parent.left; anchors.bottom: parent.bottom
                                 spacing: 6
                                 Label {
@@ -467,6 +469,7 @@ BarWidget {
                             }
                             Robot {
                                 id: lookout
+                                parent: root.expanded ? chartFooter : radarFrame
                                 objectName: "lookoutRobot"
                                 width: 48; height: 48
                                 anchors.right: parent.right; anchors.bottom: parent.bottom
