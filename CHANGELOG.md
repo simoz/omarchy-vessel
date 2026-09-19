@@ -9,6 +9,19 @@ version commit. From 0.7.1 onward, version headings link to release tags.
 
 ## Unreleased
 
+## [0.8.3](https://github.com/simoz/omarchy-vessel/releases/tag/v0.8.3) — 2026-09-19
+
+### Fixed
+
+- Place the robot above the contact counter in the expanded map footer, with the
+  counter aligned to the bottom of the OpenStreetMap credits. Keep the compact
+  layout unchanged and reserve enough space to prevent footer clipping.
+
+### Changed
+
+- Refresh expanded screenshots and catalog preview; update the renderer's
+  alignment checks for the contact counter.
+
 ## [0.8.2](https://github.com/simoz/omarchy-vessel/releases/tag/v0.8.2) — 2026-09-19
 
 ### Fixed
