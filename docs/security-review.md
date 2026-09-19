@@ -1,13 +1,14 @@
 # Security review
 
-Reviewed on **2026-09-19**. The reviewed runtime and tests are now recorded in
-commit `a6c3e8b74d8d3ae1c2b99cb986024d788fe4e7ba`, including the unreleased vector
-maps, zoom changes, QML refactor and the fixes described below. This documentation
-update follows that commit. The preceding release is 0.7.3 at
-`87d544ae2d8fbc0be4a08107422171a784b49fef`.
-The manifest still reads 0.7.3; this report does **not** claim that these fixes are
-in the published 0.7.3 release. File hashes and dependency-check results are recorded
-in [security-review-evidence.json](security-review-evidence.json).
+Reviewed on **2026-09-19** for **0.8.1**, with runtime and preview tooling at
+commit `eb6d1051f7098d906b17308f39a4ed9a388d750a` (manifest version 0.8.1).
+This pass reviews changes since the prior assessment at
+`a6c3e8b74d8d3ae1c2b99cb986024d788fe4e7ba`, including the intervening 0.8.0
+changes at `991d00a` and the 0.8.1 cleanup. Two additional security regressions
+and this report follow the reviewed runtime commit. Their exact contents are
+identified by the file hashes in
+[security-review-evidence.json](security-review-evidence.json).
+This identifies the reviewed checkout, not the publication status of a release tag.
 
 ## Scope and result
 
@@ -15,16 +16,47 @@ The review inspected the receiver and credential paths, settings storage,
 subprocess/runtime setup, HTTPS requests and redirects, vector parsing,
 projection, tile caching, and QML data/rendering boundaries. Checks combined source
 inspection, adversarial inputs, local WebSocket servers and the regression suite.
-No production credentials were used, and no third-party service was penetration-tested.
+**No new actionable security findings were identified in the reviewed changes.**
+The previous assessment's six fixes remain in place and their regression tests
+pass. No production credentials were used; this pass made only package-metadata
+and advisory queries to external services, not a penetration test of providers.
+Remaining trust boundaries and availability limits below still apply.
 
-The pass identified and fixed a credential-destination issue in redirected
-AISStream connections, two geometry-budget gaps, and several map-input/cache
-hardening issues. The credential redirect and polygon-closure issue were reproduced
-before the fixes. There is no evidence from this review of exploitation in a deployed
-installation. Remaining trust boundaries and availability limits are listed below;
-this is not a security certification.
+## 0.8.1 changes rechecked
 
-## Findings and fixes
+- **Attribution merging:** source text is cleaned and limited to 600 characters
+  per credit and eight sources per vessel before deduplication. The new prefix
+  comparison executes no provider-supplied code. A regression submits 100 sources
+  with oversized credits and confirms those bounds and retention of distinct
+  credits. Identical/overlapping credits and separate licenses are also covered.
+  Vessel names and credits remain plain text in QML.
+- **Demo removal and old settings:** the removed flag is excluded from validated
+  and public settings and cannot bypass coordinate validation. A regression reads
+  an actual legacy-shaped settings file, rejects missing manual coordinates,
+  repairs it while preserving both provider keys, and verifies private file
+  permissions. The removed CLI option no longer starts a simulated receiver.
+  An old demo configuration with valid location settings now follows the normal
+  selected-provider path; invalid manual locations require correction in Settings.
+- **Map activation and loading:** all normal radar views can request detailed maps;
+  failed/superseded requests retain the existing bounded helper, cache and retry
+  behaviour. Loading-state and closed-view regressions pass. Removing the demo
+  does not introduce any new network destination or send AIS keys to map services.
+- **Preview tooling:** screenshots require explicitly supplied local AIS and map
+  JSON. The renderer serializes the data into its temporary QML fixture and uses
+  the normal plain-text UI. It performs no network requests or credential lookup.
+  These developer inputs are trusted local files, not a new public ingestion API;
+  their whole-file reads have no size cap. Published screenshots intentionally
+  contain real vessel names, MMSIs, positions and source attributions. No raw
+  capture or credentials were added to the repository.
+- **Unchanged sensitive components:** receiver transport, TLS/redirect rules,
+  runtime installer, network URL validation, vector parser and map cache are
+  unchanged from the prior assessed runtime. Their full regression suite was
+  rerun; the dependency pin is unchanged and was checked again below.
+
+## Findings and fixes from the previous assessment
+
+The following findings were fixed before this pass. Their tests were rerun for
+0.8.1; the original vulnerable implementations were not reintroduced or retested.
 
 | ID | Finding and impact | Resolution and evidence |
 | --- | --- | --- |
@@ -92,19 +124,21 @@ Regressions: [test_receiver.py](../tests/test_receiver.py),
 | ipwho.is | IP-geolocation request; the provider observes the client's IP. |
 | PyPI/files.pythonhosted.org | Dependency installation requests; no saved AIS key is passed by the installer. |
 
-Pausing AIS reception does not disable map requests while the map is open. No persistent vessel-position history is written;
-cached tile filenames/data can reveal areas previously viewed to someone with local
+Pausing AIS reception does not disable map requests while the map is open. The
+runtime writes no persistent vessel-position history; developer captures and
+published screenshots are explicit exceptions outside normal receiver operation.
+Cached tile filenames/data can reveal areas previously viewed to someone with local
 access. These behaviours are documented in the [README](../README.md#data-and-privacy).
 
 ## Dependency check
 
-On 2026-09-19, the [OSV query API](https://google.github.io/osv.dev/api/) returned
+Rechecked on 2026-09-19 at 13:16 UTC: the [OSV query API](https://google.github.io/osv.dev/api/) returned
 no matching advisories for PyPI `websockets` version `17.1`. The pinned portable
 wheel URL and SHA-256 matched the
 [official PyPI metadata](https://pypi.org/pypi/websockets/17.1/json).
 This is a point-in-time package lookup, not proof of absence of vulnerabilities.
 
-The installed websockets 17.1 redirect implementation was also inspected: it strips
+The prior assessment inspected the websockets 17.1 redirect implementation: it strips
 sensitive headers across origins, which does not protect a key subsequently placed
 in an application message. SR-01 therefore restricts the receiver itself.
 
@@ -114,18 +148,20 @@ not new plugin dependencies.
 
 ## Verification
 
-- **64 Python tests and 33 JavaScript tests pass.** Python checks include private
-  settings, TLS rejection, provider credential isolation, redirects, cache errors,
+- **68 Python tests and 34 JavaScript tests pass.** Python checks include private
+  settings, legacy-demo migration, bounded attributions, TLS rejection, provider
+  credential isolation, redirects, cache errors,
   invalid geometry and resource limits. JavaScript checks include map-response
   ordering, closed views, retry behaviour, mouse/keyboard zoom and settings submission.
 - One parser regression runs **1,024 deterministic mutations** of a small valid MVT
   fixture (seed `20260919`). Accepted inputs decode; rejected inputs fail with the
   controlled exception type. This is targeted robustness testing, not exhaustive fuzzing.
-- The local redirect regression first failed because the second server received the
-  synthetic AISStream key, then passed after redirects were disabled. Those two peers
+- In the previous assessment, the local redirect regression first failed because
+  the second server received the synthetic AISStream key, then passed after
+  redirects were disabled. It passes again for 0.8.1. Those two peers
   use loopback WS; certificate verification is covered by the separate TLS test.
 - A cached real Genoa viewport still completes after the fixes: four level-11 tiles,
-  a 464,053-byte JSON response. It uses public fixture coordinates, no user location
+  a 464,052-byte compact JSON response. It uses public fixture coordinates, no user location
   or credentials, and no fresh map download during this pass.
 - Ruff lint/format checks and Git whitespace checks pass. The negative TLS test may
   emit a local handshake-reset diagnostic while its security assertions pass.
@@ -141,10 +177,11 @@ ruff check backend tools tests
 ruff format --check backend tools tests
 ```
 
-Qt rendering, pointer anchoring and the refactored service were checked earlier
-in this session with a mocked Omarchy host. They were not repeated as part of this
-security pass, which makes no QML changes. Real Quickshell/Hyprland operation and
-an authenticated production AISStream connection remain unverified here.
+Both detailed-map palettes were rendered again with the current QML and a mocked
+Omarchy host in a temporary checkout, using local AIS/map captures without network
+access. Existing published screenshots were left unchanged. Pointer anchoring is
+covered by the JavaScript regressions. Real Quickshell/Hyprland operation and an
+authenticated production AISStream connection remain unverified here.
 
 ## Remaining trust boundaries and limitations
 
@@ -173,5 +210,6 @@ The 2026-09-17 report covered 0.7.0 at commit
 `73d801fb89b6743286fceac20b1fc9ba89adad9e` and reported 39 Python/22 JavaScript tests.
 Earlier fixes for huge numbers, invalid text/deep JSON, public-settings allowlists,
 file/HTTP size limits, HTTPS downgrade rejection and installer shutdown races remain
-covered by the current tests. This report supersedes the earlier snapshot and adds
-OpenWaters, detailed maps and the findings above.
+covered by the current tests. The prior 2026-09-19 assessment at `a6c3e8b` added OpenWaters, detailed maps and
+SR-01 through SR-06 (64 Python/33 JavaScript tests). This 0.8.1 update supersedes
+its snapshot while retaining those findings as historical context.

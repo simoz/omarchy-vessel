@@ -24,6 +24,12 @@ version commit. From 0.7.1 onward, version headings link to release tags.
 - Update the catalog preview and require real AIS snapshots and detailed map
   batches when generating screenshots.
 
+### Security
+
+- Refresh the security assessment for 0.8.1, with no new actionable findings in
+  the reviewed changes. Recheck prior fixes and the dependency pin; add regressions
+  for bounded attributions and legacy demo settings that preserve credential safety.
+
 ## [0.8.0](https://github.com/simoz/omarchy-vessel/releases/tag/v0.8.0) — 2026-09-19
 
 ### Fixed

@@ -18,6 +18,25 @@ from receiver import Receiver
 
 
 class UntrustedInputTest(unittest.TestCase):
+    def test_many_oversized_attributions_remain_bounded(self):
+        fleet = ais.Fleet(0, 0, 25)
+        for index in range(100):
+            fleet.ingest(
+                dict(
+                    MessageType="PositionReport",
+                    MetaData=dict(MMSI=123456789),
+                    Message=dict(PositionReport=dict(Latitude=0, Longitude=0.1)),
+                    source=f"source-{index}",
+                    attribution=f"Credit {index}: " + "x" * 10_000,
+                ),
+                1000,
+            )
+        ship = fleet.snapshot(1000)["ships"][0]
+        self.assertEqual(len(ship["credits"]), 8)
+        self.assertTrue(all(len(value) <= 600 for value in ship["credits"].values()))
+        self.assertLessEqual(len(ship["attribution"]), 8 * 600 + 7 * 3)
+        self.assertEqual(ship["attribution"].count("Credit "), 8)
+
     def test_huge_numbers_cannot_crash_or_poison_the_fleet(self):
         fleet = ais.Fleet(0, 0, 25)
         receiver = Receiver(fleet, {}, "test-key", lambda _: None, provider="aisstream")
@@ -94,6 +113,22 @@ class SettingsBoundaryTest(unittest.TestCase):
             set(public), set(settings.DEFAULTS) | {"hasApiKey", "hasOpenwatersKey"}
         )
         self.assertNotIn("private-", json.dumps(public))
+
+    def test_legacy_demo_file_preserves_keys_without_skipping_validation(self):
+        settings.save(dict(apiKey="private-ais", openwatersKey="private-open"))
+        legacy = settings.read() | {"demo": True}
+        settings.path().write_text(json.dumps(legacy))
+        self.assertNotIn("demo", settings.read())
+        self.assertNotIn("private-", json.dumps(settings.public_settings()))
+        legacy.update(autoLocation=False, latitude=None, longitude=None)
+        settings.path().write_text(json.dumps(legacy))
+        with self.assertRaises(ValueError):
+            settings.read()
+        settings.save(dict(autoLocation=False, latitude=44.4056, longitude=8.9463))
+        self.assertEqual(settings.api_key("aisstream"), "private-ais")
+        self.assertEqual(settings.api_key("openwaters"), "private-open")
+        self.assertNotIn("demo", json.loads(settings.path().read_text()))
+        self.assertEqual(settings.path().stat().st_mode & 0o777, 0o600)
 
     def test_corrupt_saved_values_fail_validation_and_can_be_repaired(self):
         settings.save(dict(apiKey="private-key"))
