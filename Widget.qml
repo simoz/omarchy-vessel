@@ -587,16 +587,6 @@ BarWidget {
                     id: credits
                     width: parent.width; spacing: 2
                     readonly property int textSize: Math.max(10, root.smallTextSize - 1)
-                    readonly property string attribution: root.selectedShip
-                        ? (root.selectedShip.attribution || "").split(" · ")
-                            .filter(credit => !/^OpenWaters(?:\s+AIS)?$/i.test(credit.trim()))
-                            .join(" · ").trim() : ""
-                    Label {
-                        width: parent.width; wrapMode: Text.WordWrap
-                        font.pixelSize: credits.textSize; color: Color.muted
-                        text: credits.attribution || (root.report.provider === "aisstream" ? "AISStream" : "")
-                        visible: text.length > 0
-                    }
                     Text {
                         width: parent.width
                         visible: radar.detailed
