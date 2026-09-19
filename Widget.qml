@@ -486,25 +486,33 @@ BarWidget {
                                     font.pixelSize: root.smallTextSize; color: Color.muted
                                     text: root.selectedShip ? root.selectedShip.type + " ·" : ""
                                 }
+                                Label {
+                                    visible: vesselLink.hasImo
+                                    height: vesselLink.height
+                                    verticalAlignment: Text.AlignVCenter
+                                    font.pixelSize: root.smallTextSize; color: Color.muted
+                                    text: root.selectedShip ? "MMSI " + root.selectedShip.mmsi + " ·" : ""
+                                }
                                 Action {
                                     id: vesselLink
                                     objectName: "openVesselPage"
                                     readonly property string vesselUrl: Model.vesselUrl(root.selectedShip)
-                                    text: root.selectedShip ? "MMSI " + root.selectedShip.mmsi : ""
-                                    implicitWidth: mmsiLabel.implicitWidth + 4
-                                    implicitHeight: mmsiLabel.implicitHeight + 8
+                                    readonly property bool hasImo: !!root.selectedShip && /^[1-9][0-9]{6}$/.test(String(root.selectedShip.imo))
+                                    text: root.selectedShip ? (hasImo ? "IMO " + root.selectedShip.imo : "MMSI " + root.selectedShip.mmsi) : ""
+                                    implicitWidth: vesselIdentifierLabel.implicitWidth + 4
+                                    implicitHeight: vesselIdentifierLabel.implicitHeight + 8
                                     iconOnly: true
                                     color: "transparent"
                                     border.color: activeFocus ? Color.accent : "transparent"
                                     enabled: vesselUrl.length > 0
-                                    Accessible.name: text + ": open vessel on VesselFinder"
+                                    Accessible.name: text + ": " + Controls.ToolTip.text
                                     onTriggered: if (enabled) Qt.openUrlExternally(vesselUrl)
                                     onActiveFocusChanged: if (activeFocus) root.ensureVisible(vesselLink)
                                     Controls.ToolTip.visible: hovered
                                     Controls.ToolTip.delay: 500
-                                    Controls.ToolTip.text: "Open vessel on VesselFinder"
+                                    Controls.ToolTip.text: hasImo ? "Open vessel details on VesselFinder" : "Search vessel by MMSI on VesselFinder"
                                     Label {
-                                        id: mmsiLabel
+                                        id: vesselIdentifierLabel
                                         anchors.centerIn: parent
                                         text: vesselLink.text
                                         font.pixelSize: root.smallTextSize
