@@ -550,7 +550,7 @@ BarWidget {
                                         Label {
                                             id: vesselIdentifierLabel
                                             anchors.centerIn: parent
-                                            text: vesselLink.text
+                                            text: vesselLink.text + (vesselLink.hasImo ? " ↗" : "")
                                             font.underline: true
                                             color: Color.accent
                                         }
