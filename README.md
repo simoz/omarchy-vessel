@@ -24,8 +24,6 @@ Real AIS traffic received from OpenWaters on 19 September 2026, with the detaile
 | --- | --- |
 | ![Compact dark panel](docs/compact-preview-dark.png) | ![Compact light panel](docs/compact-preview-light.png) |
 
-Rendered with Qt and a mocked Omarchy host; these images do not verify Hyprland integration.
-
 ## Why I built Vessel
 
 When I'm working by the sea, I see boats passing by and always wonder: What's that boat called? Where has it come from? Where is it going?
