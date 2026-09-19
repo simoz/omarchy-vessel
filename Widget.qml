@@ -460,10 +460,42 @@ BarWidget {
                         Rectangle { visible: !keys.wide; width: parent.width; height: 1; color: Color.muted; opacity: 0.3 }
                         Column {
                             width: parent.width; spacing: 6; visible: root.selectedShip !== null
-                            Label {
-                                width: parent.width; wrapMode: Text.WordWrap
-                                font.pixelSize: 22; font.bold: true
-                                text: root.selectedShip ? (root.selectedShip.name || "MMSI " + root.selectedShip.mmsi) : ""
+                            Item {
+                                width: parent.width
+                                height: Math.max(vesselName.implicitHeight, vesselLink.implicitHeight)
+                                Label {
+                                    id: vesselName
+                                    width: Math.min(implicitWidth, parent.width - vesselLink.width - 6)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    wrapMode: Text.WordWrap
+                                    font.pixelSize: 22; font.bold: true
+                                    text: root.selectedShip ? (root.selectedShip.name || "MMSI " + root.selectedShip.mmsi) : ""
+                                }
+                                Action {
+                                    id: vesselLink
+                                    objectName: "openVesselPage"
+                                    anchors.left: vesselName.right
+                                    anchors.leftMargin: 6
+                                    anchors.top: parent.top
+                                    implicitWidth: 30; implicitHeight: 30
+                                    iconOnly: true
+                                    text: "Open vessel on MarineTraffic"
+                                    enabled: !!root.selectedShip && /^[0-9]{9}$/.test(String(root.selectedShip.mmsi))
+                                    onTriggered: {
+                                        if (enabled)
+                                            Qt.openUrlExternally("https://www.marinetraffic.com/en/ais/details/ships/mmsi:" + encodeURIComponent(root.selectedShip.mmsi));
+                                    }
+                                    onActiveFocusChanged: if (activeFocus) root.ensureVisible(vesselLink)
+                                    Controls.ToolTip.visible: hovered
+                                    Controls.ToolTip.delay: 500
+                                    Controls.ToolTip.text: text
+                                    Label {
+                                        anchors.centerIn: parent
+                                        text: "↗"
+                                        font.pixelSize: 22
+                                        color: Color.accent
+                                    }
+                                }
                             }
                             Label {
                                 width: parent.width; wrapMode: Text.WordWrap
