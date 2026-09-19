@@ -64,5 +64,5 @@ test('offline geography is reserved for failed detail, not initial loading', () 
   assert.equal(loading(), false);
   state.detailed = false;
   state.detailEnabled = false;
-  assert.equal(loading(), false); // Offline demo needs no network map.
+  assert.equal(loading(), false); // A disabled detail layer needs no network map.
 });

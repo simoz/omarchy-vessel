@@ -15,7 +15,6 @@ import ais
 import basemap
 import geometry as g
 import settings
-import vessel
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -161,12 +160,20 @@ class SettingsTest(unittest.TestCase):
             self.assertEqual(settings.read()["unit"], unit)
             self.assertEqual(settings.read()["radiusNm"], 25)
 
+    def test_removed_demo_preference_cannot_bypass_location_validation(self):
+        public = settings.save(dict(demo=True, apiKey="original"))
+        self.assertNotIn("demo", public)
+        self.assertNotIn("demo", json.loads(settings.path().read_text()))
+        self.assertEqual(settings.api_key(), "original")
+        with self.assertRaises(ValueError):
+            settings.save(dict(demo=True, autoLocation=False))
+
     def test_invalid_settings_do_not_replace_saved_key(self):
         settings.save(dict(apiKey="original"))
         for bad in [
             dict(radiusNm=0),
             dict(latitude=91),
-            dict(demo="true"),
+            dict(autoLocation="true"),
             dict(autoLocation=False),
             dict(unit="miles"),
             dict(apiKey="bad\nkey"),
@@ -211,24 +218,10 @@ class BasemapTest(unittest.TestCase):
             for rings in data["polygons"]
         )
 
-    def test_genova_geography_and_demo_stay_offshore(self):
+    def test_genova_land_and_sea_geography(self):
         self.assertTrue(self.genova["available"])
         self.assertTrue(self.land([0, -0.7], self.genova))
         self.assertFalse(self.land([0, 0.7], self.genova))
-        for tick in [0, 314, 628, 942]:
-            fleet = ais.Fleet(*g.GENOA, 25)
-            vessel.populate_demo(fleet, tick, 1000)
-            for ship in fleet.snapshot(1000)["ships"]:
-                angle = math.radians(ship["bearing"])
-                self.assertFalse(
-                    self.land(
-                        [
-                            math.sin(angle) * ship["distance"] / 25,
-                            -math.cos(angle) * ship["distance"] / 25,
-                        ],
-                        self.genova,
-                    )
-                )
 
     def test_offline_coastal_labels_are_geographically_projected(self):
         cities = self.genova["cities"]
@@ -259,45 +252,6 @@ class BasemapTest(unittest.TestCase):
                 self.assertTrue(self.land([0, 0], data))
             if lat > 89:
                 self.assertFalse(self.land([0, 0], data))
-
-
-class DemoTest(unittest.TestCase):
-    def test_demo_uses_standard_library_without_runtime_installation(self):
-        with tempfile.TemporaryDirectory() as directory:
-            env = dict(os.environ, XDG_DATA_HOME=directory, XDG_CONFIG_HOME=directory)
-            process = subprocess.Popen(
-                [
-                    sys.executable,
-                    "-B",
-                    "-S",
-                    str(ROOT / "backend/vessel.py"),
-                    "--demo",
-                    "--latitude",
-                    "0",
-                    "--longitude",
-                    "0",
-                ],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                env=env,
-            )
-            try:
-                first = json.loads(process.stdout.readline())
-                second = json.loads(process.stdout.readline())
-                third = json.loads(process.stdout.readline())
-                self.assertEqual(first["status"], "LOCATING")
-                self.assertEqual(second["latitude"], g.GENOA[0])
-                self.assertEqual(
-                    second["location"], "Genoa (Italy) · simulated traffic"
-                )
-                self.assertEqual(len(second["ships"]), 6)
-                self.assertIn("basemap", second)
-                self.assertNotIn("basemap", third)
-                self.assertEqual(list(Path(directory).iterdir()), [])
-            finally:
-                process.terminate()
-                process.communicate(timeout=5)
 
 
 if __name__ == "__main__":

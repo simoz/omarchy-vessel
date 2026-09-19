@@ -13,14 +13,13 @@ function form(mode) {
   vm.runInContext(source.match(/    function save\([^]*?\n    }/)[0], state);
   return {state,saved};
 }
-test('location modes save unambiguous preferences and leave demo mode', () => {
+test('location modes save unambiguous preferences', () => {
   for (const mode of ['city','ip','coordinates']) {
     const {state,saved} = form(mode);
     state.save();
     assert.equal(saved.length,1);
     assert.equal(saved[0].autoLocation,mode==='ip');
     assert.equal(saved[0].cityName,mode==='city'?'Genoa':'');
-    assert.equal(saved[0].demo,false);
     assert.equal(saved[0].latitude,'44.4');
     assert.equal(saved[0].apiKey,'replacement');
     assert.equal(state.apiKey.text,'');

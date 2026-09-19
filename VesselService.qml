@@ -63,7 +63,7 @@ Item {
     }
     // Receiver ownership, user preferences and settings/search feedback.
     property var config: ({})
-    property var preferences: ({provider: "openwaters", radiusNm: 25, autoLocation: true, demo: false, unit: "nm", hasApiKey: false, hasOpenwatersKey: false})
+    property var preferences: ({provider: "openwaters", radiusNm: 25, autoLocation: true, unit: "nm", hasApiKey: false, hasOpenwatersKey: false})
     readonly property bool searchingCity: cityProcess.running
     property var cityResults: []
     property var cityCache: []

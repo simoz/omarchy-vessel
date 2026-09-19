@@ -37,7 +37,7 @@ VENV_PYTHON="$(python3 -B -c 'import sys; sys.path.insert(0, "backend"); import 
 ```
 
 The tests cover AIS normalization, Class A/B merging, timestamps and expiry,
-dateline/polar geometry, offshore demo placement, settings validation and private
+dateline/polar geometry, settings validation and private
 file permissions. Local WebSocket tests exercise compressed binary messages,
 subscription rejection, reconnection, cancellation and rejection of untrusted TLS certificates without an AIS account. OpenWaters checks cover anonymous access, optional authentication, snapshot age, source attribution and isolation from saved AISStream credentials. Bootstrap tests cover failed installation, cancellation and path aliases.
 Security regression tests cover oversized numeric values, malformed inputs,
@@ -59,7 +59,7 @@ ruff format --check backend tools tests
 
 Modules:
 
-- `backend/vessel.py`: command-line entry point, location selection and offline demo.
+- `backend/vessel.py`: command-line entry point and location selection.
 - `backend/ais.py`: AIS validation, Class A/B merging and bounded fleet snapshots.
 - `backend/receiver.py`: WebSocket subscription, status updates, cancellation and reconnection.
 - `backend/geometry.py`, `backend/basemap.py`: nautical calculations and the offline map.
@@ -110,23 +110,26 @@ harness when moving view code.
 
 ## Preview images
 
-Simulation is internal only: run `python3 backend/vessel.py --demo` for the
-offline Genoa fixture. It is not exposed in Settings. The preview renderer uses
-the same fixture directly.
-
-With PySide6 installed in a development environment, regenerate the screenshots:
+All previews use real AIS traffic and a detailed map. With PySide6 installed,
+provide a recent receiver JSON snapshot for Genoa (44.4056, 8.9463), radius 25 nm,
+and a JSON batch produced by `--map-detail` for the same location and radius,
+zoom 8 and center (0, 0):
 
 ```sh
-QT_QPA_PLATFORM=offscreen QT_SCALE_FACTOR=2 python3 tools/render_previews.py
+QT_QPA_PLATFORM=offscreen QT_SCALE_FACTOR=2 \
+  VESSEL_PREVIEW_LIVE=/tmp/vessel-live-preview.json \
+  VESSEL_PREVIEW_DETAIL=/tmp/vessel-detail-genoa.json \
+  python3 tools/render_previews.py
 ```
 
-The renderer uses the current QML interface, bundled geography and the offline
-Genoa demo. Only the Quickshell host and receiver are stubbed, so no API key or
-network connection is used. The main expanded preview is 2400 × 1600 pixels;
-settings use a narrower window. This checks Qt rendering, not Hyprland integration.
-The marketplace serves optimized copies of preview.png, so its catalog must
-refresh after the updated source image is pushed.
+The snapshot must contain received vessels and the selected provider. Capture and
+render promptly so the displayed ages remain representative. The renderer uses
+the current QML interface and preserves positions, timestamps and attributions;
+only the Quickshell host and receiver are stubbed. Rendering itself is offline.
+Missing inputs or unavailable detailed coverage stop generation.
 
-To also render the detailed-map close-up, set `VESSEL_PREVIEW_DETAIL` to a JSON
-batch produced by `--map-detail` for Genoa, radius 25 nm, zoom 8 and center (0, 0).
-The renderer reads that file locally and keeps all contacts labelled as simulated.
+The renderer writes `docs/live-detail-preview.png` (dark),
+`docs/live-detail-preview-light.png` (light), and copies the light image to
+`preview.png` for the catalog. Images are 2400 × 1600 pixels. This checks Qt
+rendering, not Hyprland integration. The marketplace serves optimized copies of
+`preview.png`, so its catalog must refresh after the updated image is pushed.

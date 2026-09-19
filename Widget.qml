@@ -402,7 +402,7 @@ BarWidget {
                                 detail: VesselService.mapDetail
                                 failedDetailQuery: VesselService.completedDetail && isFinite(VesselService.detailRetryAt)
                                     ? VesselService.completedDetail : ""
-                                detailEnabled: root.viewing && !root.configuring && !root.report.demo
+                                detailEnabled: root.viewing && !root.configuring
                                 onDetailRequested: query => VesselService.requestDetail(query)
                                 selectedMmsi: root.selectedShip ? root.selectedShip.mmsi : ""
                                 onCloseRequested: root.close()
@@ -412,7 +412,7 @@ BarWidget {
                                 objectName: "lookoutRobot"
                                 width: 48; height: 48
                                 anchors.right: parent.right; anchors.bottom: parent.bottom
-                                awake: !VesselService.paused && ["LIVE", "LISTENING", "DEMO"].indexOf(root.report.status) !== -1
+                                awake: !VesselService.paused && ["LIVE", "LISTENING"].indexOf(root.report.status) !== -1
                                 live: !VesselService.paused && root.report.status === "LIVE"
                                 visible: root.viewing
                             }
@@ -524,7 +524,7 @@ BarWidget {
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.revealShip(modelData) }
                             }
                         }
-                        Label { width: parent.width; wrapMode: Text.WordWrap; text: root.report.demo ? "SIMULATED TRAFFIC · no live positions" : (root.report.provider === "aisstream" ? "AISStream" : "OpenWaters") + " · received vessels only · not for navigation"; font.pixelSize: root.smallTextSize; color: Color.muted }
+                        Label { width: parent.width; wrapMode: Text.WordWrap; text: (root.report.provider === "aisstream" ? "AISStream" : "OpenWaters") + " · received vessels only · not for navigation"; font.pixelSize: root.smallTextSize; color: Color.muted }
                     }
                 }
             }

@@ -1,56 +1,18 @@
 #!/usr/bin/env python3
-"""Vessel's JSON-lines receiver. Only live mode needs the managed WebSocket dependency."""
+"""Vessel's JSON-lines receiver. Uses the managed WebSocket dependency."""
 
 import argparse
 import asyncio
 import json
-import math
 import signal
 import sys
-import time
 
 import basemap
 import settings
 from ais import Fleet, clean
-from geometry import GENOA, coordinates, destination, number
+from geometry import coordinates, number
 from network import fetch_json
 from receiver import Receiver
-
-
-def populate_demo(fleet, tick, now):
-    boats = (
-        ("HAVEN", 37),
-        ("NORTH STAR", 70),
-        ("OUTPOST", 30),
-        ("BLUE HOUR", 60),
-        ("LITTLE TERN", 36),
-        ("BRONZE", 52),
-    )
-    for index, (name, kind) in enumerate(boats):
-        # Motion stays offshore, south of Genoa (Italy). Live traffic is never animated.
-        bearing = 160 + index * 12 + math.sin(tick * 0.005) * 5
-        lat, lon = destination(
-            fleet.lat, fleet.lon, fleet.radius * (0.18 + index * 0.125), bearing
-        )
-        fleet.ingest(
-            dict(
-                MessageType="ExtendedClassBPositionReport",
-                MetaData=dict(MMSI=999000001 + index),
-                Message=dict(
-                    ExtendedClassBPositionReport=dict(
-                        Valid=True,
-                        Latitude=lat,
-                        Longitude=lon,
-                        Name="DEMO " + name,
-                        Type=kind,
-                        Sog=3 + index * 2,
-                        Cog=(bearing + (90 if math.cos(tick * 0.005) >= 0 else -90))
-                        % 360,
-                    )
-                ),
-            ),
-            now,
-        )
 
 
 def output(data):
@@ -91,7 +53,6 @@ def main(argv=None):
         action="store_true",
         help="Prepare the managed live dependency without connecting",
     )
-    parser.add_argument("--demo", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--auto-location", action="store_true")
     parser.add_argument("--latitude", type=float)
     parser.add_argument("--longitude", type=float)
@@ -154,9 +115,8 @@ def main(argv=None):
             saved = settings.read()
             provider = saved["provider"]
             city_name = saved["cityName"]
-            args.radius, args.demo, args.auto_location = (
+            args.radius, args.auto_location = (
                 saved["radiusNm"],
-                saved["demo"],
                 saved["autoLocation"],
             )
             args.latitude, args.longitude = (
@@ -170,47 +130,40 @@ def main(argv=None):
             )
     if not number(args.radius, 1, 200):
         return setup("Radius must be between 1 and 200 nautical miles.")
-    if not args.demo:
-        try:
-            key = settings.api_key(provider)
-        except (OSError, ValueError, TypeError, AttributeError, RecursionError):
-            return setup(
-                "Could not read your API key. Open Settings and save it again."
-            )
-        if provider == "aisstream" and not key and not args.prepare_runtime:
-            return setup(
-                "Open Settings to enter your AISStream API key or select OpenWaters."
-            )
-        try:
-            from runtime import ensure_runtime
+    try:
+        key = settings.api_key(provider)
+    except (OSError, ValueError, TypeError, AttributeError, RecursionError):
+        return setup("Could not read your API key. Open Settings and save it again.")
+    if provider == "aisstream" and not key and not args.prepare_runtime:
+        return setup(
+            "Open Settings to enter your AISStream API key or select OpenWaters."
+        )
+    try:
+        from runtime import ensure_runtime
 
-            ensure_runtime(
-                lambda status, error: output(
-                    dict(status=status, error=error, ships=[], total=0)
-                )
+        ensure_runtime(
+            lambda status, error: output(
+                dict(status=status, error=error, ships=[], total=0)
             )
-        except Exception:
-            # Installer failures must use a stable, credential-free UI message.
-            return setup(
-                "Could not prepare Python. Check internet access, available disk space and Python venv support, then reconnect."
-            )
-        if args.prepare_runtime:
-            output(dict(status="READY", error="", ships=[], total=0))
-            return 0
+        )
+    except Exception:
+        # Installer failures must use a stable, credential-free UI message.
+        return setup(
+            "Could not prepare Python. Check internet access, available disk space and Python venv support, then reconnect."
+        )
+    if args.prepare_runtime:
+        output(dict(status="READY", error="", ships=[], total=0))
+        return 0
     state = dict(
         status="LOCATING",
         error="",
         ships=[],
         total=0,
-        demo=args.demo,
         radius=args.radius,
         provider=provider,
     )
     output(state)
-    if args.demo:
-        lat, lon = GENOA
-        label = "Genoa (Italy) · simulated traffic"
-    elif args.latitude is not None or args.longitude is not None:
+    if args.latitude is not None or args.longitude is not None:
         lat, lon = args.latitude, args.longitude
         if not coordinates(lat, lon):
             return setup("Set both latitude and longitude within valid ranges.", state)
@@ -229,18 +182,10 @@ def main(argv=None):
         latitude=lat,
         longitude=lon,
         location=label,
-        status="DEMO" if args.demo else "CONNECTING",
+        status="CONNECTING",
     )
     state["basemap"] = basemap.build(lat, lon, args.radius)
     fleet = Fleet(lat, lon, args.radius)
-    if args.demo:
-        tick = 0
-        while True:
-            populate_demo(fleet, tick, time.time())
-            output(state | fleet.snapshot(time.time()))
-            state.pop("basemap", None)
-            tick += 1
-            time.sleep(1)
     asyncio.run(Receiver(fleet, state, key, output, provider=provider).run())
     return 0
 

@@ -10,7 +10,6 @@ DEFAULTS = dict(
     provider="openwaters",
     radiusNm=25,
     autoLocation=True,
-    demo=False,
     unit="nm",
     latitude=None,
     longitude=None,
@@ -64,8 +63,9 @@ def validate_preferences(values):
     if result["provider"] not in ("openwaters", "aisstream"):
         raise ValueError("Invalid AIS provider")
     result["radiusNm"] = bounded_number(result["radiusNm"], 1, 200)
-    if result["unit"] not in ("nm", "km", "mi") or any(
-        type(result[key]) is not bool for key in ("demo", "autoLocation")
+    if (
+        result["unit"] not in ("nm", "km", "mi")
+        or type(result["autoLocation"]) is not bool
     ):
         raise ValueError("Invalid preferences")
     for key, limit in (("latitude", 90), ("longitude", 180)):
@@ -73,10 +73,8 @@ def validate_preferences(values):
         result[key] = (
             None if value in (None, "") else bounded_number(value, -limit, limit)
         )
-    if (
-        not result["demo"]
-        and not result["autoLocation"]
-        and any(result[key] is None for key in ("latitude", "longitude"))
+    if not result["autoLocation"] and any(
+        result[key] is None for key in ("latitude", "longitude")
     ):
         raise ValueError("Both coordinates are required")
     city = result["cityName"]

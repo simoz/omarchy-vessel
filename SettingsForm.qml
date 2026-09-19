@@ -32,7 +32,7 @@ Column {
         var values = {provider: provider, radiusNm: radius.text,
             latitude: latitude.text, longitude: longitude.text,
             cityName: locationMode === "city" ? cityName : "",
-            autoLocation: locationMode === "ip", demo: false,
+            autoLocation: locationMode === "ip",
             unit: kilometres.checked ? "km" : miles.checked ? "mi" : "nm"};
         values[provider === "openwaters" ? "openwatersKey" : "apiKey"] = apiKey.text;
         VesselService.saveSettings(values);

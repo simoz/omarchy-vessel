@@ -6,9 +6,17 @@ A marine radar for Omarchy. Put a name to the boats on your horizon, with a litt
 
 See nearby AIS-equipped vessels, their names, speed and reported destinations on a map with coastlines and coastal cities. Vessel follows your Omarchy palette and lives behind a single boat icon in the bar.
 
-![Vessel expanded view with simulated traffic](docs/demo-preview.png)
+## Screenshots
 
-[Detailed map of Genoa](docs/detail-preview.png)
+Real AIS traffic received from OpenWaters on 19 September 2026, with the detailed OpenFreeMap map of Genoa. These are captured snapshots; vessel positions and timestamps reflect the reports received.
+
+### Dark palette
+
+![Vessel in a dark palette with real AIS traffic and a detailed map of Genoa](docs/live-detail-preview.png)
+
+### Light palette
+
+![Vessel in a light palette with real AIS traffic and a detailed map of Genoa](docs/live-detail-preview-light.png)
 
 ## Why I built Vessel
 
@@ -39,7 +47,7 @@ OpenWaters loads recent positions immediately, then streams updates. Positions r
 
 Use **CHANGE** to replace a saved credential. An empty key field preserves it. OpenWaters tokens and AISStream keys are stored separately. Preferences and credentials are stored in `~/.config/omarchy-vessel/settings.json` (or `$XDG_CONFIG_HOME/omarchy-vessel/settings.json`), with owner-only file permissions (`0600`). Keep this file out of public dotfile backups.
 
-[View Settings](docs/settings-preview.png) · [OpenWaters availability and limits](https://openwaters.io/ais/) · [AISStream documentation](https://aisstream.io/documentation)
+[OpenWaters availability and limits](https://openwaters.io/ais/) · [AISStream documentation](https://aisstream.io/documentation)
 
 ## Use the radar
 
@@ -94,8 +102,6 @@ Filled dots indicate stationary vessels (reported speed below 0.5 knots). Moving
 
 **LIVE** indicates incoming reports, **LISTENING** an active connection awaiting reports, and **PAUSED** a saved view with reception stopped. Reception continues when you close the panel; click the status next to the location to pause it. Click **PAUSED** again to resume. The same control is reachable with Tab and activates with Enter or Space. **REJECTED** indicates a credential, subscription area or connection limit issue.
 
-[Light palette](docs/demo-preview-light.png) · [Zoomed radar](docs/zoom-preview.png) · [Panned map](docs/pan-preview.png) · [Keyboard guide](docs/keyboard-preview.png)
-
 ## Update
 
 ```sh
@@ -125,7 +131,7 @@ Vessel is built for watching nearby traffic. Coverage and reported destinations 
 - **Photon / OpenStreetMap** provides city search from the name you enter.
 - **ipwho.is** provides approximate location from your public IP when enabled.
 - **Natural Earth** coastlines and **GeoNames** city labels are bundled with the plugin.
-- **OpenFreeMap** receives requests for the map tiles you view, which reveal the viewed area and your IP address. These requests are independent of AIS reception and may continue while reception is paused and the map is open. No AIS keys or vessel positions are sent. Detailed tiles are stored under `$XDG_CACHE_HOME/omarchy-vessel/tiles` (normally `~/.cache/omarchy-vessel/tiles`); above 128 MiB the cache is trimmed to 96 MiB after a batch, so downloads can temporarily exceed that threshold. Demo mode remains offline. Map data attribution is shown below the radar; see [OpenFreeMap](https://openfreemap.org/) and [OpenStreetMap copyright](https://www.openstreetmap.org/copyright).
+- **OpenFreeMap** receives requests for the map tiles you view, which reveal the viewed area and your IP address. These requests are independent of AIS reception and may continue while reception is paused and the map is open. No AIS keys or vessel positions are sent. Detailed tiles are stored under `$XDG_CACHE_HOME/omarchy-vessel/tiles` (normally `~/.cache/omarchy-vessel/tiles`); above 128 MiB the cache is trimmed to 96 MiB after a batch, so downloads can temporarily exceed that threshold. Map data attribution is shown below the radar; see [OpenFreeMap](https://openfreemap.org/) and [OpenStreetMap copyright](https://www.openstreetmap.org/copyright).
 
 Code is licensed under [MIT](LICENSE). Natural Earth data is public domain; GeoNames data is licensed under [CC BY 4.0](https://www.geonames.org/about.html). See [data sources and attribution](data/README.md).
 

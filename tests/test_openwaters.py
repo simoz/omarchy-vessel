@@ -14,7 +14,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 import settings
-from ais import Fleet
+from ais import Fleet, attribution_text
 from geometry import bounding_boxes
 from receiver import Receiver
 from websockets.asyncio.server import serve
@@ -33,6 +33,34 @@ def event(kind="PositionReport", age=0, source="aishub", attribution="AISHub", *
 
 
 class OpenWatersTest(unittest.IsolatedAsyncioTestCase):
+    def test_overlapping_attributions_keep_full_credit_in_either_arrival_order(self):
+        provider = "Open Waters AIS (https://openwaters.io/ais/)"
+        combined = provider + ". AISHub (https://www.aishub.net)"
+        for credits in ([provider, combined], [combined, provider]):
+            with self.subTest(credits=credits):
+                fleet = Fleet(0, 0, 25)
+                receiver = Receiver(fleet, {}, "", lambda _: None)
+                for index, credit in enumerate(credits):
+                    receiver.handle_message(
+                        json.dumps(event(source=f"source{index}", attribution=credit))
+                    )
+                self.assertEqual(
+                    fleet.snapshot(time.time())["ships"][0]["attribution"], combined
+                )
+
+    def test_distinct_licenses_and_similar_source_names_are_preserved(self):
+        credits = [
+            "Source",
+            "Source extended",
+            "Source. License A",
+            "Source. License B",
+        ]
+        self.assertEqual(
+            attribution_text(credits),
+            "Source extended · Source. License A · Source. License B",
+        )
+        self.assertEqual(attribution_text(["AISHub", "AISHub"]), "AISHub")
+
     async def test_snapshot_subscription_anonymous_and_authenticated(self):
         for token in ("", "openwaters-test-token"):
             with self.subTest(token=bool(token)):

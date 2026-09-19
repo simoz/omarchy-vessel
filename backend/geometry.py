@@ -1,4 +1,4 @@
-"""Shared nautical geometry for the AIS filter, demo and offline map."""
+"""Shared nautical geometry for the AIS filter and offline map."""
 
 import math
 

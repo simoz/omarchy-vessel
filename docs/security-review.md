@@ -92,8 +92,7 @@ Regressions: [test_receiver.py](../tests/test_receiver.py),
 | ipwho.is | IP-geolocation request; the provider observes the client's IP. |
 | PyPI/files.pythonhosted.org | Dependency installation requests; no saved AIS key is passed by the installer. |
 
-Pausing AIS reception does not disable map requests while the map is open. Demo
-mode does not request online maps. No persistent vessel-position history is written;
+Pausing AIS reception does not disable map requests while the map is open. No persistent vessel-position history is written;
 cached tile filenames/data can reveal areas previously viewed to someone with local
 access. These behaviours are documented in the [README](../README.md#data-and-privacy).
 

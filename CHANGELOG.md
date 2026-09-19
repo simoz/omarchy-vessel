@@ -9,6 +9,21 @@ version commit. From 0.7.1 onward, version headings link to release tags.
 
 ## Unreleased
 
+## [0.8.1](https://github.com/simoz/omarchy-vessel/releases/tag/v0.8.1) — 2026-09-19
+
+### Fixed
+
+- Avoid duplicate OpenWaters attribution when one source credit already includes
+  another, preserving additional source and license information.
+
+### Changed
+
+- Remove the internal traffic demo, its command-line option and preferences.
+- Replace old previews with real AIS traffic over detailed maps in dark and light
+  palettes, shown together in the README's Screenshots section.
+- Update the catalog preview and require real AIS snapshots and detailed map
+  batches when generating screenshots.
+
 ## [0.8.0](https://github.com/simoz/omarchy-vessel/releases/tag/v0.8.0) — 2026-09-19
 
 ### Fixed

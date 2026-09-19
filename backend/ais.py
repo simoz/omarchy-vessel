@@ -53,6 +53,20 @@ def category(code):
     return TYPES.get(code, "Unknown" if code == 0 else "Other")
 
 
+def attribution_text(credits):
+    """Keep complete credits, omitting a credit already prefixed to another."""
+    unique = list(dict.fromkeys(credits))
+    return " · ".join(
+        credit
+        for credit in unique
+        if not any(
+            other.startswith(credit + separator)
+            for other in unique
+            for separator in (". ", " · ", "; ", " • ")
+        )
+    )
+
+
 def message_time(metadata, received):
     """Use only timezone-aware, plausible AIS times; otherwise label receipt time."""
     raw = metadata.get("time_utc")
@@ -118,7 +132,7 @@ class Fleet:
             if source in credits or len(credits) < 8:
                 credits[source] = clean(envelope.get("attribution"), 600) or source
             ship["credits"] = credits
-            ship["attribution"] = " · ".join(dict.fromkeys(credits.values()))
+            ship["attribution"] = attribution_text(credits.values())
         if name:
             ship["name"] = name
         if type(kind_code) is int and kind_code > 0:
