@@ -584,20 +584,21 @@ BarWidget {
                     }
                 }
                 Column {
-                    width: parent.width; spacing: 4
+                    id: credits
+                    width: parent.width; spacing: 2
+                    readonly property int textSize: Math.max(10, root.smallTextSize - 1)
+                    readonly property string attribution: root.selectedShip ? (root.selectedShip.attribution || "").trim() : ""
                     Label {
                         width: parent.width; wrapMode: Text.WordWrap
-                        font.pixelSize: root.smallTextSize; color: Color.muted
-                        text: root.selectedShip ? (root.selectedShip.attribution || "") : ""
-                        visible: text.length > 0
+                        font.pixelSize: credits.textSize; color: Color.muted
+                        text: credits.attribution || (root.report.provider === "aisstream" ? "AISStream" : "OpenWaters")
                     }
-                    Label { width: parent.width; wrapMode: Text.WordWrap; text: (root.report.provider === "aisstream" ? "AISStream" : "OpenWaters") + " · received vessels only · not for navigation"; font.pixelSize: root.smallTextSize; color: Color.muted }
                     Text {
                         width: parent.width
                         visible: radar.detailed
                         text: '<a href="https://openfreemap.org/">OpenFreeMap</a> · <a href="https://openmaptiles.org/">© OpenMapTiles</a> · <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>'
                         textFormat: Text.StyledText
-                        font.pixelSize: root.smallTextSize
+                        font.pixelSize: credits.textSize
                         font.family: root.family
                         color: Color.muted; linkColor: Color.muted
                         wrapMode: Text.Wrap
@@ -607,7 +608,12 @@ BarWidget {
                         visible: !radar.detailed && VesselService.basemap.available
                         width: parent.width; wrapMode: Text.WordWrap
                         text: "Natural Earth · © GeoNames"
-                        font.pixelSize: root.smallTextSize; color: Color.muted
+                        font.pixelSize: credits.textSize; color: Color.muted
+                    }
+                    Label {
+                        width: parent.width; wrapMode: Text.WordWrap
+                        text: "Received vessels only · not for navigation"
+                        font.pixelSize: credits.textSize; color: Color.muted
                     }
                 }
             }
