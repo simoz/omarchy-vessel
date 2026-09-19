@@ -1,6 +1,6 @@
 # Security review
 
-Reviewed on **2026-09-19** for the next release, starting from commit `cf101ba`.
+Reviewed on **2026-09-19** for **0.8.2**, starting from commit `cf101ba`.
 This pass covers changes since the 0.8.1 assessment at `c0ef578`, plus the current
 expanded layout, preview tooling and security regressions. Exact reviewed files
 are identified in [security-review-evidence.json](security-review-evidence.json).

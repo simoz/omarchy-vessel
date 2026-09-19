@@ -1,9 +1,9 @@
 {
   "review_date": "2026-09-19",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "base_commit": "cf101ba2957b3dfdaeb7fccf2c0a230e5691a33f",
   "previous_review_commit": "c0ef578ed3216f191eded742ddf69c81c85a1daa",
-  "scope": "Changes since the previous review plus expanded contact layout, refreshed previews and security regressions in the working tree. Manifest remains 0.8.1 pending the final version bump; file hashes identify reviewed contents, not release publication.",
+  "scope": "Changes since the previous review plus expanded contact layout, refreshed previews and security regressions committed at 16f165a. Final version metadata is 0.8.2; file hashes identify reviewed contents, not release publication.",
   "result": "No new actionable findings in reviewed changes; prior SR-01 through SR-06 regressions pass.",
   "environment": {
     "python": "3.14.5",
@@ -53,7 +53,7 @@
   },
   "sha256": {
     "BoatIcon.qml": "7c55d1b49a5500a0137df709f529707ac4326ee43f64013ae59ae6c7ba7c8e9f",
-    "CHANGELOG.md": "8f44cb86333592aeb60988ed4353fa5e76b628de49f0a2d4478ea00282ca6abf",
+    "CHANGELOG.md": "5f4046cffcaa719c4f817682b128cb7db1efdad79341d88a58aa37fa7fe7898f",
     "DetailMap.qml": "3b189954eef4a9efb74df941abf5c9786d0b8d7947b07944c9d49bdf07ecaad2",
     "Keyboard.js": "dd4da5511e3be77b17dd36f0b1bc931a1fc46805c21ff88ee47046f963c86384",
     "KeyboardHelp.qml": "5b4617b524c81fd9d84e3821db7777915d29d89c1aac676ac33cd6bd59521bb1",
@@ -84,8 +84,8 @@
     "docs/development.md": "7d80b55411a46e8142d697d58f667a302049c4ada12ba749df7b3c9524e475ab",
     "docs/live-detail-preview-light.png": "759fba1eb2b067ba604dee116066cf8df2f7effa5114ca8d495f7ff67ae8e9c0",
     "docs/live-detail-preview.png": "4e78e0de07982ac0765babcad46ef9ce320738e19c49716845bd8d1480cf7168",
-    "docs/security-review.md": "70fce78868bb9cbb4a35f5637890bc2a646b6224c6554590d2e787221c30b9db",
-    "manifest.json": "1cd97a5675b30d74501af89b4fad27014e56f1fed43850d9c01c0ccbf5a5669c",
+    "docs/security-review.md": "4700c08cd3f9493b8b9a7d09bca4bdc1224220a53f6ddbaf38e140895e6c1da5",
+    "manifest.json": "5fbef4ac81666068f11a6b280af9d5f4472fcdeb282e4ba1b256cf2dba9f1b65",
     "preview.png": "759fba1eb2b067ba604dee116066cf8df2f7effa5114ca8d495f7ff67ae8e9c0",
     "requirements.txt": "49f701c0de21475f45c4537caa8e9d03d7d92a953f3b54bffe5d106f253bf6f9",
     "tests/keyboard.test.cjs": "31648068efa731228b3e4e5c73149f30d3ce3408f5fdb62b9ef0c8200b025f57",

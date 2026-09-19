@@ -9,6 +9,32 @@ version commit. From 0.7.1 onward, version headings link to release tags.
 
 ## Unreleased
 
+## [0.8.2](https://github.com/simoz/omarchy-vessel/releases/tag/v0.8.2) — 2026-09-19
+
+### Fixed
+
+- Stop reception, map downloads and city searches when the last radar view closes;
+  preserve manual pause and active views on other monitors.
+- Open the radar on first use instead of treating the initial stopped state as a
+  configuration error.
+- Place the expanded robot above Contacts and align the contact block with the
+  map credits; preserve the robot position in the compact panel.
+
+### Changed
+
+- Add a VesselFinder link beside the vessel name, using IMO when available and
+  MMSI search otherwise. Display destination, MMSI and IMO in aligned columns.
+- Place AIS report age beside vessel type and compact map credits below the legend.
+- Refresh real AIS screenshots in expanded and compact views, in both palettes,
+  including the catalog preview and automated layout assertions.
+
+### Security
+
+- Reassess credential handling, network destinations, closed-view cancellation,
+  external links and previous security fixes; no new actionable findings identified.
+- Add adversarial IMO and vessel-link regressions. All 70 Python and 41 JavaScript
+  tests pass; refresh the dependency advisory check and review evidence.
+
 ## [0.8.1](https://github.com/simoz/omarchy-vessel/releases/tag/v0.8.1) — 2026-09-19
 
 ### Fixed
