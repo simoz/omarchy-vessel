@@ -18,7 +18,7 @@ Item {
     // Separate process: map navigation never reconnects or blocks reception.
     function requestDetail(query) {
         wantedDetail = query ? JSON.stringify(query) : "";
-        if (!wantedDetail || detailProcess.running)
+        if (viewers === 0 || !wantedDetail || detailProcess.running)
             return;
         var alreadyCompleted = wantedDetail === completedDetail;
         var retryAllowed = Date.now() >= detailRetryAt;
@@ -26,7 +26,7 @@ Item {
             startDetail();
     }
     function startDetail() {
-        if (!wantedDetail) return;
+        if (viewers === 0 || !wantedDetail) return;
         detailProcess.query = wantedDetail;
         detailProcess.received = false;
         detailProcess.command = helperCommand(["--map-detail"]);
@@ -41,7 +41,7 @@ Item {
         stdout: SplitParser {
             onRead: data => {
                 // Never install a response for a view the user has already left.
-                if (detailProcess.query !== root.wantedDetail) return;
+                if (root.viewers === 0 || detailProcess.query !== root.wantedDetail) return;
                 try {
                     var result = JSON.parse(data);
                     detailProcess.received = true;
@@ -53,6 +53,7 @@ Item {
             }
         }
         onExited: {
+            if (root.viewers === 0) return;
             // Coalesce a burst of navigation into one follow-up for the latest view.
             if (query !== root.wantedDetail) root.startDetail();
             else if (!received) {
@@ -76,6 +77,22 @@ Item {
     property string signature: ""
     // Reference counting stops the helper when the last bar instance disappears.
     property int users: 0
+    property int viewers: 0
+    // Count open views across monitors independently from installed bar widgets.
+    function setViewing(visible) {
+        viewers = Math.max(0, viewers + (visible ? 1 : -1));
+        if (viewers === 0) {
+            stopReceiver();
+            wantedDetail = "";
+            detailProcess.running = false;
+            clearCitySearch();
+            if (!paused && report.status !== "SETUP") {
+                var snapshot = Object.assign({}, report);
+                snapshot.status = "STOPPED";
+                report = snapshot;
+            }
+        } else if (visible && viewers === 1 && !paused) restart();
+    }
     property bool pendingRestart: false
     property bool stopping: false
     property bool paused: false
@@ -131,6 +148,7 @@ Item {
     // Wait for the old process to exit before launching its replacement.
     function restart() {
         paused = false;
+        if (viewers === 0) { stopReceiver(); return; }
         report = {status: "STARTING", ships: [], total: 0, error: ""};
         basemap = {available: false, polygons: [], coastlines: []};
         mapDetail = {available: false};
@@ -140,7 +158,7 @@ Item {
         else startTimer.restart();
     }
     function start() {
-        if (users === 0 || paused || stopping) return;
+        if (users === 0 || viewers === 0 || paused || stopping) return;
         pendingRestart = false;
         // Credentials are read by Python from user storage, never from argv.
         process.command = helperCommand(["--saved-settings"]);
@@ -195,7 +213,7 @@ Item {
     }
     function searchCity(query) {
         query = query.trim();
-        if (cityProcess.running || query.length < 2) return;
+        if (viewers === 0 || cityProcess.running || query.length < 2) return;
         cityResults = []; cityError = ""; cityQuery = query;
         // Session cache avoids repeat network requests; saved cities never need re-geocoding.
         for (var i = 0; i < cityCache.length; i++) {

@@ -100,7 +100,7 @@ Filled dots indicate stationary vessels (reported speed below 0.5 knots). Moving
 
 **VIEW** shows the visible radius. The contact counter shows visible vessels versus all received vessels in range. The list covers the full configured range.
 
-**LIVE** indicates incoming reports, **LISTENING** an active connection awaiting reports, and **PAUSED** a saved view with reception stopped. Reception continues when you close the panel; click the status next to the location to pause it. Click **PAUSED** again to resume. The same control is reachable with Tab and activates with Enter or Space. **REJECTED** indicates a credential, subscription area or connection limit issue.
+**LIVE** indicates incoming reports, **LISTENING** an active connection awaiting reports, and **PAUSED** a saved view with reception stopped. Reception and all network downloads stop automatically when no compact panel or expanded window is open. Opening either view resumes reception unless you paused it manually. With multiple monitors, downloads continue while at least one view is open. Click **PAUSED** again to resume. The same control is reachable with Tab and activates with Enter or Space. **REJECTED** indicates a credential, subscription area or connection limit issue.
 
 ## Update
 

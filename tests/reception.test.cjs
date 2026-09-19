@@ -9,14 +9,15 @@ const path = require('node:path');
 function service() {
   const timer = () => ({running: true, stop() {this.running = false;}, restart() {this.running = true;}});
   const state = vm.createContext({
-    users: 1, paused: false, stopping: false, pendingRestart: false,
+    users: 1, viewers: 1, detailProcess: {running: false}, paused: false, stopping: false, pendingRestart: false,
     report: {status: 'LIVE', ships: [{mmsi: '123'}], total: 1},
     basemap: {available: true}, config: {pythonExecutable: 'python3'}, signature: '', helper: '/plugin/backend/vessel.py',
     process: {running: true}, startTimer: timer(), startupWatch: timer(),
-    clearCitySearch() {}, loadSettings() {}
+    cityProcess: {running: false}, cityQuery: "", cityResults: [], cityError: "",
+    loadSettings() {}
   });
   const source = fs.readFileSync(path.join(__dirname, '../VesselService.qml'), 'utf8');
-  for (const name of ['helperCommand', 'stopReceiver', 'pause', 'togglePaused', 'restart', 'start', 'configure', 'detach']) {
+  for (const name of ['clearCitySearch', 'searchCity', 'setViewing', 'helperCommand', 'stopReceiver', 'pause', 'togglePaused', 'restart', 'start', 'configure', 'detach']) {
     const match = source.match(new RegExp('    function ' + name + '\\([^]*?\\n    }'));
     assert.ok(match, name);
     vm.runInContext(match[0], state);
@@ -76,4 +77,40 @@ test('a second monitor does not reset an already scheduled receiver start', () =
   s.configure({pythonExecutable: 'python3'});
   assert.equal(s.report, snapshot);
   assert.equal(s.startTimer.running, true);
+});
+
+test('closing the last view stops all downloads and reopening resumes reception', () => {
+  const s = service();
+  s.detailProcess.running = true;
+  s.cityProcess.running = true;
+  s.cityQuery = 'Genoa';
+  s.wantedDetail = 'pending';
+  s.setViewing(false);
+  assert.equal(s.process.running, false);
+  assert.equal(s.detailProcess.running, false);
+  assert.equal(s.wantedDetail, '');
+  assert.equal(s.cityProcess.running, false);
+  s.searchCity('Genoa');
+  assert.equal(s.cityProcess.running, false);
+  s.restart(); s.start();
+  assert.equal(s.process.running, false);
+  assert.equal(s.startTimer.running, false);
+  s.setViewing(true); s.start();
+  assert.equal(s.process.running, true);
+});
+test('other visible monitors keep reception alive and manual pause survives reopening', () => {
+  const s = service();
+  s.setViewing(true); s.setViewing(false);
+  assert.equal(s.process.running, true);
+  s.pause(); s.setViewing(false); s.setViewing(true); s.start();
+  assert.equal(s.paused, true);
+  assert.equal(s.process.running, false);
+});
+
+test('attaching a closed widget never schedules reception', () => {
+  const s = service();
+  s.viewers = 0; s.process.running = false; s.startTimer.running = false;
+  s.configure({pythonExecutable: 'python3'}); s.start();
+  assert.equal(s.process.running, false);
+  assert.equal(s.startTimer.running, false);
 });

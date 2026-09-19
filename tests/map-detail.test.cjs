@@ -12,7 +12,7 @@ function bodyAfter(text, marker) {
   return text.slice(brace + 1, end - 1);
 }
 function service() {
-  const state = vm.createContext({wantedDetail: '', completedDetail: '', detailRetryAt: 0,
+  const state = vm.createContext({viewers: 1, wantedDetail: '', completedDetail: '', detailRetryAt: 0,
     mapDetail: {available: false}, detailProcess: {running: false, received: false, query: ''},
     process: {running: true}, helperCommand: args => ['python3', '-B', '/plugin/backend/vessel.py', ...args]});
   state.root = state;
@@ -65,4 +65,16 @@ test('offline geography is reserved for failed detail, not initial loading', () 
   state.detailed = false;
   state.detailEnabled = false;
   assert.equal(loading(), false); // A disabled detail layer needs no network map.
+});
+
+test('hidden views cannot start downloads or restart a canceled map request', () => {
+  const s = service();
+  s.requestDetail({zoom: 8});
+  s.viewers = 0;
+  s.requestDetail({zoom: 9});
+  s.read({available: true}); s.exit();
+  assert.equal(s.detailProcess.running, false);
+  assert.equal(s.mapDetail.available, false);
+  s.requestDetail({zoom: 10}); s.startDetail();
+  assert.equal(s.detailProcess.running, false);
 });

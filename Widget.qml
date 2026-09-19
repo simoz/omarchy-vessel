@@ -58,8 +58,8 @@ BarWidget {
         Qt.callLater(root.focusCurrentView);
     }
     function collapse() {
-        expanded = false;
         opened = true;
+        expanded = false;
         Qt.callLater(root.focusCurrentView);
     }
     function toggle() {
@@ -136,8 +136,18 @@ BarWidget {
     }
     // Attach once per monitor while the singleton owns the shared network process.
     onSettingsChanged: if (attached) VesselService.configure(settings)
-    Component.onCompleted: { attached = true; VesselService.attach(settings); }
-    Component.onDestruction: if (attached) VesselService.detach()
+    onViewingChanged: if (attached) VesselService.setViewing(viewing)
+    Component.onCompleted: {
+        VesselService.attach(settings);
+        attached = true;
+        if (viewing) VesselService.setViewing(true);
+    }
+    Component.onDestruction: {
+        if (attached) {
+            if (viewing) VesselService.setViewing(false);
+            VesselService.detach();
+        }
+    }
     // Age labels need a clock only while the details panel is visible.
     Timer { interval: 1000; running: root.viewing; repeat: true; onTriggered: root.now = Date.now() }
 
