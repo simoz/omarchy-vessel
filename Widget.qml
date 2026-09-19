@@ -432,20 +432,9 @@ BarWidget {
                             Label { width: parent.width / 2; text: "VIEW / " + Model.distance(radar.viewRadiusNm, root.unit); color: Color.muted }
                             Label { width: parent.width / 2; text: radar.visibleShips.length + " / " + (root.report.total || 0) + " CONTACTS"; horizontalAlignment: Text.AlignRight; color: Color.accent }
                         }
-                        Text {
-                            width: parent.width
-                            visible: radar.detailed
-                            text: '<a href="https://openfreemap.org/">OpenFreeMap</a> · <a href="https://openmaptiles.org/">© OpenMapTiles</a> · <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>'
-                            textFormat: Text.StyledText
-                            font.pixelSize: root.smallTextSize
-                            font.family: root.family
-                            color: Color.muted; linkColor: Color.muted
-                            wrapMode: Text.Wrap
-                            onLinkActivated: link => Qt.openUrlExternally(link)
-                        }
                         Label {
                             visible: !radar.detailed
-                            text: radar.mapLoading ? "LOADING MAP…" : (VesselService.basemap.available ? "OFFLINE MAP · NATURAL EARTH · © GEONAMES" : "BASEMAP UNAVAILABLE")
+                            text: radar.mapLoading ? "LOADING MAP…" : (VesselService.basemap.available ? "OFFLINE MAP" : "BASEMAP UNAVAILABLE")
                             font.pixelSize: root.smallTextSize; color: Color.muted
                         }
                         Label {
@@ -497,9 +486,9 @@ BarWidget {
                                     }
                                 }
                                 Label {
-                                    width: parent.width; wrapMode: Text.WordWrap
-                                    font.pixelSize: root.smallTextSize; color: Color.muted
-                                    text: root.selectedShip ? root.selectedShip.type : ""
+                                    width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: root.smallTextSize
+                                    text: root.selectedShip ? root.selectedShip.type + " · " + root.selectedShip.timeSource + " · " + Model.age(root.selectedShip.lastSeen, root.now) + (root.selectedShip.stale ? " · OLD POSITION" : "") : ""
+                                    color: root.selectedShip && root.selectedShip.stale ? Color.accent : Color.muted
                                 }
                             }
                             Row {
@@ -548,20 +537,6 @@ BarWidget {
                                 }
                             }
                             Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.2 }
-                            Column {
-                                width: parent.width; spacing: 3
-                                Label {
-                                    width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: root.smallTextSize
-                                    text: root.selectedShip ? root.selectedShip.timeSource + " · " + Model.age(root.selectedShip.lastSeen, root.now) + (root.selectedShip.stale ? " · OLD POSITION" : "") : ""
-                                    color: root.selectedShip && root.selectedShip.stale ? Color.accent : Color.muted
-                                }
-                                Label {
-                                    width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: root.smallTextSize; color: Color.muted
-                                    text: root.selectedShip ? (root.selectedShip.attribution || "") : ""
-                                    visible: text.length > 0
-                                }
-                            }
-                            Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.2 }
                         }
                         Label {
                             width: parent.width; wrapMode: Text.WordWrap; visible: root.ships.length === 0
@@ -606,7 +581,33 @@ BarWidget {
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.revealShip(modelData) }
                             }
                         }
-                        Label { width: parent.width; wrapMode: Text.WordWrap; text: (root.report.provider === "aisstream" ? "AISStream" : "OpenWaters") + " · received vessels only · not for navigation"; font.pixelSize: root.smallTextSize; color: Color.muted }
+                    }
+                }
+                Column {
+                    width: parent.width; spacing: 4
+                    Label {
+                        width: parent.width; wrapMode: Text.WordWrap
+                        font.pixelSize: root.smallTextSize; color: Color.muted
+                        text: root.selectedShip ? (root.selectedShip.attribution || "") : ""
+                        visible: text.length > 0
+                    }
+                    Label { width: parent.width; wrapMode: Text.WordWrap; text: (root.report.provider === "aisstream" ? "AISStream" : "OpenWaters") + " · received vessels only · not for navigation"; font.pixelSize: root.smallTextSize; color: Color.muted }
+                    Text {
+                        width: parent.width
+                        visible: radar.detailed
+                        text: '<a href="https://openfreemap.org/">OpenFreeMap</a> · <a href="https://openmaptiles.org/">© OpenMapTiles</a> · <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>'
+                        textFormat: Text.StyledText
+                        font.pixelSize: root.smallTextSize
+                        font.family: root.family
+                        color: Color.muted; linkColor: Color.muted
+                        wrapMode: Text.Wrap
+                        onLinkActivated: link => Qt.openUrlExternally(link)
+                    }
+                    Label {
+                        visible: !radar.detailed && VesselService.basemap.available
+                        width: parent.width; wrapMode: Text.WordWrap
+                        text: "Natural Earth · © GeoNames"
+                        font.pixelSize: root.smallTextSize; color: Color.muted
                     }
                 }
             }
