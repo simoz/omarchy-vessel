@@ -442,6 +442,28 @@ BarWidget {
                             text: "● STATIONARY · ▲ MOVING · ○ SPEED UNKNOWN"
                             font.pixelSize: root.smallTextSize; color: Color.muted
                         }
+                        Column {
+                            id: credits
+                            width: parent.width; spacing: 2
+                            readonly property int textSize: Math.max(10, root.smallTextSize - 1)
+                            Text {
+                                width: parent.width
+                                visible: radar.detailed
+                                text: '<a href="https://openfreemap.org/">OpenFreeMap</a> · <a href="https://openmaptiles.org/">© OpenMapTiles</a> · <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>'
+                                textFormat: Text.StyledText
+                                font.pixelSize: credits.textSize
+                                font.family: root.family
+                                color: Color.muted; linkColor: Color.muted
+                                wrapMode: Text.Wrap
+                                onLinkActivated: link => Qt.openUrlExternally(link)
+                            }
+                            Label {
+                                visible: !radar.detailed && VesselService.basemap.available
+                                width: parent.width; wrapMode: Text.WordWrap
+                                text: "Natural Earth · © GeoNames"
+                                font.pixelSize: credits.textSize; color: Color.muted
+                            }
+                        }
                     }
                     Column {
                         width: keys.wide ? 320 : parent.width
@@ -581,28 +603,6 @@ BarWidget {
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.revealShip(modelData) }
                             }
                         }
-                    }
-                }
-                Column {
-                    id: credits
-                    width: parent.width; spacing: 2
-                    readonly property int textSize: Math.max(10, root.smallTextSize - 1)
-                    Text {
-                        width: parent.width
-                        visible: radar.detailed
-                        text: '<a href="https://openfreemap.org/">OpenFreeMap</a> · <a href="https://openmaptiles.org/">© OpenMapTiles</a> · <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>'
-                        textFormat: Text.StyledText
-                        font.pixelSize: credits.textSize
-                        font.family: root.family
-                        color: Color.muted; linkColor: Color.muted
-                        wrapMode: Text.Wrap
-                        onLinkActivated: link => Qt.openUrlExternally(link)
-                    }
-                    Label {
-                        visible: !radar.detailed && VesselService.basemap.available
-                        width: parent.width; wrapMode: Text.WordWrap
-                        text: "Natural Earth · © GeoNames"
-                        font.pixelSize: credits.textSize; color: Color.muted
                     }
                 }
             }
