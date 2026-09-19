@@ -11,9 +11,13 @@ Item {
     property var basemap: ({available: false, polygons: [], coastlines: []})
     property var detail: ({available: false})
     property bool detailEnabled: false
+    property string failedDetailQuery: ""
+    // The offline map is a failure fallback, not a loading placeholder.
+    readonly property bool mapLoading: detailEnabled && !detailed
+        && (!detailQuery || failedDetailQuery !== detailQuery)
     signal detailRequested(var query)
     // A loaded map is reusable only while it covers the whole visible circle
-    // and belongs to the same observer/range. Otherwise draw the offline layer.
+    // and belongs to the same observer/range.
     readonly property bool detailed: {
         if (detail.available !== true || !basemap.origin)
             return false;
@@ -112,7 +116,7 @@ Item {
     // Map components only draw. This item owns the camera and user interaction.
     OfflineMap {
         anchors.fill: parent
-        visible: !root.detailed
+        visible: !root.detailed && !root.mapLoading
         geography: root.basemap
         viewScale: root.zoom
         offset: root.centerPixels
@@ -184,6 +188,7 @@ Item {
     }
     RadarLabels {
         anchors.fill: parent
+        visible: !root.mapLoading
         geography: root.detailed ? root.detail : root.basemap
         contacts: root.visibleShips
         selection: root.selectedMmsi

@@ -126,3 +126,7 @@ network connection is used. The main expanded preview is 2400 × 1600 pixels;
 settings use a narrower window. This checks Qt rendering, not Hyprland integration.
 The marketplace serves optimized copies of preview.png, so its catalog must
 refresh after the updated source image is pushed.
+
+To also render the detailed-map close-up, set `VESSEL_PREVIEW_DETAIL` to a JSON
+batch produced by `--map-detail` for Genoa, radius 25 nm, zoom 8 and center (0, 0).
+The renderer reads that file locally and keeps all contacts labelled as simulated.

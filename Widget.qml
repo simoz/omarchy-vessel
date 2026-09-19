@@ -201,12 +201,14 @@ BarWidget {
         id: button
         anchors.fill: parent
         bar: root.bar
-        // Measure one Nerd Font icon, just like the built-in bar buttons.
-        // The hidden label supplies the standard slot; BoatIcon paints it.
-        text: "\uf21a"
+        // Size the slot from the actual icon, not a hidden font glyph whose
+        // advance can vary between the user's fonts and fallback fonts.
+        fixedWidth: root.vertical ? -1 : boatIcon.width + scaledHorizontalMargin * 2
+        fixedHeight: root.vertical ? boatIcon.height + scaledVerticalPadding * 2 : -1
         labelVisible: false
         hasVisualContent: true
         BoatIcon {
+            id: boatIcon
             anchors.centerIn: parent
             width: Style.space(16); height: width
             ink: button.foreground
@@ -398,6 +400,8 @@ BarWidget {
                                 basemap: VesselService.basemap
                                 // Source changes update geography without owning camera state.
                                 detail: VesselService.mapDetail
+                                failedDetailQuery: VesselService.completedDetail && isFinite(VesselService.detailRetryAt)
+                                    ? VesselService.completedDetail : ""
                                 detailEnabled: root.viewing && !root.configuring && !root.report.demo
                                 onDetailRequested: query => VesselService.requestDetail(query)
                                 selectedMmsi: root.selectedShip ? root.selectedShip.mmsi : ""
@@ -431,7 +435,7 @@ BarWidget {
                         }
                         Label {
                             visible: !radar.detailed
-                            text: VesselService.basemap.available ? "OFFLINE MAP · NATURAL EARTH · © GEONAMES" : "BASEMAP UNAVAILABLE"
+                            text: radar.mapLoading ? "LOADING MAP…" : (VesselService.basemap.available ? "OFFLINE MAP · NATURAL EARTH · © GEONAMES" : "BASEMAP UNAVAILABLE")
                             font.pixelSize: root.smallTextSize; color: Color.muted
                         }
                         Label {

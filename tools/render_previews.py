@@ -77,7 +77,7 @@ def main():
     )
     put(
         "qs/Ui/WidgetButton.qml",
-        'import QtQuick\nItem {property var bar; property string text; property bool labelVisible; property bool hasVisualContent; property real fixedWidth; property real scaledHorizontalMargin:4; property color foreground:"white"; property string tooltipText; property bool dimmed; signal pressed(int b); implicitWidth:28; implicitHeight:28}',
+        'import QtQuick\nItem {property var bar; property string text; property bool labelVisible; property bool hasVisualContent; property real fixedWidth; property real fixedHeight; property real scaledHorizontalMargin:4; property real scaledVerticalPadding:6; property color foreground:"white"; property string tooltipText; property bool dimmed; signal pressed(int b); implicitWidth:28; implicitHeight:28}',
     )
     put(
         "qs/Ui/KeyboardPanel.qml",
@@ -141,6 +141,8 @@ def main():
      property var basemap: MAP
      property var preferences: ({provider:"openwaters",hasOpenwatersKey:false,unit:"nm",radiusNm:25,cityName:"Genoa",latitude:44.4056,longitude:8.9463,autoLocation:false,hasApiKey:true,demo:true})
      property var mapDetail: ({available:false})
+     property string completedDetail: ""
+     property double detailRetryAt: 0
      function requestDetail(query) {}
      property bool paused:false
      property bool searchingCity:false
@@ -210,6 +212,23 @@ def main():
     print(
         "Rendered expanded, zoom, pan, keyboard and settings previews from current QML"
     )
+
+    # Optionally render a supplied map batch; simulated contacts stay labelled.
+    detail_path = os.environ.get("VESSEL_PREVIEW_DETAIL")
+    if detail_path:
+        detail = json.loads(Path(detail_path).read_text())
+        assert detail.get("available") and detail.get("origin") == [*GENOA, 25]
+        root.setProperty("configuring", False)
+        w.setWidth(1200)
+        w.setHeight(800)
+        radar.setProperty("detail", detail)
+        radar.setProperty("zoomLevel", 3)
+        radar.setProperty("viewCenter", QPointF(detail["x"], detail["y"]))
+        assert radar.property("detailed")
+        shot("docs/detail-preview.png")
+        radar.setProperty("detail", {"available": False})
+        radar.setProperty("zoomLevel", 0)
+        radar.setProperty("viewCenter", QPointF(0, 0))
 
     root.setProperty("configuring", False)
     w.setWidth(1200)

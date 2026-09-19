@@ -8,11 +8,15 @@ See nearby AIS-equipped vessels, their names, speed and reported destinations on
 
 ![Vessel expanded view with simulated traffic](docs/demo-preview.png)
 
+[Detailed map of Genoa](docs/detail-preview.png)
+
 ## Why I built Vessel
 
 When I'm working by the sea, I see boats passing by and always wonder: What's that boat called? Where has it come from? Where is it going?
 
 I wanted a widget I could glance at while working, connecting the boats on the horizon to the information they broadcast, and fitting naturally into my [Outpost](https://github.com/simoz/omarchy-outpost-theme) and [Haven](https://github.com/simoz/omarchy-haven-theme) themes.
+
+Thank you to Wes Grimes, the creator of [Omastorm](https://github.com/wesleygrimes/omastorm), whose work inspired me to improve Vessel's map and zoom controls.
 
 ## Install
 
@@ -33,21 +37,20 @@ Accept the plugin trust prompt and click the boat icon to open **Settings**. The
 
 OpenWaters loads recent positions immediately, then streams updates. Positions retain their original timestamps. Anonymous access allows 20 messages/second, two connections per IP and 100 square degrees of coverage; excess messages are thinned. Large radii at high latitudes may require a personal token or a smaller radius.
 
-Once a credential is saved, use **CHANGE** to enter a replacement.
-An empty key field preserves the saved credential for that provider. OpenWaters tokens and AISStream keys are stored separately; existing AISStream keys remain available when you select AISStream. Paste a new key to replace it. Preferences and the key are stored in `~/.config/omarchy-vessel/settings.json` (or `$XDG_CONFIG_HOME/omarchy-vessel/settings.json`), with owner-only file permissions (`0600`). Keep this file out of public dotfile backups.
+Use **CHANGE** to replace a saved credential. An empty key field preserves it. OpenWaters tokens and AISStream keys are stored separately. Preferences and credentials are stored in `~/.config/omarchy-vessel/settings.json` (or `$XDG_CONFIG_HOME/omarchy-vessel/settings.json`), with owner-only file permissions (`0600`). Keep this file out of public dotfile backups.
 
 [View Settings](docs/settings-preview.png) · [OpenWaters availability and limits](https://openwaters.io/ais/) · [AISStream documentation](https://aisstream.io/documentation)
 
 ## Use the radar
 
-The map loads detailed OpenFreeMap vectors for the visible area as you zoom, including coastlines, rivers, docks, roads and local place names. It keeps the radar's theme and nautical projection. Previously loaded tiles are cached locally; if a complete detailed view is unavailable, the radar shows the bundled **offline map** with its source label. That fallback has generalized coastlines and may omit narrow channels. Polar views beyond Web Mercator coverage also use the offline map.
+The map shows coastlines, rivers, docks, roads and local place names, with more detail as you zoom in. It follows your Omarchy palette and loads the visible area from OpenFreeMap, caching map data locally. When detailed coverage is unavailable, it displays the bundled **offline map**, identified by the source label below the radar. The offline map has generalized coastlines and may omit narrow channels; it also provides coverage near the poles.
 
 | Control | Action |
 | --- | --- |
 | Boat icon in the bar | Open or close the panel; return to the panel from the expanded window. |
 | Expand icon (diagonal arrows, top right) | Switch between the panel and expanded window, keeping zoom and selection. |
-| Zoom buttons (+ and −) | Zoom between 1× and 64× in 1.25× steps, like Omastorm. |
-| Mouse wheel over the radar | Scroll up to zoom in, down to zoom out, keeping the map point under the pointer fixed within loaded coverage. Each event changes the visible range by a factor of 0.85, like Omastorm. |
+| Zoom buttons (+ and −) | Gradually zoom in or out, between 1× and 64×. |
+| Mouse wheel over the radar | Scroll up to zoom in, down to zoom out, keeping the map point under the pointer fixed within loaded coverage. |
 | Map drag | Move around the loaded area after zooming in. |
 | Center button (crosshair, beside zoom) | Return to your position and reset zoom to 1×. |
 | Vessel on the map or in the list | Select a vessel to see its details. Selecting from the list also brings it into view on the map. |
@@ -95,11 +98,12 @@ Filled dots indicate stationary vessels (reported speed below 0.5 knots). Moving
 
 ## Update
 
-See the [changelog](CHANGELOG.md) for release history and upcoming changes.
-
 ```sh
-omarchy plugin update simoz.vessel --yes; omarchy-shell shell rescanPlugins
+omarchy plugin update simoz.vessel --yes
+omarchy-shell shell rescanPlugins
 ```
+
+Release notes are in the [changelog](CHANGELOG.md).
 
 ## Remove
 
@@ -121,7 +125,7 @@ Vessel is built for watching nearby traffic. Coverage and reported destinations 
 - **Photon / OpenStreetMap** provides city search from the name you enter.
 - **ipwho.is** provides approximate location from your public IP when enabled.
 - **Natural Earth** coastlines and **GeoNames** city labels are bundled with the plugin.
-- **OpenFreeMap** receives requests for the map tiles you view, which reveal the viewed area and your IP address. These requests are independent of AIS reception and may continue while reception is paused and the map is open. No AIS keys or vessel positions are sent. Detailed tiles are stored under `$XDG_CACHE_HOME/omarchy-vessel/tiles` (normally `~/.cache/omarchy-vessel/tiles`), with a 128 MiB cache ceiling. Demo mode remains offline. Map data attribution is shown below the radar; see [OpenFreeMap](https://openfreemap.org/) and [OpenStreetMap copyright](https://www.openstreetmap.org/copyright).
+- **OpenFreeMap** receives requests for the map tiles you view, which reveal the viewed area and your IP address. These requests are independent of AIS reception and may continue while reception is paused and the map is open. No AIS keys or vessel positions are sent. Detailed tiles are stored under `$XDG_CACHE_HOME/omarchy-vessel/tiles` (normally `~/.cache/omarchy-vessel/tiles`); above 128 MiB the cache is trimmed to 96 MiB after a batch, so downloads can temporarily exceed that threshold. Demo mode remains offline. Map data attribution is shown below the radar; see [OpenFreeMap](https://openfreemap.org/) and [OpenStreetMap copyright](https://www.openstreetmap.org/copyright).
 
 Code is licensed under [MIT](LICENSE). Natural Earth data is public domain; GeoNames data is licensed under [CC BY 4.0](https://www.geonames.org/about.html). See [data sources and attribution](data/README.md).
 

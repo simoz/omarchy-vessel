@@ -48,3 +48,21 @@ test('closing the map discards in-flight replies without another request', () =>
   const s = service(); s.requestDetail({zoom: 8}); s.requestDetail(null);
   s.read({available: true}); s.exit(); assert.equal(s.mapDetail.available, false); assert.equal(s.detailProcess.running, false);
 });
+
+// Exercise loading/fallback transitions with the expression used by the radar.
+test('offline geography is reserved for failed detail, not initial loading', () => {
+  const radarSource = fs.readFileSync(path.join(__dirname, '../Radar.qml'), 'utf8');
+  const expression = radarSource.match(/readonly property bool mapLoading: ([\s\S]*?)\n    signal/)[1];
+  const state = {detailEnabled: true, detailed: false, detailQuery: 'view-a', failedDetailQuery: ''};
+  const loading = () => vm.runInNewContext(expression, state);
+  assert.equal(loading(), true);
+  state.failedDetailQuery = 'view-a';
+  assert.equal(loading(), false);
+  state.detailQuery = 'view-b';
+  assert.equal(loading(), true);
+  state.detailed = true;
+  assert.equal(loading(), false);
+  state.detailed = false;
+  state.detailEnabled = false;
+  assert.equal(loading(), false); // Offline demo needs no network map.
+});
