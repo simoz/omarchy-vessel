@@ -114,3 +114,20 @@ test('attaching a closed widget never schedules reception', () => {
   assert.equal(s.process.running, false);
   assert.equal(s.startTimer.running, false);
 });
+
+test('first opening starts the radar instead of treating an idle receiver as missing setup', () => {
+  const serviceSource = fs.readFileSync(path.join(__dirname, '../VesselService.qml'), 'utf8');
+  const widgetSource = fs.readFileSync(path.join(__dirname, '../Widget.qml'), 'utf8');
+  const initialReport = serviceSource.match(/property var report: (.*)/)[1];
+  const state = vm.createContext({
+    report: vm.runInNewContext(initialReport), opened: false, expanded: false, configuring: false
+  });
+  vm.runInContext(widgetSource.match(/    function toggle\([^]*?\n    }/)[0], state);
+  vm.runInContext('toggle()', state);
+  assert.equal(state.opened, true);
+  assert.equal(state.configuring, false);
+  state.opened = false;
+  state.report.status = 'SETUP';
+  vm.runInContext('toggle()', state);
+  assert.equal(state.configuring, true);
+});

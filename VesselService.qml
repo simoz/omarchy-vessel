@@ -6,7 +6,8 @@ import Quickshell.Io
 // Share one receiver across all widget instances in this QML engine.
 Item {
     id: root
-    property var report: ({status: "SETUP", ships: [], total: 0, error: ""})
+    // No receiver has run yet; only a real setup failure should open Settings.
+    property var report: ({status: "STOPPED", ships: [], total: 0, error: ""})
     // Retain static geography between snapshots without repainting it every second.
     property var basemap: ({available: false, polygons: [], coastlines: []})
     property var mapDetail: ({available: false})
