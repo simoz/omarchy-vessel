@@ -26,6 +26,7 @@ Column {
         else if (locationMode === "coordinates") latitude.forceActiveFocus();
         else ipMode.forceActiveFocus();
     }
+    // Build one payload from the active modes; hidden fields never decide the mode.
     function save() {
         if (!canSave) return;
         var values = {provider: provider, radiusNm: radius.text,
@@ -37,7 +38,10 @@ Column {
         VesselService.saveSettings(values);
         apiKey.text = "";
     }
-    function cancel() { apiKey.text = ""; done(); }
+    function cancel() {
+        apiKey.text = "";
+        done();
+    }
     function chooseMode(mode) {
         locationMode = mode;
         VesselService.clearCitySearch();
@@ -48,6 +52,7 @@ Column {
     function openBrowser(url) {
         Quickshell.execDetached(["omarchy-launch-browser", url]);
     }
+    // Public preferences contain only key-presence flags, never stored credentials.
     function populate() {
         var value = VesselService.preferences;
         root.provider = value.provider || "openwaters";

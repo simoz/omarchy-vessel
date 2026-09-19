@@ -18,6 +18,48 @@ from websockets.asyncio.server import serve
 
 
 class ReceiverTest(unittest.IsolatedAsyncioTestCase):
+    async def test_redirect_never_receives_credentials_or_subscription(self):
+        redirected = []
+        finished = asyncio.Event()
+
+        async def destination(socket):
+            redirected.append(json.loads(await socket.recv()))
+            finished.set()
+            await socket.wait_closed()
+
+        async with serve(destination, "127.0.0.1", 0) as target:
+            target_url = f"ws://127.0.0.1:{target.sockets[0].getsockname()[1]}"
+
+            def redirect(connection, request):
+                response = connection.respond(302, "redirect")
+                response.headers["Location"] = target_url
+                return response
+
+            def output(snapshot):
+                if snapshot["status"] == "RECONNECTING":
+                    finished.set()
+
+            async with serve(
+                destination, "127.0.0.1", 0, process_request=redirect
+            ) as source:
+                receiver = Receiver(
+                    Fleet(0, 0, 25),
+                    {},
+                    "synthetic-redirect-key",
+                    output,
+                    provider="aisstream",
+                    retry_delay=60,
+                    url=f"ws://127.0.0.1:{source.sockets[0].getsockname()[1]}",
+                )
+                task = asyncio.create_task(receiver.run())
+                try:
+                    await asyncio.wait_for(finished.wait(), 3)
+                finally:
+                    task.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await task
+        self.assertEqual(redirected, [])
+
     async def test_binary_compression_subscription_and_clean_cancellation(self):
         observed = {}
         arrived = asyncio.Event()

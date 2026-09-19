@@ -63,6 +63,10 @@ Modules:
 - `backend/ais.py`: AIS validation, Class A/B merging and bounded fleet snapshots.
 - `backend/receiver.py`: WebSocket subscription, status updates, cancellation and reconnection.
 - `backend/geometry.py`, `backend/basemap.py`: nautical calculations and the offline map.
+- `backend/detail_map.py`, `backend/vector_tiles.py`: bounded OpenFreeMap tile requests, local cache, MVT decoding and projection into the same nautical coordinates as AIS.
+- `Radar.qml`: camera, navigation and layer order; it requests the visible map after a 180 ms pause in navigation, independently of reception.
+- `OfflineMap.qml`, `DetailMap.qml`: drawing for the bundled and downloaded geography, respectively. Both receive the same camera scale and pixel offset.
+- `RadarLabels.qml`: label measurements and space reserved around visible contacts; collision decisions remain in `Model.js`.
 - `backend/runtime.py`: private virtualenv setup, dependency verification and process replacement.
 - `backend/settings.py`: validated settings and atomic, owner-only credential storage.
 - `backend/geocoding.py`: explicit Photon city searches, response validation and location labels.
@@ -77,6 +81,31 @@ Modules:
 The helper emits JSON snapshots; the first located snapshot also includes a static
 basemap. Position timestamps use Unix seconds, while the QML display clock uses
 milliseconds. Live positions are never extrapolated or stored on disk.
+
+`--map-detail` accepts one bounded JSON request on stdin (`lat`, `lon`, `radius`,
+`zoom`, `size`, `x`, `y`) and emits a complete projected map. Zoom levels 7–14
+come from the same OpenFreeMap TileJSON endpoint as Omastorm. Requests use at
+most 36 tiles and four concurrent HTTPS transfers, with a 10-second network
+timeout, seven-day cache freshness, stale cache fallback and 30-second retry
+backoff. The cache trims from 128 to 96 MiB. Responses are discarded if the
+viewport has changed; incomplete batches never replace the displayed map.
+No additional runtime dependency is required. The nautical range remains 1×–64×;
+at the source's maximum detail, further zoom enlarges the level-14 vectors.
+
+## Reading and editing the UI
+
+Start with `Widget.qml` for panel/window ownership and actions, `Radar.qml` for
+the camera and paint order, and `VesselService.qml` for process lifecycles.
+The painting components receive data and camera values; they do not fetch data
+or change selection. QML coordinates are observer-relative coverage-radius units
+until converted to pixels. Geographic degrees and Mercator tiles stay in Python.
+
+Keep comments focused on units, ownership, ordering and reasons a seemingly
+simpler implementation would change behaviour. Prefer named intermediate values
+to long expressions, and expand handlers that change several pieces of state.
+Do not repeat the code in a comment or introduce components without a clear
+responsibility. Preserve QML object IDs used by keyboard focus and the preview
+harness when moving view code.
 
 
 ## Preview images

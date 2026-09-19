@@ -1,5 +1,11 @@
 # Offline basemap
 
+`basemap.json.gz` is the offline fallback. Detailed views load OpenFreeMap's
+OpenMapTiles-schema vector tiles on demand, with attribution to OpenFreeMap,
+OpenMapTiles and OpenStreetMap below the radar. These tiles are cached in the
+user's cache directory and are not bundled here. See [OpenFreeMap](https://openfreemap.org/)
+and [OpenStreetMap's data licence](https://www.openstreetmap.org/copyright).
+
 `basemap.json.gz` contains global land polygons and coastlines from **Natural Earth**, sourced from the `v5.1.2` release of its vector repository:
 
 - [ne_10m_land.geojson](https://github.com/nvkelso/natural-earth-vector/blob/v5.1.2/geojson/ne_10m_land.geojson)

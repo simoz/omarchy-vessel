@@ -133,6 +133,7 @@ def cities_at(lat, lon, radius, path=CITIES_PATH):
 def build(lat, lon, radius, path=PATH):
     result = dict(
         key=f"{lat},{lon},{radius}",
+        origin=[lat, lon, radius],
         available=False,
         polygons=[],
         coastlines=[],

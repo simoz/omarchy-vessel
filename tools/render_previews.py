@@ -23,6 +23,9 @@ def main():
         "Widget.qml",
         "BoatIcon.qml",
         "Radar.qml",
+        "DetailMap.qml",
+        "OfflineMap.qml",
+        "RadarLabels.qml",
         "Robot.qml",
         "Model.js",
         "ShipModel.qml",
@@ -137,6 +140,8 @@ def main():
      property var ships: report.ships
      property var basemap: MAP
      property var preferences: ({provider:"openwaters",hasOpenwatersKey:false,unit:"nm",radiusNm:25,cityName:"Genoa",latitude:44.4056,longitude:8.9463,autoLocation:false,hasApiKey:true,demo:true})
+     property var mapDetail: ({available:false})
+     function requestDetail(query) {}
      property bool paused:false
      property bool searchingCity:false
      property var cityResults:[]

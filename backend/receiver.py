@@ -126,6 +126,13 @@ class Receiver:
         from websockets.asyncio.client import connect
         from websockets.exceptions import InvalidStatus, WebSocketException
 
+        class DirectConnection(connect):
+            def process_redirect(self, error):
+                # AISStream's key is in the first message, not an HTTP header.
+                # Header stripping alone cannot protect it after a redirect.
+                # Only the explicitly configured provider may receive a subscription.
+                return error
+
         logger = logging.Logger("vessel.websocket", level=logging.CRITICAL + 1)
         logger.addHandler(logging.NullHandler())
         publisher = asyncio.create_task(self.publish())
@@ -136,7 +143,7 @@ class Receiver:
                 self.emit()
                 opened = time.monotonic()
                 try:
-                    async with connect(
+                    async with DirectConnection(
                         self.url,
                         additional_headers={"Authorization": "Bearer " + self.key}
                         if self.provider == "openwaters" and self.key

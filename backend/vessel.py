@@ -82,6 +82,7 @@ def setup(message, state=None):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--search-city", metavar="NAME")
+    parser.add_argument("--map-detail", action="store_true")
     parser.add_argument("--read-settings", action="store_true")
     parser.add_argument("--save-settings", action="store_true")
     parser.add_argument("--saved-settings", action="store_true")
@@ -96,6 +97,18 @@ def main(argv=None):
     parser.add_argument("--longitude", type=float)
     parser.add_argument("--radius", type=float, default=25)
     args = parser.parse_args(argv)
+    # Map requests are one-shot jobs. Handle them before settings, credentials
+    # and WebSocket runtime setup so navigation stays independent of reception.
+    if args.map_detail:
+        try:
+            from detail_map import build
+
+            query = json.loads(sys.stdin.readline(2049))
+            output(build(query))
+            return 0
+        except (OSError, ValueError, TypeError, KeyError, RecursionError):
+            output(dict(available=False))
+            return 1
     if args.search_city is not None:
         try:
             from geocoding import search

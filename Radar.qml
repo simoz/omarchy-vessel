@@ -9,11 +9,58 @@ Item {
     property real markerSize: 12
     property var ships: []
     property var basemap: ({available: false, polygons: [], coastlines: []})
+    property var detail: ({available: false})
+    property bool detailEnabled: false
+    signal detailRequested(var query)
+    // A loaded map is reusable only while it covers the whole visible circle
+    // and belongs to the same observer/range. Otherwise draw the offline layer.
+    readonly property bool detailed: {
+        if (detail.available !== true || !basemap.origin)
+            return false;
+        var sameOrigin = JSON.stringify(detail.origin) === JSON.stringify(basemap.origin);
+        var centerDistance = Math.hypot(viewCenter.x - detail.x, viewCenter.y - detail.y);
+        var visibleRadius = 1 / zoom;
+        return sameOrigin && detail.origin[2] === radiusNm
+            && centerDistance + visibleRadius <= detail.coverRadius + 0.000001;
+    }
+    // Serialization also gives the service an exact identity for each viewport.
+    readonly property string detailQuery: {
+        if (!basemap.origin)
+            return "";
+        return JSON.stringify({
+            lat: basemap.origin[0], lon: basemap.origin[1], radius: radiusNm,
+            x: viewCenter.x, y: viewCenter.y, zoom: zoom, size: Math.min(4096, width)
+        });
+    }
+    function scheduleDetail() {
+        if (visible && detailEnabled && detailQuery) {
+            detailTimer.restart();
+        } else {
+            detailTimer.stop();
+            detailRequested(null);
+        }
+    }
+    onDetailQueryChanged: scheduleDetail()
+    onDetailEnabledChanged: scheduleDetail()
+    onVisibleChanged: scheduleDetail()
+    // Debounce navigation, then retry unavailable detail only while it is visible.
+    Timer {
+        id: detailTimer
+        interval: 180
+        onTriggered: root.detailRequested(JSON.parse(root.detailQuery))
+    }
+    Timer {
+        interval: 30000; repeat: true
+        running: root.visible && root.detailEnabled && !!root.detailQuery && !root.detailed
+        onTriggered: root.scheduleDetail()
+    }
+    // Camera state: distances use the observer's coverage radius, not pixels.
     property real radiusNm: 25
     readonly property bool zoomControlsFocused: zoomInButton.activeFocus || zoomOutButton.activeFocus || centerButton.activeFocus
     signal closeRequested()
     Keys.onEscapePressed: closeRequested()
     property real controlsRightMargin: 0
+    // Logarithmic levels allow fractional zoom steps; six levels cover 1x..64x.
     property real zoomLevel: 0
     readonly property int maxZoomLevel: 6
     readonly property real zoom: Math.pow(2, zoomLevel)
@@ -40,70 +87,42 @@ Item {
         setCenter(center.x, center.y);
     }
     // Restore the initial overview, including when zoomed without any panning.
-    function recenter() { zoomLevel = 0; viewCenter = Qt.point(0, 0); }
+    function recenter() {
+        zoomLevel = 0;
+        viewCenter = Qt.point(0, 0);
+    }
     onZoomChanged: setCenter(viewCenter.x, viewCenter.y)
     onBasemapChanged: recenter()
     // Keep the zoom local: changing the view must never reconnect the AIS feed.
-    function zoomIn() { zoomLevel = Math.min(maxZoomLevel, zoomLevel + 1); }
-    function zoomOut() { zoomLevel = Math.max(0, zoomLevel - 1); }
+    function zoomBy(factor) {
+        var nextLevel = zoomLevel + Math.log2(factor);
+        zoomLevel = Math.max(0, Math.min(maxZoomLevel, nextLevel));
+    }
+    function zoomIn() {
+        zoomBy(1.25);
+    }
+    function zoomOut() {
+        zoomBy(1 / 1.25);
+    }
     onRadiusNmChanged: recenter()
     property string selectedMmsi: ""
     signal selected(string mmsi)
     implicitHeight: width
-    // Geographic paths use normalized radar coordinates: [0,0] is the observer
-    // and a distance of 1 reaches the range ring. Clip all map ink to that ring.
-    Canvas {
-        id: mapLayer
+    // Paint order matters: geography, sweep, grid, labels, contacts, then controls.
+    // Map components only draw. This item owns the camera and user interaction.
+    OfflineMap {
         anchors.fill: parent
-        property var geography: root.basemap
-        property point offset: root.centerPixels
-        onOffsetChanged: requestPaint()
-        property real viewScale: root.zoom
-        onViewScaleChanged: requestPaint()
-        property color coastColor: Color.accent
-        property color landColor: Color.foreground
-        onGeographyChanged: requestPaint()
-        onCoastColorChanged: requestPaint()
-        onLandColorChanged: requestPaint()
-        onWidthChanged: requestPaint()
-        onHeightChanged: requestPaint()
-        onPaint: {
-            var c = getContext("2d"); c.reset();
-            if (!geography.available) return;
-            var mid = width / 2, r = root.chartRadius;
-            c.save();
-            c.beginPath(); c.arc(mid, mid, r, 0, Math.PI * 2); c.clip();
-            var polygons = geography.polygons || [];
-            polygons.forEach(function(rings) {
-                c.beginPath();
-                rings.forEach(function(points) {
-                    points.forEach(function(p, i) {
-                        if (i === 0) c.moveTo(mid + p[0] * r * viewScale - offset.x, mid + p[1] * r * viewScale - offset.y);
-                        else c.lineTo(mid + p[0] * r * viewScale - offset.x, mid + p[1] * r * viewScale - offset.y);
-                    });
-                    c.closePath();
-                });
-                c.fillStyle = landColor; c.globalAlpha = 0.09; c.fill();
-                // Fine hatching gives land a chart-like texture without fixed colors.
-                // The polygon's winding also clips the hatch away from inland holes.
-                c.save(); c.clip(); c.beginPath();
-                for (var x = -width; x < width * 2; x += 9) {
-                    c.moveTo(x, 0); c.lineTo(x + width, width);
-                }
-                c.strokeStyle = landColor; c.globalAlpha = 0.045; c.lineWidth = 1; c.stroke(); c.restore();
-            });
-            // Coastlines are a separate dataset, so land partition seams never
-            // appear as artificial shores when a viewport crosses a tile edge.
-            c.beginPath();
-            (geography.coastlines || []).forEach(function(points) {
-                points.forEach(function(p, i) {
-                    if (i === 0) c.moveTo(mid + p[0] * r * viewScale - offset.x, mid + p[1] * r * viewScale - offset.y);
-                    else c.lineTo(mid + p[0] * r * viewScale - offset.x, mid + p[1] * r * viewScale - offset.y);
-                });
-            });
-            c.globalAlpha = 0.7; c.strokeStyle = coastColor; c.lineWidth = 1.2;
-            c.lineJoin = "round"; c.stroke(); c.restore();
-        }
+        visible: !root.detailed
+        geography: root.basemap
+        viewScale: root.zoom
+        offset: root.centerPixels
+    }
+    DetailMap {
+        anchors.fill: parent
+        visible: root.detailed
+        geography: root.detail
+        viewScale: root.zoom
+        offset: root.centerPixels
     }
     // Paint this faint sweep once, then animate the item transform.
     // The sweep stays centered on the viewport, including while the map is panned.
@@ -163,46 +182,16 @@ Item {
             }
         }
     }
-    Canvas {
-        id: cityLayer
+    RadarLabels {
         anchors.fill: parent
-        property var geography: root.basemap
-        property var contacts: root.visibleShips
-        property string selection: root.selectedMmsi
-        onSelectionChanged: requestPaint()
-        property point offset: root.centerPixels
-        onOffsetChanged: requestPaint()
-        property real viewScale: root.zoom
-        property color ink: Color.muted
-        property color halo: Color.background
-        onGeographyChanged: requestPaint()
-        onContactsChanged: requestPaint()
-        onViewScaleChanged: requestPaint()
-        onInkChanged: requestPaint()
-        onHaloChanged: requestPaint()
-        onWidthChanged: requestPaint()
-        onHeightChanged: requestPaint()
-        onPaint: {
-            var c = getContext("2d"); c.reset();
-            c.font = "12px monospace";
-            var cities = (geography.cities || []).map(function(city) {
-                return {name: city.name, x: city.x - root.viewCenter.x, y: city.y - root.viewCenter.y, textWidth: c.measureText(city.name).width};
-            });
-            // Reserve the visible symbols, not their larger invisible click targets.
-            var occupied = [{x: width / 2 - offset.x - 14, y: height / 2 - offset.y - 6, width: 28, height: 32}];
-            contacts.forEach(function(ship) {
-                var p = Model.point(ship, width, root.viewRadiusNm, root.centerPixels);
-                var margin = ship.mmsi === selection ? root.markerSize / 2 + 6 : root.markerSize / 2 + 2;
-                occupied.push({x: p.x - margin, y: p.y - margin, width: margin * 2, height: margin * 2});
-            });
-            var labels = Model.cityLabels(cities, width, viewScale, occupied);
-            c.lineJoin = "round"; c.strokeStyle = halo; c.fillStyle = ink;
-            labels.forEach(function(label) {
-                c.lineWidth = 3; c.strokeText(label.name, label.x, label.y);
-                c.fillText(label.name, label.x, label.y);
-                c.beginPath(); c.arc(label.dotX, label.dotY, 1.6, 0, Math.PI * 2); c.fill();
-            });
-        }
+        geography: root.detailed ? root.detail : root.basemap
+        contacts: root.visibleShips
+        selection: root.selectedMmsi
+        viewCenter: root.viewCenter
+        viewScale: root.zoom
+        viewRadiusNm: root.viewRadiusNm
+        markerSize: root.markerSize
+        offset: root.centerPixels
     }
     Repeater {
         model: ["N", "E", "S", "W"]
@@ -286,10 +275,8 @@ Item {
             // Keep the map point under the pointer fixed, within loaded coverage.
             var x = root.viewCenter.x + dx / (root.chartRadius * root.zoom);
             var y = root.viewCenter.y + dy / (root.chartRadius * root.zoom);
-            // A standard wheel notch is 120 units: four notches double the zoom.
-            // Smaller trackpad deltas produce correspondingly smaller changes.
-            root.zoomLevel = Math.max(0, Math.min(root.maxZoomLevel,
-                                                root.zoomLevel + wheel.angleDelta.y / 480));
+            // Match Omastorm: one gentle step per event, independent of delta size.
+            root.zoomBy(wheel.angleDelta.y > 0 ? 1 / 0.85 : 0.85);
             root.setCenter(x - dx / (root.chartRadius * root.zoom),
                            y - dy / (root.chartRadius * root.zoom));
             if (pressed) {

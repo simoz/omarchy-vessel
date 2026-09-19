@@ -34,11 +34,43 @@ BarWidget {
         return ships.length ? ships[0] : null;
     }
     readonly property string family: bar ? bar.fontFamily : "monospace"
-    function open() { if (!expanded) opened = true; }
-    function close() { helpOpen = false; opened = false; expanded = false; configuring = false; }
-    function expand() { expanded = true; opened = false; Qt.callLater(() => root.configuring ? form.focusFirst() : radar.forceActiveFocus()); }
-    function collapse() { expanded = false; opened = true; Qt.callLater(() => root.configuring ? form.focusFirst() : radar.forceActiveFocus()); }
-    function toggle() { if (expanded) { collapse(); return; } if (!opened && report.status === "SETUP") configuring = true; opened = !opened; }
+    // The panel and expanded window share one scene. Change its parent rather
+    // than recreate it, so zoom, selection and unsaved form fields survive.
+    function focusCurrentView() {
+        if (root.configuring)
+            form.focusFirst();
+        else
+            radar.forceActiveFocus();
+    }
+    function open() {
+        if (!expanded)
+            opened = true;
+    }
+    function close() {
+        helpOpen = false;
+        opened = false;
+        expanded = false;
+        configuring = false;
+    }
+    function expand() {
+        expanded = true;
+        opened = false;
+        Qt.callLater(root.focusCurrentView);
+    }
+    function collapse() {
+        expanded = false;
+        opened = true;
+        Qt.callLater(root.focusCurrentView);
+    }
+    function toggle() {
+        if (expanded) {
+            collapse();
+            return;
+        }
+        if (!opened && report.status === "SETUP")
+            configuring = true;
+        opened = !opened;
+    }
     function refresh() { VesselService.restart(); }
     function revealShip(ship) {
         selectedMmsi = ship.mmsi;
@@ -68,6 +100,7 @@ BarWidget {
         revealShip(ships[index]);
         contacts.positionViewAtIndex(index, ListView.Contain);
     }
+    // Keyboard focus can move below the fold; scroll only as far as necessary.
     function ensureVisible(item) {
         var point = item.mapToItem(viewport.contentItem, 0, 0);
         var target = viewport.contentY;
@@ -75,6 +108,7 @@ BarWidget {
         else if (point.y + item.height > target + viewport.height) target = point.y + item.height - viewport.height;
         viewport.contentY = Math.max(0, Math.min(target, Math.max(0, viewport.contentHeight - viewport.height)));
     }
+    // Mouse controls and keyboard shortcuts call the same view/service actions.
     function runCommand(command) {
         switch (command) {
         case "help": showHelp(); break;
@@ -341,6 +375,7 @@ BarWidget {
                     }
                 }
                 Rectangle { width: parent.width; height: 1; color: Color.accent; opacity: 0.4 }
+                // The chart and vessel details share a row only when both fit.
                 Grid {
                     width: parent.width
                     columns: keys.wide ? 2 : 1
@@ -361,6 +396,10 @@ BarWidget {
                                 markerSize: root.expanded ? 14 : 12
                                 ships: root.ships; radiusNm: root.report.radius || 25
                                 basemap: VesselService.basemap
+                                // Source changes update geography without owning camera state.
+                                detail: VesselService.mapDetail
+                                detailEnabled: root.viewing && !root.configuring && !root.report.demo
+                                onDetailRequested: query => VesselService.requestDetail(query)
                                 selectedMmsi: root.selectedShip ? root.selectedShip.mmsi : ""
                                 onCloseRequested: root.close()
                                 onSelected: function(mmsi) { root.selectedMmsi = mmsi; }
@@ -379,8 +418,20 @@ BarWidget {
                             Label { width: parent.width / 2; text: "VIEW / " + Model.distance(radar.viewRadiusNm, root.unit); color: Color.muted }
                             Label { width: parent.width / 2; text: radar.visibleShips.length + " / " + (root.report.total || 0) + " CONTACTS"; horizontalAlignment: Text.AlignRight; color: Color.accent }
                         }
+                        Text {
+                            width: parent.width
+                            visible: radar.detailed
+                            text: '<a href="https://openfreemap.org/">OpenFreeMap</a> · <a href="https://openmaptiles.org/">© OpenMapTiles</a> · <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>'
+                            textFormat: Text.StyledText
+                            font.pixelSize: root.smallTextSize
+                            font.family: root.family
+                            color: Color.muted; linkColor: Color.muted
+                            wrapMode: Text.Wrap
+                            onLinkActivated: link => Qt.openUrlExternally(link)
+                        }
                         Label {
-                            text: VesselService.basemap.available ? "NATURAL EARTH · CITIES © GEONAMES" : "BASEMAP UNAVAILABLE"
+                            visible: !radar.detailed
+                            text: VesselService.basemap.available ? "OFFLINE MAP · NATURAL EARTH · © GEONAMES" : "BASEMAP UNAVAILABLE"
                             font.pixelSize: root.smallTextSize; color: Color.muted
                         }
                         Label {

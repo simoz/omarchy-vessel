@@ -40,14 +40,14 @@ An empty key field preserves the saved credential for that provider. OpenWaters 
 
 ## Use the radar
 
-**Rivers and inland waterways:** Vessel is designed for coastal viewing. The offline map contains generalized land and coastlines, without a dedicated river layer, so riverbanks and narrow channels—such as the Thames through London—may be missing. AIS-equipped vessels can still appear where reception is available, but they may look as if they are on land. Zooming in does not add the missing map detail.
+The map loads detailed OpenFreeMap vectors for the visible area as you zoom, including coastlines, rivers, docks, roads and local place names. It keeps the radar's theme and nautical projection. Previously loaded tiles are cached locally; if a complete detailed view is unavailable, the radar shows the bundled **offline map** with its source label. That fallback has generalized coastlines and may omit narrow channels. Polar views beyond Web Mercator coverage also use the offline map.
 
 | Control | Action |
 | --- | --- |
 | Boat icon in the bar | Open or close the panel; return to the panel from the expanded window. |
 | Expand icon (diagonal arrows, top right) | Switch between the panel and expanded window, keeping zoom and selection. |
-| Zoom buttons (+ and −) | Zoom between 1× and 64×. |
-| Mouse wheel over the radar | Scroll up to zoom in, down to zoom out, keeping the map point under the pointer fixed within loaded coverage. |
+| Zoom buttons (+ and −) | Zoom between 1× and 64× in 1.25× steps, like Omastorm. |
+| Mouse wheel over the radar | Scroll up to zoom in, down to zoom out, keeping the map point under the pointer fixed within loaded coverage. Each event changes the visible range by a factor of 0.85, like Omastorm. |
 | Map drag | Move around the loaded area after zooming in. |
 | Center button (crosshair, beside zoom) | Return to your position and reset zoom to 1×. |
 | Vessel on the map or in the list | Select a vessel to see its details. Selecting from the list also brings it into view on the map. |
@@ -95,6 +95,8 @@ Filled dots indicate stationary vessels (reported speed below 0.5 knots). Moving
 
 ## Update
 
+See the [changelog](CHANGELOG.md) for release history and upcoming changes.
+
 ```sh
 omarchy plugin update simoz.vessel --yes; omarchy-shell shell rescanPlugins
 ```
@@ -119,6 +121,7 @@ Vessel is built for watching nearby traffic. Coverage and reported destinations 
 - **Photon / OpenStreetMap** provides city search from the name you enter.
 - **ipwho.is** provides approximate location from your public IP when enabled.
 - **Natural Earth** coastlines and **GeoNames** city labels are bundled with the plugin.
+- **OpenFreeMap** receives requests for the map tiles you view, which reveal the viewed area and your IP address. These requests are independent of AIS reception and may continue while reception is paused and the map is open. No AIS keys or vessel positions are sent. Detailed tiles are stored under `$XDG_CACHE_HOME/omarchy-vessel/tiles` (normally `~/.cache/omarchy-vessel/tiles`), with a 128 MiB cache ceiling. Demo mode remains offline. Map data attribution is shown below the radar; see [OpenFreeMap](https://openfreemap.org/) and [OpenStreetMap copyright](https://www.openstreetmap.org/copyright).
 
 Code is licensed under [MIT](LICENSE). Natural Earth data is public domain; GeoNames data is licensed under [CC BY 4.0](https://www.geonames.org/about.html). See [data sources and attribution](data/README.md).
 

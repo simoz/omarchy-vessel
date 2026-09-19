@@ -9,6 +9,59 @@ Item {
     property var report: ({status: "SETUP", ships: [], total: 0, error: ""})
     // Retain static geography between snapshots without repainting it every second.
     property var basemap: ({available: false, polygons: [], coastlines: []})
+    property var mapDetail: ({available: false})
+    // wantedDetail is the latest viewport, even while an older request runs.
+    // completedDetail suppresses duplicate requests; failures become retryable.
+    property string wantedDetail: ""
+    property string completedDetail: ""
+    property double detailRetryAt: 0
+    // Separate process: map navigation never reconnects or blocks reception.
+    function requestDetail(query) {
+        wantedDetail = query ? JSON.stringify(query) : "";
+        if (!wantedDetail || detailProcess.running)
+            return;
+        var alreadyCompleted = wantedDetail === completedDetail;
+        var retryAllowed = Date.now() >= detailRetryAt;
+        if (!alreadyCompleted || retryAllowed)
+            startDetail();
+    }
+    function startDetail() {
+        if (!wantedDetail) return;
+        detailProcess.query = wantedDetail;
+        detailProcess.received = false;
+        detailProcess.command = helperCommand(["--map-detail"]);
+        detailProcess.running = true;
+    }
+    Process {
+        id: detailProcess
+        property string query: ""
+        property bool received: false
+        stdinEnabled: true
+        onStarted: write(query + "\n")
+        stdout: SplitParser {
+            onRead: data => {
+                // Never install a response for a view the user has already left.
+                if (detailProcess.query !== root.wantedDetail) return;
+                try {
+                    var result = JSON.parse(data);
+                    detailProcess.received = true;
+                    root.completedDetail = detailProcess.query;
+                    // Successful data stays reusable until the viewport changes.
+                    root.detailRetryAt = result.available ? Number.POSITIVE_INFINITY : Date.now() + 30000;
+                    if (result.available) root.mapDetail = result;
+                } catch (_) { /* Retain the last complete map on a failed batch. */ }
+            }
+        }
+        onExited: {
+            // Coalesce a burst of navigation into one follow-up for the latest view.
+            if (query !== root.wantedDetail) root.startDetail();
+            else if (!received) {
+                root.completedDetail = query;
+                root.detailRetryAt = Date.now() + 30000;
+            }
+        }
+    }
+    // Receiver ownership, user preferences and settings/search feedback.
     property var config: ({})
     property var preferences: ({provider: "openwaters", radiusNm: 25, autoLocation: true, demo: false, unit: "nm", hasApiKey: false, hasOpenwatersKey: false})
     readonly property bool searchingCity: cityProcess.running
@@ -80,6 +133,8 @@ Item {
         paused = false;
         report = {status: "STARTING", ships: [], total: 0, error: ""};
         basemap = {available: false, polygons: [], coastlines: []};
+        mapDetail = {available: false};
+        wantedDetail = ""; completedDetail = "";
         stopping = false;
         if (process.running) { pendingRestart = true; process.running = false; }
         else startTimer.restart();
@@ -98,6 +153,7 @@ Item {
         settingsProcess.command = helperCommand(["--read-settings"]);
         settingsProcess.running = true;
     }
+    // Persist first; settingsSaved lets the editor close before reception restarts.
     function saveSettings(values) {
         if (settingsProcess.running) return;
         settingsError = ""; saving = true;
@@ -187,6 +243,7 @@ Item {
                 root.report = {status: "SETUP", ships: [], total: 0, error: "Could not start Python. Check pythonExecutable in the widget settings."};
         }
     }
+    // Reception snapshots are independent from the detail-map and settings replies.
     Process {
         id: process
         // The helper emits complete snapshots; replacing the object updates QML bindings.
