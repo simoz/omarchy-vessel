@@ -526,23 +526,23 @@ BarWidget {
                                 }
                             }
                             Row {
-                                width: parent.width; spacing: 12
+                                width: parent.width; spacing: 8
                                 Column {
                                     readonly property string destination: root.selectedShip ? (root.selectedShip.destination || "").trim() : ""
-                                    width: parent.width - mmsiField.width - imoField.width - 24
+                                    width: (parent.width - 16) / 3
                                     spacing: 4
                                     Label { text: "DESTINATION"; font.pixelSize: root.smallTextSize; color: Color.muted }
                                     Label { width: parent.width; wrapMode: Text.Wrap; text: parent.destination || "—" }
                                 }
                                 Column {
                                     id: mmsiField
-                                    width: Math.max(mmsiCaption.implicitWidth, mmsiValue.implicitWidth); spacing: 4
+                                    width: (parent.width - 16) / 3; spacing: 4
                                     Label { id: mmsiCaption; text: "MMSI"; font.pixelSize: root.smallTextSize; color: Color.muted }
                                     Label { id: mmsiValue; text: root.selectedShip ? root.selectedShip.mmsi : "—" }
                                 }
                                 Column {
                                     id: imoField
-                                    width: Math.max(imoCaption.implicitWidth, imoValue.implicitWidth); spacing: 4
+                                    width: (parent.width - 16) / 3; spacing: 4
                                     Label { id: imoCaption; text: "IMO"; font.pixelSize: root.smallTextSize; color: Color.muted }
                                     Label { id: imoValue; text: vesselLink.hasImo ? String(root.selectedShip.imo) : "—" }
                                 }
