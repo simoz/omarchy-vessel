@@ -479,11 +479,12 @@ BarWidget {
                                     anchors.top: parent.top
                                     implicitWidth: 30; implicitHeight: 30
                                     iconOnly: true
-                                    text: "Find vessel on VesselFinder"
-                                    enabled: !!root.selectedShip && /^[0-9]{9}$/.test(String(root.selectedShip.mmsi))
+                                    text: "Open vessel on VesselFinder"
+                                    readonly property string vesselUrl: Model.vesselUrl(root.selectedShip)
+                                    enabled: vesselUrl.length > 0
                                     onTriggered: {
                                         if (enabled)
-                                            Qt.openUrlExternally("https://www.vesselfinder.com/vessels?name=" + encodeURIComponent(root.selectedShip.mmsi));
+                                            Qt.openUrlExternally(vesselUrl);
                                     }
                                     onActiveFocusChanged: if (activeFocus) root.ensureVisible(vesselLink)
                                     Controls.ToolTip.visible: hovered

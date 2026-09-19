@@ -56,6 +56,15 @@ class GeometryTest(unittest.TestCase):
 
 
 class FleetTest(unittest.TestCase):
+    def test_imo_survives_position_updates_and_unavailable_static_values(self):
+        fleet = ais.Fleet(0, 0, 25)
+        fleet.ingest(report("ShipStaticData", ImoNumber=9400708), 1000)
+        fleet.ingest(report(), 1001)
+        for imo in (0, None, True, 999999, 10000000):
+            fleet.ingest(report("ShipStaticData", ImoNumber=imo), 1002)
+        self.assertEqual(fleet.snapshot(1002)["ships"][0]["imo"], 9400708)
+
+
     def test_class_a_and_b_and_static_merge(self):
         fleet = ais.Fleet(0, 0, 25)
         for index, kind in enumerate(ais.POSITION_TYPES):

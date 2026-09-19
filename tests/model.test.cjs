@@ -121,3 +121,14 @@ test('motion icons use reported speed, including zero and unknown values', () =>
   for (const speed of [null, undefined, '0', -1, NaN, Infinity])
     assert.equal(m.motion({speed}), 'unknown');
 });
+
+test('vessel links prefer direct IMO details and use MMSI search when IMO is unavailable', () => {
+  assert.equal(m.vesselUrl({imo: 9400708, mmsi: '247346000'}),
+    'https://www.vesselfinder.com/vessels/details/9400708');
+  for (const imo of [undefined, null, 0, 'invalid']) {
+    assert.equal(m.vesselUrl({imo, mmsi: '247346000'}),
+      'https://www.vesselfinder.com/vessels?name=247346000');
+  }
+  assert.equal(m.vesselUrl(null), '');
+  assert.equal(m.vesselUrl({mmsi: 'invalid'}), '');
+});

@@ -129,3 +129,13 @@ function shipCenter(ship, coverageRadius) {
     var range = ship.distance / coverageRadius;
     return {x: Math.sin(angle) * range, y: -Math.cos(angle) * range};
 }
+
+// VesselFinder detail pages use IMO; MMSI search also covers vessels without one.
+function vesselUrl(ship) {
+    if (!ship) return "";
+    if (/^[1-9][0-9]{6}$/.test(String(ship.imo)))
+        return "https://www.vesselfinder.com/vessels/details/" + ship.imo;
+    if (/^[0-9]{9}$/.test(String(ship.mmsi)))
+        return "https://www.vesselfinder.com/vessels?name=" + ship.mmsi;
+    return "";
+}

@@ -137,6 +137,10 @@ class Fleet:
             ship["name"] = name
         if type(kind_code) is int and kind_code > 0:
             ship["type"] = category(kind_code)
+        if kind == "ShipStaticData":
+            imo = body.get("ImoNumber")
+            if type(imo) is int and 1000000 <= imo <= 9999999:
+                ship["imo"] = imo
         destination = clean(body.get("Destination"))
         if destination:
             ship["destination"] = destination
