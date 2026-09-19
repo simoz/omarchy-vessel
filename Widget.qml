@@ -527,10 +527,9 @@ BarWidget {
                             }
                             Column {
                                 readonly property string destination: root.selectedShip ? (root.selectedShip.destination || "").trim() : ""
-                                visible: destination.length > 0
                                 width: parent.width; spacing: 4
                                 Label { text: "DESTINATION"; font.pixelSize: root.smallTextSize; color: Color.muted }
-                                Label { width: parent.width; wrapMode: Text.WordWrap; text: parent.destination }
+                                Label { width: parent.width; wrapMode: Text.WordWrap; text: parent.destination || "—" }
                             }
                             Row {
                                 width: parent.width; spacing: 16
