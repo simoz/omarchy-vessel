@@ -62,7 +62,7 @@ The map shows coastlines, rivers, docks, roads and local place names, with more 
 | Map drag | Move around the loaded area after zooming in. |
 | Center button (crosshair, beside zoom) | Return to your position and reset zoom to 1×. |
 | Vessel on the map or in the list | Select a vessel to see its details. Selecting from the list also brings it into view on the map. |
-| IMO number in the selected vessel details | Open its VesselFinder details page, with a photo when available. MMSI remains visible; when no IMO has been received, the MMSI number links to the vessel search instead. |
+| External link icon beside the vessel name | Open its VesselFinder details page by IMO, or search by MMSI when IMO is unavailable. MMSI and IMO appear below the destination. |
 | Status button beside the location | Click to pause reception; click again when it reads PAUSED to resume. Last positions remain visible while paused. |
 | Settings button in the footer | Change location, API key, range and units. |
 | Keyboard icon (top right) | Open the shortcut guide. You can also press `?` or `F1`. |

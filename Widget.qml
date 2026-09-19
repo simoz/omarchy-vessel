@@ -462,11 +462,39 @@ BarWidget {
                             width: parent.width; spacing: 14; visible: root.selectedShip !== null
                             Column {
                                 width: parent.width; spacing: 3
-                                Label {
-                                    id: vesselName
-                                    width: parent.width; wrapMode: Text.WordWrap
-                                    font.pixelSize: 22; font.bold: true
-                                    text: root.selectedShip ? (root.selectedShip.name || "Unnamed vessel") : ""
+                                Item {
+                                    width: parent.width
+                                    height: Math.max(vesselName.implicitHeight, vesselLink.height)
+                                    Label {
+                                        id: vesselName
+                                        width: Math.min(implicitWidth, parent.width - vesselLink.width - 8)
+                                        wrapMode: Text.WordWrap
+                                        font.pixelSize: 22; font.bold: true
+                                        text: root.selectedShip ? (root.selectedShip.name || "Unnamed vessel") : ""
+                                    }
+                                    Action {
+                                        id: vesselLink
+                                        objectName: "openVesselPage"
+                                        anchors.left: vesselName.right; anchors.leftMargin: 8
+                                        anchors.top: parent.top
+                                        readonly property string vesselUrl: Model.vesselUrl(root.selectedShip)
+                                        readonly property bool hasImo: !!root.selectedShip && /^[1-9][0-9]{6}$/.test(String(root.selectedShip.imo))
+                                        text: hasImo ? "Open vessel details on VesselFinder" : "Search vessel by MMSI on VesselFinder"
+                                        implicitWidth: 30; implicitHeight: 30
+                                        iconOnly: true
+                                        color: "transparent"
+                                        border.color: activeFocus ? Color.accent : "transparent"
+                                        enabled: vesselUrl.length > 0
+                                        onTriggered: if (enabled) Qt.openUrlExternally(vesselUrl)
+                                        onActiveFocusChanged: if (activeFocus) root.ensureVisible(vesselLink)
+                                        Controls.ToolTip.visible: hovered
+                                        Controls.ToolTip.delay: 500
+                                        Controls.ToolTip.text: text
+                                        Label {
+                                            anchors.centerIn: parent
+                                            text: "↗"; font.pixelSize: 22; color: Color.accent
+                                        }
+                                    }
                                 }
                                 Label {
                                     width: parent.width; wrapMode: Text.WordWrap
@@ -504,59 +532,20 @@ BarWidget {
                                 Label { text: "DESTINATION"; font.pixelSize: root.smallTextSize; color: Color.muted }
                                 Label { width: parent.width; wrapMode: Text.WordWrap; text: parent.destination }
                             }
-                            Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.2 }
-                            Column {
-                                width: parent.width; spacing: 2
-                                Row {
-                                    visible: vesselLink.hasImo
-                                    spacing: 12
-                                    Label {
-                                        width: 52; height: vesselLink.height
-                                        verticalAlignment: Text.AlignVCenter
-                                        text: "MMSI"; font.pixelSize: root.smallTextSize; color: Color.muted
-                                    }
-                                    Label {
-                                        height: vesselLink.height
-                                        verticalAlignment: Text.AlignVCenter
-                                        text: root.selectedShip ? root.selectedShip.mmsi : ""
-                                    }
+                            Row {
+                                width: parent.width; spacing: 16
+                                Column {
+                                    width: (parent.width - 16) / 2; spacing: 4
+                                    Label { text: "MMSI"; font.pixelSize: root.smallTextSize; color: Color.muted }
+                                    Label { text: root.selectedShip ? root.selectedShip.mmsi : "" }
                                 }
-                                Row {
-                                    spacing: 12
-                                    Label {
-                                        width: 52; height: vesselLink.height
-                                        verticalAlignment: Text.AlignVCenter
-                                        text: vesselLink.hasImo ? "IMO" : "MMSI"
-                                        font.pixelSize: root.smallTextSize; color: Color.muted
-                                    }
-                                    Action {
-                                        id: vesselLink
-                                        objectName: "openVesselPage"
-                                        readonly property string vesselUrl: Model.vesselUrl(root.selectedShip)
-                                        readonly property bool hasImo: !!root.selectedShip && /^[1-9][0-9]{6}$/.test(String(root.selectedShip.imo))
-                                        text: root.selectedShip ? String(hasImo ? root.selectedShip.imo : root.selectedShip.mmsi) : ""
-                                        implicitWidth: vesselIdentifierLabel.implicitWidth + 4
-                                        implicitHeight: vesselIdentifierLabel.implicitHeight + 8
-                                        iconOnly: true
-                                        color: "transparent"
-                                        border.color: activeFocus ? Color.accent : "transparent"
-                                        enabled: vesselUrl.length > 0
-                                        Accessible.name: (hasImo ? "IMO " : "MMSI ") + text + ": " + Controls.ToolTip.text
-                                        onTriggered: if (enabled) Qt.openUrlExternally(vesselUrl)
-                                        onActiveFocusChanged: if (activeFocus) root.ensureVisible(vesselLink)
-                                        Controls.ToolTip.visible: hovered
-                                        Controls.ToolTip.delay: 500
-                                        Controls.ToolTip.text: hasImo ? "Open vessel details on VesselFinder" : "Search vessel by MMSI on VesselFinder"
-                                        Label {
-                                            id: vesselIdentifierLabel
-                                            anchors.centerIn: parent
-                                            text: vesselLink.text + (vesselLink.hasImo ? " ↗" : "")
-                                            font.underline: true
-                                            color: Color.accent
-                                        }
-                                    }
+                                Column {
+                                    width: (parent.width - 16) / 2; spacing: 4
+                                    Label { text: "IMO"; font.pixelSize: root.smallTextSize; color: Color.muted }
+                                    Label { text: vesselLink.hasImo ? String(root.selectedShip.imo) : "—" }
                                 }
                             }
+                            Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.2 }
                             Column {
                                 width: parent.width; spacing: 3
                                 Label {
