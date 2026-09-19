@@ -459,77 +459,116 @@ BarWidget {
                         spacing: 12
                         Rectangle { visible: !keys.wide; width: parent.width; height: 1; color: Color.muted; opacity: 0.3 }
                         Column {
-                            width: parent.width; spacing: 6; visible: root.selectedShip !== null
-                            Label {
-                                id: vesselName
-                                width: parent.width; wrapMode: Text.WordWrap
-                                font.pixelSize: 22; font.bold: true
-                                text: root.selectedShip ? (root.selectedShip.name || "MMSI " + root.selectedShip.mmsi) : ""
-                            }
-                            Label {
-                                width: parent.width; wrapMode: Text.WordWrap
-                                text: root.selectedShip ? Model.distance(root.selectedShip.distance, root.unit) + " " + Model.compass(root.selectedShip.bearing) + " · " + Math.round(root.selectedShip.bearing) + "° from you" + "  /  " + (root.selectedShip.speed === null ? "Speed unknown" : root.selectedShip.speed.toFixed(1) + " kn") : ""
-                            }
-                            Label {
-                                readonly property string destination: root.selectedShip ? (root.selectedShip.destination || "").trim() : ""
-                                visible: destination.length > 0
-                                width: parent.width; elide: Text.ElideRight
-                                font.pixelSize: root.smallTextSize + 1; color: Color.muted
-                                text: "Destination · " + destination
-                            }
-                            Flow {
-                                width: parent.width
-                                spacing: 6
+                            width: parent.width; spacing: 14; visible: root.selectedShip !== null
+                            Column {
+                                width: parent.width; spacing: 3
                                 Label {
-                                    height: vesselLink.height
-                                    verticalAlignment: Text.AlignVCenter
-                                    font.pixelSize: root.smallTextSize; color: Color.muted
-                                    text: root.selectedShip ? root.selectedShip.type + " ·" : ""
+                                    id: vesselName
+                                    width: parent.width; wrapMode: Text.WordWrap
+                                    font.pixelSize: 22; font.bold: true
+                                    text: root.selectedShip ? (root.selectedShip.name || "Unnamed vessel") : ""
                                 }
                                 Label {
-                                    visible: vesselLink.hasImo
-                                    height: vesselLink.height
-                                    verticalAlignment: Text.AlignVCenter
+                                    width: parent.width; wrapMode: Text.WordWrap
                                     font.pixelSize: root.smallTextSize; color: Color.muted
-                                    text: root.selectedShip ? "MMSI " + root.selectedShip.mmsi + " ·" : ""
+                                    text: root.selectedShip ? root.selectedShip.type : ""
                                 }
-                                Action {
-                                    id: vesselLink
-                                    objectName: "openVesselPage"
-                                    readonly property string vesselUrl: Model.vesselUrl(root.selectedShip)
-                                    readonly property bool hasImo: !!root.selectedShip && /^[1-9][0-9]{6}$/.test(String(root.selectedShip.imo))
-                                    text: root.selectedShip ? (hasImo ? "IMO " + root.selectedShip.imo : "MMSI " + root.selectedShip.mmsi) : ""
-                                    implicitWidth: vesselIdentifierLabel.implicitWidth + 4
-                                    implicitHeight: vesselIdentifierLabel.implicitHeight + 8
-                                    iconOnly: true
-                                    color: "transparent"
-                                    border.color: activeFocus ? Color.accent : "transparent"
-                                    enabled: vesselUrl.length > 0
-                                    Accessible.name: text + ": " + Controls.ToolTip.text
-                                    onTriggered: if (enabled) Qt.openUrlExternally(vesselUrl)
-                                    onActiveFocusChanged: if (activeFocus) root.ensureVisible(vesselLink)
-                                    Controls.ToolTip.visible: hovered
-                                    Controls.ToolTip.delay: 500
-                                    Controls.ToolTip.text: hasImo ? "Open vessel details on VesselFinder" : "Search vessel by MMSI on VesselFinder"
-                                    Label {
-                                        id: vesselIdentifierLabel
-                                        anchors.centerIn: parent
-                                        text: vesselLink.text
-                                        font.pixelSize: root.smallTextSize
-                                        font.underline: true
-                                        color: Color.accent
+                            }
+                            Row {
+                                width: parent.width; spacing: 8
+                                Repeater {
+                                    model: [
+                                        {label: "DISTANCE", value: root.selectedShip ? Model.distance(root.selectedShip.distance, root.unit) : "—"},
+                                        {label: "BEARING", value: root.selectedShip ? Model.compass(root.selectedShip.bearing) + " " + Math.round(root.selectedShip.bearing) + "°" : "—"},
+                                        {label: "SPEED", value: root.selectedShip && root.selectedShip.speed !== null ? root.selectedShip.speed.toFixed(1) + " kn" : "—"}
+                                    ]
+                                    Column {
+                                        required property var modelData
+                                        width: (parent.width - 16) / 3; spacing: 4
+                                        Label {
+                                            text: modelData.label
+                                            font.pixelSize: root.smallTextSize; color: Color.muted
+                                        }
+                                        Label {
+                                            width: parent.width; wrapMode: Text.WordWrap
+                                            text: modelData.value
+                                            font.bold: true
+                                        }
                                     }
                                 }
                             }
-                            Label {
-                                width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: root.smallTextSize
-                                text: root.selectedShip ? root.selectedShip.timeSource + " · " + Model.age(root.selectedShip.lastSeen, root.now) + (root.selectedShip.stale ? " · OLD POSITION" : "") : ""
-                                color: root.selectedShip && root.selectedShip.stale ? Color.accent : Color.muted
+                            Column {
+                                readonly property string destination: root.selectedShip ? (root.selectedShip.destination || "").trim() : ""
+                                visible: destination.length > 0
+                                width: parent.width; spacing: 4
+                                Label { text: "DESTINATION"; font.pixelSize: root.smallTextSize; color: Color.muted }
+                                Label { width: parent.width; wrapMode: Text.WordWrap; text: parent.destination }
                             }
-                            Label {
-                                width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: root.smallTextSize; color: Color.muted
-                                text: root.selectedShip ? (root.selectedShip.attribution || "") : ""
-                                visible: text.length > 0
+                            Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.2 }
+                            Column {
+                                width: parent.width; spacing: 2
+                                Row {
+                                    visible: vesselLink.hasImo
+                                    spacing: 12
+                                    Label {
+                                        width: 52; height: vesselLink.height
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: "MMSI"; font.pixelSize: root.smallTextSize; color: Color.muted
+                                    }
+                                    Label {
+                                        height: vesselLink.height
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: root.selectedShip ? root.selectedShip.mmsi : ""
+                                    }
+                                }
+                                Row {
+                                    spacing: 12
+                                    Label {
+                                        width: 52; height: vesselLink.height
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: vesselLink.hasImo ? "IMO" : "MMSI"
+                                        font.pixelSize: root.smallTextSize; color: Color.muted
+                                    }
+                                    Action {
+                                        id: vesselLink
+                                        objectName: "openVesselPage"
+                                        readonly property string vesselUrl: Model.vesselUrl(root.selectedShip)
+                                        readonly property bool hasImo: !!root.selectedShip && /^[1-9][0-9]{6}$/.test(String(root.selectedShip.imo))
+                                        text: root.selectedShip ? String(hasImo ? root.selectedShip.imo : root.selectedShip.mmsi) : ""
+                                        implicitWidth: vesselIdentifierLabel.implicitWidth + 4
+                                        implicitHeight: vesselIdentifierLabel.implicitHeight + 8
+                                        iconOnly: true
+                                        color: "transparent"
+                                        border.color: activeFocus ? Color.accent : "transparent"
+                                        enabled: vesselUrl.length > 0
+                                        Accessible.name: (hasImo ? "IMO " : "MMSI ") + text + ": " + Controls.ToolTip.text
+                                        onTriggered: if (enabled) Qt.openUrlExternally(vesselUrl)
+                                        onActiveFocusChanged: if (activeFocus) root.ensureVisible(vesselLink)
+                                        Controls.ToolTip.visible: hovered
+                                        Controls.ToolTip.delay: 500
+                                        Controls.ToolTip.text: hasImo ? "Open vessel details on VesselFinder" : "Search vessel by MMSI on VesselFinder"
+                                        Label {
+                                            id: vesselIdentifierLabel
+                                            anchors.centerIn: parent
+                                            text: vesselLink.text
+                                            font.underline: true
+                                            color: Color.accent
+                                        }
+                                    }
+                                }
+                            }
+                            Column {
+                                width: parent.width; spacing: 3
+                                Label {
+                                    width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: root.smallTextSize
+                                    text: root.selectedShip ? root.selectedShip.timeSource + " · " + Model.age(root.selectedShip.lastSeen, root.now) + (root.selectedShip.stale ? " · OLD POSITION" : "") : ""
+                                    color: root.selectedShip && root.selectedShip.stale ? Color.accent : Color.muted
+                                }
+                                Label {
+                                    width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: root.smallTextSize; color: Color.muted
+                                    text: root.selectedShip ? (root.selectedShip.attribution || "") : ""
+                                    visible: text.length > 0
+                                }
                             }
                         }
                         Label {
