@@ -393,6 +393,8 @@ BarWidget {
                     columns: keys.wide ? 2 : 1
                     spacing: 20
                     Column {
+                        id: chartColumn
+                        objectName: "chartColumn"
                         width: keys.wide ? parent.width - 340 : parent.width
                         spacing: 12
                         Item {
@@ -433,10 +435,10 @@ BarWidget {
                         Item {
                             id: chartFooter
                             width: parent.width
-                            height: root.expanded ? Math.max(chartNotes.implicitHeight, lookout.height) : chartNotes.implicitHeight
+                            height: chartNotes.implicitHeight
                             Column {
                                 id: chartNotes
-                                width: parent.width - (root.expanded ? lookout.width + 12 : 0)
+                                width: parent.width
                                 anchors.left: parent.left; anchors.bottom: parent.bottom
                                 spacing: 6
                                 Label {
@@ -446,6 +448,7 @@ BarWidget {
                                 }
                                 Column {
                                     id: credits
+                                    objectName: "mapCredits"
                                     width: parent.width; spacing: 2
                                     readonly property int textSize: Math.max(10, root.smallTextSize - 1)
                                     Text {
@@ -469,7 +472,7 @@ BarWidget {
                             }
                             Robot {
                                 id: lookout
-                                parent: root.expanded ? chartFooter : radarFrame
+                                parent: root.expanded ? contactsHeader : radarFrame
                                 objectName: "lookoutRobot"
                                 width: 48; height: 48
                                 anchors.right: parent.right; anchors.bottom: parent.bottom
@@ -584,37 +587,58 @@ BarWidget {
                             text: root.report.error || ""; color: Color.accent
                         }
                         ShipModel { id: contactModel; ships: root.ships }
-                        // Bound the contact list height; the receiver already sorts by distance.
-                        ListView {
-                            id: contacts
-                            objectName: "contacts"
-                            activeFocusOnTab: true
-                            Accessible.role: Accessible.List
-                            Accessible.name: "Vessels; use Up and Down to select"
-                            onActiveFocusChanged: if (activeFocus) root.ensureVisible(contacts)
-                            Keys.onUpPressed: root.selectVessel(-1)
-                            Keys.onDownPressed: root.selectVessel(1)
-                            Keys.onReturnPressed: if (root.selectedShip) root.revealShip(root.selectedShip)
-                            Keys.onEnterPressed: if (root.selectedShip) root.revealShip(root.selectedShip)
-                            Keys.onSpacePressed: if (root.selectedShip) root.revealShip(root.selectedShip)
-                            Rectangle { anchors.fill: parent; color: "transparent"; border.color: Color.accent; visible: contacts.activeFocus; z: 2 }
+                        // Align the contact block with the map credits in the two-column view.
+                        Item {
+                            id: contactsBlock
+                            objectName: "contactsBlock"
                             width: parent.width
-                            height: Math.min(contentHeight, keys.wide ? Math.max(144, keys.height - 380) : 144)
-                            clip: true
-                            model: contactModel
-                            spacing: 4
-                            delegate: Rectangle {
-                                required property var ship
-                                readonly property var modelData: ship
-                                objectName: "vessel-" + modelData.mmsi
-                                width: ListView.view.width; height: 38
-                                color: Color.background
-                                border.width: root.selectedShip && root.selectedShip.mmsi === modelData.mmsi ? 1 : 0
-                                border.color: Color.accent
-                                opacity: modelData.stale ? 0.5 : 1
-                                Label { anchors.left: parent.left; anchors.leftMargin: 8; anchors.verticalCenter: parent.verticalCenter; width: parent.width * 0.65; elide: Text.ElideRight; text: modelData.name || modelData.mmsi }
-                                Label { anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter; text: Model.distance(modelData.distance, root.unit); color: Color.accent }
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.revealShip(modelData) }
+                            height: keys.wide
+                                ? Math.max(60 + Math.min(contacts.contentHeight, 144), chartColumn.height - y)
+                                : (root.expanded ? 60 : 0) + Math.min(contacts.contentHeight, 144)
+                            Item {
+                                id: contactsHeader
+                                objectName: "contactsHeader"
+                                width: parent.width; height: root.expanded ? 48 : 0
+                                visible: root.expanded
+                                anchors.bottom: contacts.top; anchors.bottomMargin: 12
+                                Label {
+                                    anchors.left: parent.left; anchors.bottom: parent.bottom
+                                    text: "CONTACTS"; font.pixelSize: root.smallTextSize; color: Color.muted
+                                }
+                            }
+                            // Bound the contact list height; the receiver already sorts by distance.
+                            ListView {
+                                id: contacts
+                                objectName: "contacts"
+                                activeFocusOnTab: true
+                                Accessible.role: Accessible.List
+                                Accessible.name: "Vessels; use Up and Down to select"
+                                onActiveFocusChanged: if (activeFocus) root.ensureVisible(contacts)
+                                Keys.onUpPressed: root.selectVessel(-1)
+                                Keys.onDownPressed: root.selectVessel(1)
+                                Keys.onReturnPressed: if (root.selectedShip) root.revealShip(root.selectedShip)
+                                Keys.onEnterPressed: if (root.selectedShip) root.revealShip(root.selectedShip)
+                                Keys.onSpacePressed: if (root.selectedShip) root.revealShip(root.selectedShip)
+                                Rectangle { anchors.fill: parent; color: "transparent"; border.color: Color.accent; visible: contacts.activeFocus; z: 2 }
+                                width: parent.width
+                                anchors.bottom: parent.bottom
+                                height: Math.min(contentHeight, parent.height - (root.expanded ? 60 : 0))
+                                clip: true
+                                model: contactModel
+                                spacing: 4
+                                delegate: Rectangle {
+                                    required property var ship
+                                    readonly property var modelData: ship
+                                    objectName: "vessel-" + modelData.mmsi
+                                    width: ListView.view.width; height: 38
+                                    color: Color.background
+                                    border.width: root.selectedShip && root.selectedShip.mmsi === modelData.mmsi ? 1 : 0
+                                    border.color: Color.accent
+                                    opacity: modelData.stale ? 0.5 : 1
+                                    Label { anchors.left: parent.left; anchors.leftMargin: 8; anchors.verticalCenter: parent.verticalCenter; width: parent.width * 0.65; elide: Text.ElideRight; text: modelData.name || modelData.mmsi }
+                                    Label { anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter; text: Model.distance(modelData.distance, root.unit); color: Color.accent }
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.revealShip(modelData) }
+                                }
                             }
                         }
                     }

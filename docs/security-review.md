@@ -1,14 +1,10 @@
 # Security review
 
-Reviewed on **2026-09-19** for **0.8.1**, with runtime and preview tooling at
-commit `eb6d1051f7098d906b17308f39a4ed9a388d750a` (manifest version 0.8.1).
-This pass reviews changes since the prior assessment at
-`a6c3e8b74d8d3ae1c2b99cb986024d788fe4e7ba`, including the intervening 0.8.0
-changes at `991d00a` and the 0.8.1 cleanup. Two additional security regressions
-and this report follow the reviewed runtime commit. Their exact contents are
-identified by the file hashes in
-[security-review-evidence.json](security-review-evidence.json).
-This identifies the reviewed checkout, not the publication status of a release tag.
+Reviewed on **2026-09-19** for the next release, starting from commit `cf101ba`.
+This pass covers changes since the 0.8.1 assessment at `c0ef578`, plus the current
+expanded layout, preview tooling and security regressions. Exact reviewed files
+are identified in [security-review-evidence.json](security-review-evidence.json).
+This identifies reviewed contents, not publication of a release tag.
 
 ## Scope and result
 
@@ -18,45 +14,36 @@ projection, tile caching, and QML data/rendering boundaries. Checks combined sou
 inspection, adversarial inputs, local WebSocket servers and the regression suite.
 **No new actionable security findings were identified in the reviewed changes.**
 The previous assessment's six fixes remain in place and their regression tests
-pass. No production credentials were used; this pass made only package-metadata
-and advisory queries to external services, not a penetration test of providers.
+pass. No production credentials were used; external requests were limited to package metadata/advisories and anonymous AIS/map
+captures at public Genoa coordinates. This was not a penetration test of providers.
 Remaining trust boundaries and availability limits below still apply.
 
-## 0.8.1 changes rechecked
+## Changes rechecked
 
-- **Attribution merging:** source text is cleaned and limited to 600 characters
-  per credit and eight sources per vessel before deduplication. The new prefix
-  comparison executes no provider-supplied code. A regression submits 100 sources
-  with oversized credits and confirms those bounds and retention of distinct
-  credits. Identical/overlapping credits and separate licenses are also covered.
-  Vessel names and credits remain plain text in QML.
-- **Demo removal and old settings:** the removed flag is excluded from validated
-  and public settings and cannot bypass coordinate validation. A regression reads
-  an actual legacy-shaped settings file, rejects missing manual coordinates,
-  repairs it while preserving both provider keys, and verifies private file
-  permissions. The removed CLI option no longer starts a simulated receiver.
-  An old demo configuration with valid location settings now follows the normal
-  selected-provider path; invalid manual locations require correction in Settings.
-- **Map activation and loading:** all normal radar views can request detailed maps;
-  failed/superseded requests retain the existing bounded helper, cache and retry
-  behaviour. Loading-state and closed-view regressions pass. Removing the demo
-  does not introduce any new network destination or send AIS keys to map services.
-- **Preview tooling:** screenshots require explicitly supplied local AIS and map
-  JSON. The renderer serializes the data into its temporary QML fixture and uses
-  the normal plain-text UI. It performs no network requests or credential lookup.
-  These developer inputs are trusted local files, not a new public ingestion API;
-  their whole-file reads have no size cap. Published screenshots intentionally
-  contain real vessel names, MMSIs, positions and source attributions. No raw
-  capture or credentials were added to the repository.
-- **Unchanged sensitive components:** receiver transport, TLS/redirect rules,
-  runtime installer, network URL validation, vector parser and map cache are
-  unchanged from the prior assessed runtime. Their full regression suite was
-  rerun; the dependency pin is unchanged and was checked again below.
+- **Closed views:** the shared viewer count gates reception, map requests and city
+  search. Closing the last view cancels active and deferred work; another open view
+  keeps reception alive. Reopening respects manual pause. Lifecycle regressions
+  cover hidden views, transitions and late callbacks. Actual OS shutdown timing
+  remains unverified on Omarchy; in-flight map workers can finish while shutting down.
+- **Vessel links:** IMO values are accepted only as seven-digit integers, excluding
+  booleans. Browser URLs have a fixed HTTPS VesselFinder host and numeric IMO/MMSI;
+  names, destinations and provider URLs cannot change the target. New adversarial
+  regressions exercise malformed IMO values and URL-like AIS text. Opening requires
+  explicit user action and does not automatically download photos.
+- **UI and previews:** vessel fields remain plain text. Map attribution links are
+  fixed literals. Credits are compacted below the legend; original AIS attribution
+  remains in receiver snapshots. Real captures contain public vessel identifiers,
+  names and positions; no raw captures or credentials are committed. The renderer
+  uses trusted local JSON and a temporary mocked host, without network or credential
+  lookup. Its whole-file reads are not bounded and are not a public ingestion API.
+- **Existing protections:** transport, credential storage, runtime installation,
+  redirect restrictions, vector budgets and private tile cache were rechecked.
+  The previous six security fixes remain covered by the full regression suite.
 
 ## Findings and fixes from the previous assessment
 
 The following findings were fixed before this pass. Their tests were rerun for
-0.8.1; the original vulnerable implementations were not reintroduced or retested.
+this review; the original vulnerable implementations were not reintroduced or retested.
 
 | ID | Finding and impact | Resolution and evidence |
 | --- | --- | --- |
@@ -120,6 +107,7 @@ Regressions: [test_receiver.py](../tests/test_receiver.py),
 | OpenWaters | Selected bounding boxes and an optional OpenWaters bearer token. |
 | AISStream | Selected bounding boxes, message filters and the AISStream key. |
 | OpenFreeMap | Tile coordinates/zoom and the client's IP address; no AIS key, subscription or vessel-position payload. The requested tiles reveal the viewed area. |
+| VesselFinder (explicit browser action) | Numeric IMO or MMSI and the browser connection/IP; browser cookies and site policies apply. |
 | Photon or a configured HTTPS geocoder | Explicit city search terms and the client's IP address; no AIS key. |
 | ipwho.is | IP-geolocation request; the provider observes the client's IP. |
 | PyPI/files.pythonhosted.org | Dependency installation requests; no saved AIS key is passed by the installer. |
@@ -132,7 +120,7 @@ access. These behaviours are documented in the [README](../README.md#data-and-pr
 
 ## Dependency check
 
-Rechecked on 2026-09-19 at 13:16 UTC: the [OSV query API](https://google.github.io/osv.dev/api/) returned
+Rechecked on 2026-09-19 at 20:49 UTC: the [OSV query API](https://google.github.io/osv.dev/api/) returned
 no matching advisories for PyPI `websockets` version `17.1`. The pinned portable
 wheel URL and SHA-256 matched the
 [official PyPI metadata](https://pypi.org/pypi/websockets/17.1/json).
@@ -148,7 +136,7 @@ not new plugin dependencies.
 
 ## Verification
 
-- **68 Python tests and 34 JavaScript tests pass.** Python checks include private
+- **70 Python tests and 41 JavaScript tests pass.** Python checks include private
   settings, legacy-demo migration, bounded attributions, TLS rejection, provider
   credential isolation, redirects, cache errors,
   invalid geometry and resource limits. JavaScript checks include map-response
@@ -158,11 +146,11 @@ not new plugin dependencies.
   controlled exception type. This is targeted robustness testing, not exhaustive fuzzing.
 - In the previous assessment, the local redirect regression first failed because
   the second server received the synthetic AISStream key, then passed after
-  redirects were disabled. It passes again for 0.8.1. Those two peers
+  redirects were disabled. It passes again in this review. Those two peers
   use loopback WS; certificate verification is covered by the separate TLS test.
-- A cached real Genoa viewport still completes after the fixes: four level-11 tiles,
-  a 464,052-byte compact JSON response. It uses public fixture coordinates, no user location
-  or credentials, and no fresh map download during this pass.
+- Fresh anonymous Genoa captures produced 200 displayed vessel records (117 with
+  IMO) and a 501,042-byte detailed-map response, using fixed public coordinates
+  and no saved user credentials.
 - Ruff lint/format checks and Git whitespace checks pass. The negative TLS test may
   emit a local handshake-reset diagnostic while its security assertions pass.
 
@@ -177,11 +165,12 @@ ruff check backend tools tests
 ruff format --check backend tools tests
 ```
 
-Both detailed-map palettes were rendered again with the current QML and a mocked
-Omarchy host in a temporary checkout, using local AIS/map captures without network
-access. Existing published screenshots were left unchanged. Pointer anchoring is
-covered by the JavaScript regressions. Real Quickshell/Hyprland operation and an
-authenticated production AISStream connection remain unverified here.
+Expanded and compact views were rendered in both palettes using PySide6 6.11.2
+and real local AIS/map captures. Layout assertions pass for the expanded robot
+above Contacts, bottom alignment with credits and unchanged compact placement.
+The four published screenshots and catalog preview were refreshed. Rendering
+uses a mocked Omarchy host; real Quickshell/Hyprland operation, process shutdown
+timing and an authenticated production AISStream connection remain unverified.
 
 ## Remaining trust boundaries and limitations
 
@@ -211,5 +200,5 @@ The 2026-09-17 report covered 0.7.0 at commit
 Earlier fixes for huge numbers, invalid text/deep JSON, public-settings allowlists,
 file/HTTP size limits, HTTPS downgrade rejection and installer shutdown races remain
 covered by the current tests. The prior 2026-09-19 assessment at `a6c3e8b` added OpenWaters, detailed maps and
-SR-01 through SR-06 (64 Python/33 JavaScript tests). This 0.8.1 update supersedes
-its snapshot while retaining those findings as historical context.
+SR-01 through SR-06 (64 Python/33 JavaScript tests). This update supersedes the 0.8.1
+snapshot while retaining those findings as historical context.

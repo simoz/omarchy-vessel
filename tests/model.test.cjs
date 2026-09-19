@@ -132,3 +132,15 @@ test('vessel links prefer direct IMO details and use MMSI search when IMO is una
   assert.equal(m.vesselUrl(null), '');
   assert.equal(m.vesselUrl({mmsi: 'invalid'}), '');
 });
+
+test('external vessel links cannot use AIS text to change destination or inject a query', () => {
+  for (const value of ['https://evil.example', '9400708/../../', '9400708?next=evil',
+    '247346000&token=secret', '<script>alert(1)</script>', 'javascript:alert(1)', -1, true]) {
+    assert.equal(m.vesselUrl({imo: value, mmsi: value}), '');
+  }
+  const url = new URL(m.vesselUrl({imo: 9400708, name: '<a href="https://evil.example">ship</a>'}));
+  assert.equal(url.protocol, 'https:');
+  assert.equal(url.hostname, 'www.vesselfinder.com');
+  assert.equal(url.pathname, '/vessels/details/9400708');
+  assert.equal(url.search, '');
+});

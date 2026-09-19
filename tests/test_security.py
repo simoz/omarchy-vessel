@@ -18,6 +18,28 @@ from receiver import Receiver
 
 
 class UntrustedInputTest(unittest.TestCase):
+    def test_untrusted_imo_values_do_not_enter_the_fleet(self):
+        fleet = ais.Fleet(0, 0, 25)
+        for value in (
+            True,
+            9400708.5,
+            10**400,
+            0,
+            "9400708",
+            "https://evil.example",
+            {},
+            [],
+        ):
+            fleet.ingest(
+                dict(
+                    MessageType="ShipStaticData",
+                    MetaData=dict(MMSI=123456789),
+                    Message=dict(ShipStaticData=dict(ImoNumber=value)),
+                ),
+                1000,
+            )
+            self.assertNotIn("imo", fleet.ships["123456789"])
+
     def test_many_oversized_attributions_remain_bounded(self):
         fleet = ais.Fleet(0, 0, 25)
         for index in range(100):

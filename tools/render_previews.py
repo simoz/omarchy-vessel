@@ -69,10 +69,13 @@ def main():
     put(
         "qs/Ui/KeyboardPanel.qml",
         """import QtQuick
+    import qs.Commons
     Window {
+     default property alias panelContent: panelContentItem.data
+     data: Item { id: panelContentItem; anchors.fill: parent; anchors.margins: 12 }
      property var anchorItem; property var owner; property var bar; property bool open; property var focusTarget
      property real contentWidth; property real contentHeight
-     width:contentWidth; height:contentHeight; visible:open; color:"#182125"
+     width:contentWidth; height:contentHeight; visible:open; color:Color.background
      function fittedContentWidth(n) {return n;} function fittedContentHeight(n) {return Math.min(n,850);}
     }""",
     )
@@ -134,7 +137,7 @@ def main():
      property string settingsError:""
      property bool saving:false
      signal settingsSaved()
-     function attach(s) {} function detach() {} function configure(s) {} function restart() {} function loadSettings() {}
+     function setViewing(v) {} function attach(s) {} function detach() {} function configure(s) {} function restart() {} function loadSettings() {}
      function clearCitySearch() {} function searchCity(t) {} function saveSettings(v) {}
      function togglePaused() {paused=!paused}
     }""".replace("REPORT", json.dumps(report)).replace("MAP", json.dumps(geo))
@@ -161,6 +164,29 @@ def main():
     def window():
         return next(w for w in windows if w.isVisible() and w.width() > 100)
 
+    def verify_layout(expanded):
+        robot = root.findChild(QObject, "lookoutRobot")
+        contacts = root.findChild(QObject, "contacts")
+        if expanded:
+            header = root.findChild(QObject, "contactsHeader")
+            credit = root.findChild(QObject, "mapCredits")
+            assert robot.parentItem() == header
+            assert (
+                robot.mapToScene(QPointF(0, robot.height())).y()
+                <= contacts.mapToScene(QPointF(0, 0)).y()
+            )
+            assert (
+                abs(
+                    contacts.mapToScene(QPointF(0, contacts.height())).y()
+                    - credit.mapToScene(QPointF(0, credit.height())).y()
+                )
+                < 1
+            )
+        else:
+            assert robot.parentItem() == radar.parentItem()
+        link = root.findChild(QObject, "openVesselPage")
+        assert link.x() + link.width() <= link.parentItem().width() + 1
+
     def shot(name):
         QTest.qWait(200)
         surface = window()
@@ -170,7 +196,15 @@ def main():
     from PySide6.QtCore import QPointF
     from PySide6.QtGui import QColor
 
-    root.setProperty("selectedMmsi", report["ships"][0]["mmsi"])
+    selected = next(
+        (
+            ship
+            for ship in report["ships"]
+            if ship.get("imo") and ship.get("destination") and ship["distance"] < 3
+        ),
+        report["ships"][0],
+    )
+    root.setProperty("selectedMmsi", selected["mmsi"])
     invoke("expand")
     w = window()
     w.setWidth(1200)
@@ -180,15 +214,27 @@ def main():
     radar.setProperty("zoomLevel", 3)
     radar.setProperty("viewCenter", QPointF(0, 0))
     assert radar.property("detailed")
+    verify_layout(True)
     shot("docs/live-detail-preview.png")
     palette = top.property("previewColors")
     for prop, value in dict(
         background="#f3efdf", foreground="#263b40", accent="#846033", muted="#637775"
     ).items():
         palette.setProperty(prop, QColor(value))
+    verify_layout(True)
     shot("docs/live-detail-preview-light.png")
     shutil.copy("docs/live-detail-preview-light.png", "preview.png")
-    print("Rendered dark and light detailed-map previews from real AIS data")
+    invoke("collapse")
+    verify_layout(False)
+    shot("docs/compact-preview-light.png")
+    for prop, value in dict(
+        background="#182125", foreground="#dedbd0", accent="#d4a86a", muted="#8e9b9e"
+    ).items():
+        palette.setProperty(prop, QColor(value))
+    shot("docs/compact-preview-dark.png")
+    print(
+        "Rendered expanded and compact previews in both palettes; layout assertions passed"
+    )
 
 
 if __name__ == "__main__":

@@ -1,64 +1,74 @@
 {
   "review_date": "2026-09-19",
   "version": "0.8.1",
-  "base_commit": "eb6d1051f7098d906b17308f39a4ed9a388d750a",
-  "previous_review_commit": "a6c3e8b74d8d3ae1c2b99cb986024d788fe4e7ba",
-  "preceding_release_commit": "991d00a5d12f8c3d87abad55c0df952f2eb51e2f",
-  "scope": "Runtime and preview tooling at base_commit; additional tests/test_security.py regressions and review documentation in the working tree. File hashes identify reviewed contents; release publication is not asserted.",
+  "base_commit": "cf101ba2957b3dfdaeb7fccf2c0a230e5691a33f",
+  "previous_review_commit": "c0ef578ed3216f191eded742ddf69c81c85a1daa",
+  "scope": "Changes since the previous review plus expanded contact layout, refreshed previews and security regressions in the working tree. Manifest remains 0.8.1 pending the final version bump; file hashes identify reviewed contents, not release publication.",
   "result": "No new actionable findings in reviewed changes; prior SR-01 through SR-06 regressions pass.",
   "environment": {
     "python": "3.14.5",
     "websockets": "17.1",
     "openssl": "OpenSSL 3.6.4 25 Aug 2026",
-    "os": "macOS"
+    "os": "macOS",
+    "pyside": "6.11.2",
+    "ruff": "0.16.8"
   },
   "verification": {
-    "python_tests_passed": 68,
-    "javascript_tests_passed": 34,
+    "python_tests_passed": 70,
+    "javascript_tests_passed": 41,
     "deterministic_mvt_mutations": 1024,
     "ruff_lint": "passed",
     "ruff_format": "passed",
     "git_whitespace": "passed",
-    "cached_genoa": {
-      "tiles": 4,
-      "level": 11,
-      "json_bytes": 464052,
-      "network_calls": 0
-    },
-    "qt_render": "Both detailed palettes rendered with mocked host in temporary checkout; no network; published screenshots unchanged",
+    "qt_render": "Expanded and compact views in both palettes; mocked Omarchy host, offline renderer; robot placement and credits alignment assertions passed; four screenshots and catalog preview refreshed",
     "new_regressions": [
-      "Oversized attribution text and more than eight sources remain bounded",
-      "Legacy demo settings cannot bypass coordinates or expose/drop provider keys"
-    ]
+      "Malformed IMO values do not enter the fleet",
+      "AIS text cannot change the external vessel URL destination or inject a query"
+    ],
+    "capture": {
+      "captured_at": 1789850890.831753,
+      "map": {
+        "available": true,
+        "bytes": 501042
+      },
+      "ais": {
+        "ships": 200,
+        "with_imo": 117,
+        "status": "LIVE"
+      },
+      "anonymous": true,
+      "location": "Genoa",
+      "radius_nm": 25
+    }
   },
   "dependency": {
-    "checked_at": "2026-09-19T13:16:06.930304+00:00",
+    "checked_at": "2026-09-19T20:49:54.466617+00:00",
     "name": "websockets",
     "version": "17.1",
     "osv_endpoint": "https://api.osv.dev/v1/query",
     "osv_response": {},
     "pypi_metadata": "https://pypi.org/pypi/websockets/17.1/json",
     "wheel_url_matches_pin": true,
-    "wheel_sha256_matches_pin": true,
-    "wheel_sha256": "f221081107b8c48184d99f7019604486376e7ef826037e70aad6b02540732c23"
+    "wheel_sha256_matches_pin": true
   },
   "sha256": {
     "BoatIcon.qml": "7c55d1b49a5500a0137df709f529707ac4326ee43f64013ae59ae6c7ba7c8e9f",
+    "CHANGELOG.md": "8f44cb86333592aeb60988ed4353fa5e76b628de49f0a2d4478ea00282ca6abf",
     "DetailMap.qml": "3b189954eef4a9efb74df941abf5c9786d0b8d7947b07944c9d49bdf07ecaad2",
     "Keyboard.js": "dd4da5511e3be77b17dd36f0b1bc931a1fc46805c21ff88ee47046f963c86384",
     "KeyboardHelp.qml": "5b4617b524c81fd9d84e3821db7777915d29d89c1aac676ac33cd6bd59521bb1",
     "KeyboardIcon.qml": "7cd2808628e2a6306ccba4d08e00f3a4287d7d2164a6dbaa2ba19db3fa8127cc",
-    "Model.js": "a9bab9a2127a0c96518d0c65f58894150606feb4fcce0161a13bfa8ed92577ea",
+    "Model.js": "c98559ad706e8804ed50e2277c1f18d0048d39083882a9f937f047a58388a5a2",
     "OfflineMap.qml": "aa677d4828e35c4e2e7d53ce61aed03b8c8a7c324c2da84c8b43fb1738fcd445",
-    "README.md": "5b14cba5a3a94cc081c3ec27383aa66c68b2a7bf8bbdaecdd92d46857f66408e",
+    "README.md": "0e11591e8c4bdcc01451d91ca9d48225d06deb8191a020b4bee3aa5c2659f513",
     "Radar.qml": "8259bb38f2bcba870192ca5931d09b4a705e1b6ff2a5d27e7a28fcdbb27ccab6",
     "RadarLabels.qml": "77feee4c473eba5ba0b6adf188790371e93fd35a549eae00d23a6d3bd2dd65fc",
     "Robot.qml": "9b9d9983bb6dd4ae56f33e48b944cde207b1cb6d9feedfa973039fbcca1cd358",
     "SettingsForm.qml": "561afc20a605912d316d085d038d11dcfefe774b1cd81979b4b9efbe26aefb8b",
     "ShipModel.qml": "334513aa3295623848834a2c5bacf87cd97402b8479709f9335ff815a39ad9a9",
-    "VesselService.qml": "cf8b304900ab11d30d9fa4655fb231db8439763dab6fe16331e600e90214e6a4",
-    "Widget.qml": "befeeb71d14979587c018af90161a6b0e95da11e3a70d1b2878fe56e58ccb816",
-    "backend/ais.py": "0240fdff2b6876980458eb0386b893a52c4836642b1a4acab8b081ff80d4807e",
+    "VesselService.qml": "3355b77df531faa7ac804e0143646d7085f7c2c15c5f5cfd5162a36c144d773b",
+    "Widget.qml": "82919f980c0324b9ea47c4a9948fc425b2b8c06bda8ee7d50150e7969fa39d33",
+    "backend/ais.py": "6f9c79377dba527b88ba4e1c55b1367a8f3211da5f23961703af35bcbe912a89",
     "backend/basemap.py": "d3bdb39c01369ccf1892b0400414b3f618811e1b73266f291151dfe60386e1a2",
     "backend/detail_map.py": "46d2b3346dd11c3a03375bc73d16b8dae1398c3a35994c797f1f4dfe706d9a1a",
     "backend/geocoding.py": "f9bc537d79db49272466f1dc597e541dd450d357ce9e7440661f3283e291c49b",
@@ -69,24 +79,28 @@
     "backend/settings.py": "8d72352dc6601bbfb80316c38d489d7766cd0713ba0963beb2b77dac220c8daf",
     "backend/vector_tiles.py": "44cc93e7a6d22292f8b10065d8e03edeaad710a34001074a388e2d2a602f8191",
     "backend/vessel.py": "acd908fbb229c11dd611e88c71f3d29a04e4fae8c983d429cb095fa69061480f",
-    "docs/development.md": "09775c8c26370398888128dbe0a9b936333fa6e3305f9bdaf9bb86068c53e35e",
-    "docs/security-review.md": "33be24c731e9d5a5b71f49afdd79114ca3def97c995a44c07f43827a2325aa2f",
+    "docs/compact-preview-dark.png": "53399b067f6d2848b6f7e498f80b52f255df15a436da47f2c8413615be871096",
+    "docs/compact-preview-light.png": "8ce20a015f8124f0b4367fc23a6ab81acfb985bd6929014947449784eda1bb7f",
+    "docs/development.md": "7d80b55411a46e8142d697d58f667a302049c4ada12ba749df7b3c9524e475ab",
+    "docs/live-detail-preview-light.png": "759fba1eb2b067ba604dee116066cf8df2f7effa5114ca8d495f7ff67ae8e9c0",
+    "docs/live-detail-preview.png": "4e78e0de07982ac0765babcad46ef9ce320738e19c49716845bd8d1480cf7168",
+    "docs/security-review.md": "70fce78868bb9cbb4a35f5637890bc2a646b6224c6554590d2e787221c30b9db",
     "manifest.json": "1cd97a5675b30d74501af89b4fad27014e56f1fed43850d9c01c0ccbf5a5669c",
+    "preview.png": "759fba1eb2b067ba604dee116066cf8df2f7effa5114ca8d495f7ff67ae8e9c0",
     "requirements.txt": "49f701c0de21475f45c4537caa8e9d03d7d92a953f3b54bffe5d106f253bf6f9",
     "tests/keyboard.test.cjs": "31648068efa731228b3e4e5c73149f30d3ce3408f5fdb62b9ef0c8200b025f57",
-    "tests/map-detail.test.cjs": "fe0acdb111143f0b514aa50de42cb6cf63e7070bd6ad5e38b4e59a95720775f7",
-    "tests/model.test.cjs": "74a66c596432f4b37497b5a4d640eb729b0827f34f52d1e122db079ba9ffb767",
-    "tests/reception.test.cjs": "611bae8d0988dca2d4d9f82bb2c79764da602c90b53a244ed1734865bc4792ab",
+    "tests/map-detail.test.cjs": "ddda67e19d7b40da546611035fbf0a8a00ca5fda59cb54f2d2c35e65854b29da",
+    "tests/model.test.cjs": "63c8d31099236c02a7b7bf455c8261a5f677a0e640191c44abcfd434b15e2d0d",
+    "tests/reception.test.cjs": "965183704f1eb66789c91b877250d272704ef4cf6a73cd2b3a22b47f88b860c2",
     "tests/settings.test.cjs": "bfbbefadb20ab0100645d16d7b53f4fa7d62a3f45a8640a40c5f6d76c19b4180",
-    "tests/test_backend.py": "a5438d6160a9a7b88ab9149e731d077acb82b5268be8307244fd31b9161770b0",
+    "tests/test_backend.py": "f22d46ea9895d82ea39f3134d153b4750c8ed8fd6092eed2f94bfe651a6a7351",
     "tests/test_detail_map.py": "e790371feeb85d9128e12897faa7a63dca4275092ffe1f91fcd0976a38804e37",
     "tests/test_geocoding.py": "ee080fbe468fc373b99a4a6b5a386b09c0ac7230637586730d3b9c8faa3812a8",
     "tests/test_openwaters.py": "1789ec159e2122566f4f74c5cd3f027c665bddd1fa1f60a20bf96439772e5a69",
     "tests/test_receiver.py": "d4b4617767dfc2fc4447919faa9df7aa6ec6c4abc8a6062f6ec1d2f706eb6abf",
     "tests/test_runtime.py": "14db65ecf88326c7d2c945ebced3113aeaffb4022de5e8488ec7f5d7a5e8a95f",
-    "tests/test_security.py": "78d60714f9511243b08f2a426e6d55a622f41337cbdb6595b202d659ce159138",
+    "tests/test_security.py": "65bd0512e8e70e0b3b919fbacdcaf01d87dc585746bcd868d33a96a1f3103c3a",
     "tests/zoom.test.cjs": "6638cdbe34d6742bf62cd4ce021f0a31ed81be73681a31c8e06c9c20a2dab25a",
-    "tools/render_previews.py": "acd8c62f0135e3392d3ad39e0a5bd7340941f85082e1d4be421889934f1d26b0",
-    "CHANGELOG.md": "8f44cb86333592aeb60988ed4353fa5e76b628de49f0a2d4478ea00282ca6abf"
+    "tools/render_previews.py": "2fb03c15eac88dfd69275bb9200802da5f586dc2d8966403040322521ad86dda"
   }
 }

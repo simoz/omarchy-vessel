@@ -64,7 +64,6 @@ class FleetTest(unittest.TestCase):
             fleet.ingest(report("ShipStaticData", ImoNumber=imo), 1002)
         self.assertEqual(fleet.snapshot(1002)["ships"][0]["imo"], 9400708)
 
-
     def test_class_a_and_b_and_static_merge(self):
         fleet = ais.Fleet(0, 0, 25)
         for index, kind in enumerate(ais.POSITION_TYPES):

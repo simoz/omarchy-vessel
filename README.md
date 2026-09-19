@@ -18,6 +18,14 @@ Real AIS traffic received from OpenWaters on 19 September 2026, with the detaile
 
 ![Vessel in a light palette with real AIS traffic and a detailed map of Genoa](docs/live-detail-preview-light.png)
 
+### Compact panel
+
+| Dark | Light |
+| --- | --- |
+| ![Compact dark panel](docs/compact-preview-dark.png) | ![Compact light panel](docs/compact-preview-light.png) |
+
+Rendered with Qt and a mocked Omarchy host; these images do not verify Hyprland integration.
+
 ## Why I built Vessel
 
 When I'm working by the sea, I see boats passing by and always wonder: What's that boat called? Where has it come from? Where is it going?
@@ -34,7 +42,7 @@ Requires Omarchy 4 with Quickshell plugin support and Python 3.11+ with `venv`.
 omarchy plugin add https://github.com/simoz/omarchy-vessel.git --enable
 ```
 
-Accept the plugin trust prompt and click the boat icon to open **Settings**. The live receiver's Python dependency is installed automatically on first use.
+Accept the plugin trust prompt and click the boat icon to open the radar, then choose **Settings** to configure it. The live receiver's Python dependency is installed automatically on first use.
 
 ### Configure
 
@@ -125,10 +133,11 @@ you also want to delete Vessel's saved data.
 
 ## Data and privacy
 
-Vessel is built for watching nearby traffic. Coverage and reported destinations depend on the selected provider, receiver coverage and the vessels transmitting. Destinations appear in vessel details only when reported; the text is shown as received and may contain abbreviations or port codes.
+Vessel is built for watching nearby traffic. Coverage and reported destinations depend on the selected provider, receiver coverage and the vessels transmitting. Missing destinations appear as **—**; otherwise the text is shown as received and may contain abbreviations or port codes.
 
-- **OpenWaters** (default) receives the geographic area to monitor and your optional OpenWaters token. It aggregates multiple AIS sources; the original attributions are preserved in vessel details. Source-specific terms apply: see [OpenWaters sources and licensing](https://openwaters.io/ais/).
+- **OpenWaters** (default) receives the geographic area to monitor and your optional OpenWaters token. It aggregates multiple AIS sources; the original attributions are retained in receiver snapshots. Source-specific terms apply: see [OpenWaters sources and licensing](https://openwaters.io/ais/).
 - **AISStream**, when selected, receives your AISStream API key and the geographic area to monitor. Provider switching is manual; credentials are never shared between services.
+- **VesselFinder** opens in your default browser only when you activate the external link beside a vessel name. It receives the numeric IMO or MMSI and your browser connection; Vessel does not download vessel photos. Tab reuse depends on the browser.
 - **Photon / OpenStreetMap** provides city search from the name you enter.
 - **ipwho.is** provides approximate location from your public IP when enabled.
 - **Natural Earth** coastlines and **GeoNames** city labels are bundled with the plugin.
