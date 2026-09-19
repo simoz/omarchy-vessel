@@ -166,11 +166,11 @@ def main():
 
     def verify_layout(expanded):
         robot = root.findChild(QObject, "lookoutRobot")
-        contacts = root.findChild(QObject, "contacts")
+        contacts = root.findChild(QObject, "contactCount")
         if expanded:
-            header = root.findChild(QObject, "contactsHeader")
+            header = root.findChild(QObject, "contactSummary")
             credit = root.findChild(QObject, "mapCredits")
-            assert robot.parentItem() == header
+            assert robot.parentItem().parentItem() == header
             assert (
                 robot.mapToScene(QPointF(0, robot.height())).y()
                 <= contacts.mapToScene(QPointF(0, 0)).y()

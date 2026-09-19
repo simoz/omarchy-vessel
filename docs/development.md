@@ -133,7 +133,7 @@ The renderer writes `docs/live-detail-preview.png` (dark),
 `preview.png` for the catalog (2400 × 1600 pixels). It also writes
 `docs/compact-preview-dark.png` and `docs/compact-preview-light.png` (880 × 1700).
 The renderer selects a nearby received vessel with IMO and destination when available,
-and checks that the expanded robot sits above Contacts, the contact block ends at
+and checks that the expanded robot sits above Contacts, the contact counter ends at
 the map credits, and the compact robot stays inside the radar frame. This checks Qt
 rendering, not Hyprland integration. The marketplace serves optimized copies of
 `preview.png`, so its catalog must refresh after the updated image is pushed.
