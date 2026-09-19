@@ -460,43 +460,11 @@ BarWidget {
                         Rectangle { visible: !keys.wide; width: parent.width; height: 1; color: Color.muted; opacity: 0.3 }
                         Column {
                             width: parent.width; spacing: 6; visible: root.selectedShip !== null
-                            Item {
-                                width: parent.width
-                                height: Math.max(vesselName.implicitHeight, vesselLink.implicitHeight)
-                                Label {
-                                    id: vesselName
-                                    width: Math.min(implicitWidth, parent.width - vesselLink.width - 6)
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    wrapMode: Text.WordWrap
-                                    font.pixelSize: 22; font.bold: true
-                                    text: root.selectedShip ? (root.selectedShip.name || "MMSI " + root.selectedShip.mmsi) : ""
-                                }
-                                Action {
-                                    id: vesselLink
-                                    objectName: "openVesselPage"
-                                    anchors.left: vesselName.right
-                                    anchors.leftMargin: 6
-                                    anchors.top: parent.top
-                                    implicitWidth: 30; implicitHeight: 30
-                                    iconOnly: true
-                                    text: "Open vessel on VesselFinder"
-                                    readonly property string vesselUrl: Model.vesselUrl(root.selectedShip)
-                                    enabled: vesselUrl.length > 0
-                                    onTriggered: {
-                                        if (enabled)
-                                            Qt.openUrlExternally(vesselUrl);
-                                    }
-                                    onActiveFocusChanged: if (activeFocus) root.ensureVisible(vesselLink)
-                                    Controls.ToolTip.visible: hovered
-                                    Controls.ToolTip.delay: 500
-                                    Controls.ToolTip.text: text
-                                    Label {
-                                        anchors.centerIn: parent
-                                        text: "↗"
-                                        font.pixelSize: 22
-                                        color: Color.accent
-                                    }
-                                }
+                            Label {
+                                id: vesselName
+                                width: parent.width; wrapMode: Text.WordWrap
+                                font.pixelSize: 22; font.bold: true
+                                text: root.selectedShip ? (root.selectedShip.name || "MMSI " + root.selectedShip.mmsi) : ""
                             }
                             Label {
                                 width: parent.width; wrapMode: Text.WordWrap
@@ -509,9 +477,41 @@ BarWidget {
                                 font.pixelSize: root.smallTextSize + 1; color: Color.muted
                                 text: "Destination · " + destination
                             }
-                            Label {
-                                width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: root.smallTextSize; color: Color.muted
-                                text: root.selectedShip ? root.selectedShip.type + " · MMSI " + root.selectedShip.mmsi : ""
+                            Flow {
+                                width: parent.width
+                                spacing: 6
+                                Label {
+                                    height: vesselLink.height
+                                    verticalAlignment: Text.AlignVCenter
+                                    font.pixelSize: root.smallTextSize; color: Color.muted
+                                    text: root.selectedShip ? root.selectedShip.type + " ·" : ""
+                                }
+                                Action {
+                                    id: vesselLink
+                                    objectName: "openVesselPage"
+                                    readonly property string vesselUrl: Model.vesselUrl(root.selectedShip)
+                                    text: root.selectedShip ? "MMSI " + root.selectedShip.mmsi : ""
+                                    implicitWidth: mmsiLabel.implicitWidth + 4
+                                    implicitHeight: mmsiLabel.implicitHeight + 8
+                                    iconOnly: true
+                                    color: "transparent"
+                                    border.color: activeFocus ? Color.accent : "transparent"
+                                    enabled: vesselUrl.length > 0
+                                    Accessible.name: text + ": open vessel on VesselFinder"
+                                    onTriggered: if (enabled) Qt.openUrlExternally(vesselUrl)
+                                    onActiveFocusChanged: if (activeFocus) root.ensureVisible(vesselLink)
+                                    Controls.ToolTip.visible: hovered
+                                    Controls.ToolTip.delay: 500
+                                    Controls.ToolTip.text: "Open vessel on VesselFinder"
+                                    Label {
+                                        id: mmsiLabel
+                                        anchors.centerIn: parent
+                                        text: vesselLink.text
+                                        font.pixelSize: root.smallTextSize
+                                        font.underline: true
+                                        color: Color.accent
+                                    }
+                                }
                             }
                             Label {
                                 width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: root.smallTextSize
