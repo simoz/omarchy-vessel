@@ -14,7 +14,7 @@ Item {
     signal closeRequested()
     Keys.onEscapePressed: closeRequested()
     property real controlsRightMargin: 0
-    property int zoomLevel: 0
+    property real zoomLevel: 0
     readonly property int maxZoomLevel: 6
     readonly property real zoom: Math.pow(2, zoomLevel)
     readonly property real viewRadiusNm: radiusNm / zoom
@@ -286,8 +286,10 @@ Item {
             // Keep the map point under the pointer fixed, within loaded coverage.
             var x = root.viewCenter.x + dx / (root.chartRadius * root.zoom);
             var y = root.viewCenter.y + dy / (root.chartRadius * root.zoom);
-            if (wheel.angleDelta.y > 0) root.zoomIn();
-            else root.zoomOut();
+            // A standard wheel notch is 120 units: four notches double the zoom.
+            // Smaller trackpad deltas produce correspondingly smaller changes.
+            root.zoomLevel = Math.max(0, Math.min(root.maxZoomLevel,
+                                                root.zoomLevel + wheel.angleDelta.y / 480));
             root.setCenter(x - dx / (root.chartRadius * root.zoom),
                            y - dy / (root.chartRadius * root.zoom));
             if (pressed) {
