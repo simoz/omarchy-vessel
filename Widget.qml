@@ -570,6 +570,7 @@ BarWidget {
                                     visible: text.length > 0
                                 }
                             }
+                            Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.2 }
                         }
                         Label {
                             width: parent.width; wrapMode: Text.WordWrap; visible: root.ships.length === 0
