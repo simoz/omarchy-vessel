@@ -278,6 +278,24 @@ Item {
         property point pressCenter
         property bool moved: false
         cursorShape: pressed && moved ? Qt.ClosedHandCursor : root.zoomLevel > 0 ? Qt.OpenHandCursor : Qt.ArrowCursor
+        onWheel: function(wheel) {
+            var dx = wheel.x - width / 2, dy = wheel.y - height / 2;
+            if (Math.hypot(dx, dy) > root.chartRadius || wheel.angleDelta.y === 0) {
+                wheel.accepted = false; return;
+            }
+            // Keep the map point under the pointer fixed, within loaded coverage.
+            var x = root.viewCenter.x + dx / (root.chartRadius * root.zoom);
+            var y = root.viewCenter.y + dy / (root.chartRadius * root.zoom);
+            if (wheel.angleDelta.y > 0) root.zoomIn();
+            else root.zoomOut();
+            root.setCenter(x - dx / (root.chartRadius * root.zoom),
+                           y - dy / (root.chartRadius * root.zoom));
+            if (pressed) {
+                pressPoint = Qt.point(wheel.x, wheel.y);
+                pressCenter = root.viewCenter;
+            }
+            wheel.accepted = true;
+        }
         onPressed: function(mouse) {
             if (Math.hypot(mouse.x - width / 2, mouse.y - height / 2) > root.chartRadius) {
                 mouse.accepted = false; return;

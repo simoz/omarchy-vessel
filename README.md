@@ -47,6 +47,7 @@ An empty key field preserves the saved credential for that provider. OpenWaters 
 | Boat icon in the bar | Open or close the panel; return to the panel from the expanded window. |
 | Expand icon (diagonal arrows, top right) | Switch between the panel and expanded window, keeping zoom and selection. |
 | Zoom buttons (+ and −) | Zoom between 1× and 64×. |
+| Mouse wheel over the radar | Scroll up to zoom in, down to zoom out, keeping the map point under the pointer fixed within loaded coverage. |
 | Map drag | Move around the loaded area after zooming in. |
 | Center button (crosshair, beside zoom) | Return to your position and reset zoom to 1×. |
 | Vessel on the map or in the list | Select a vessel to see its details. Selecting from the list also brings it into view on the map. |
