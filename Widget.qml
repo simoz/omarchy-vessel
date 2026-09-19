@@ -418,14 +418,6 @@ BarWidget {
                                 onCloseRequested: root.close()
                                 onSelected: function(mmsi) { root.selectedMmsi = mmsi; }
                             }
-                            Robot {
-                                objectName: "lookoutRobot"
-                                width: 48; height: 48
-                                anchors.right: parent.right; anchors.bottom: parent.bottom
-                                awake: !VesselService.paused && ["LIVE", "LISTENING"].indexOf(root.report.status) !== -1
-                                live: !VesselService.paused && root.report.status === "LIVE"
-                                visible: root.viewing
-                            }
                         }
                         Row {
                             width: parent.width
@@ -437,31 +429,50 @@ BarWidget {
                             text: radar.mapLoading ? "LOADING MAP…" : (VesselService.basemap.available ? "OFFLINE MAP" : "BASEMAP UNAVAILABLE")
                             font.pixelSize: root.smallTextSize; color: Color.muted
                         }
-                        Label {
-                            width: parent.width; wrapMode: Text.WordWrap
-                            text: "● STATIONARY · ▲ MOVING · ○ SPEED UNKNOWN"
-                            font.pixelSize: root.smallTextSize; color: Color.muted
-                        }
-                        Column {
-                            id: credits
-                            width: parent.width; spacing: 2
-                            readonly property int textSize: Math.max(10, root.smallTextSize - 1)
-                            Text {
-                                width: parent.width
-                                visible: radar.detailed
-                                text: '<a href="https://openfreemap.org/">OpenFreeMap</a> · <a href="https://openmaptiles.org/">© OpenMapTiles</a> · <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>'
-                                textFormat: Text.StyledText
-                                font.pixelSize: credits.textSize
-                                font.family: root.family
-                                color: Color.muted; linkColor: Color.muted
-                                wrapMode: Text.Wrap
-                                onLinkActivated: link => Qt.openUrlExternally(link)
+                        Item {
+                            width: parent.width
+                            height: Math.max(chartNotes.implicitHeight, lookout.height)
+                            Column {
+                                id: chartNotes
+                                width: parent.width - lookout.width - 12
+                                anchors.left: parent.left; anchors.bottom: parent.bottom
+                                spacing: 6
+                                Label {
+                                    width: parent.width; wrapMode: Text.WordWrap
+                                    text: "● STATIONARY · ▲ MOVING · ○ SPEED UNKNOWN"
+                                    font.pixelSize: root.smallTextSize; color: Color.muted
+                                }
+                                Column {
+                                    id: credits
+                                    width: parent.width; spacing: 2
+                                    readonly property int textSize: Math.max(10, root.smallTextSize - 1)
+                                    Text {
+                                        width: parent.width
+                                        visible: radar.detailed
+                                        text: '<a href="https://openfreemap.org/">OpenFreeMap</a> · <a href="https://openmaptiles.org/">© OpenMapTiles</a> · <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>'
+                                        textFormat: Text.StyledText
+                                        font.pixelSize: credits.textSize
+                                        font.family: root.family
+                                        color: Color.muted; linkColor: Color.muted
+                                        wrapMode: Text.Wrap
+                                        onLinkActivated: link => Qt.openUrlExternally(link)
+                                    }
+                                    Label {
+                                        visible: !radar.detailed && VesselService.basemap.available
+                                        width: parent.width; wrapMode: Text.WordWrap
+                                        text: "Natural Earth · © GeoNames"
+                                        font.pixelSize: credits.textSize; color: Color.muted
+                                    }
+                                }
                             }
-                            Label {
-                                visible: !radar.detailed && VesselService.basemap.available
-                                width: parent.width; wrapMode: Text.WordWrap
-                                text: "Natural Earth · © GeoNames"
-                                font.pixelSize: credits.textSize; color: Color.muted
+                            Robot {
+                                id: lookout
+                                objectName: "lookoutRobot"
+                                width: 48; height: 48
+                                anchors.right: parent.right; anchors.bottom: parent.bottom
+                                awake: !VesselService.paused && ["LIVE", "LISTENING"].indexOf(root.report.status) !== -1
+                                live: !VesselService.paused && root.report.status === "LIVE"
+                                visible: root.viewing
                             }
                         }
                     }
