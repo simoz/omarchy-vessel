@@ -2,7 +2,7 @@
 
 **A small radar. A world of ships.**
 
-A marine radar for Omarchy. Put a name to the boats on your horizon, with a little robot keeping watch.
+A marine radar for Omarchy. Discover nearby ships, see where they’re heading, and explore the traffic along your coast.
 
 See nearby AIS-equipped vessels, their names, speed and reported destinations on a map with coastlines and coastal cities. Vessel follows your Omarchy palette and lives behind a single boat icon in the bar.
 

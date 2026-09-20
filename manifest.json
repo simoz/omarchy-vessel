@@ -5,7 +5,7 @@
   "version": "0.8.3",
   "author": "simoz",
   "license": "MIT",
-  "description": "A marine radar for Omarchy. Put a name to the boats on your horizon, with a little robot keeping watch.",
+  "description": "A marine radar for Omarchy. Discover nearby ships, see where they’re heading, and explore the traffic along your coast.",
   "kinds": [
     "bar-widget"
   ],
