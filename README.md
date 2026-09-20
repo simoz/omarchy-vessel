@@ -26,7 +26,7 @@ Real AIS traffic received from OpenWaters on 19 September 2026, with the detaile
 
 ## Why I built Vessel
 
-When I'm working by the sea, I see boats passing by and always wonder: What's that boat called? Where has it come from? Where is it going?
+When I’m working by the sea, I often watch boats go by and wonder: What’s that boat called? Where has it been? Where is it heading?
 
 I wanted a widget I could glance at while working, connecting the boats on the horizon to the information they broadcast, and fitting naturally into my [Outpost](https://github.com/simoz/omarchy-outpost-theme) and [Haven](https://github.com/simoz/omarchy-haven-theme) themes.
 
