@@ -1,6 +1,6 @@
 # Vessel
 
-**A little robot. A wide horizon.**
+**A small radar. A world of ships.**
 
 A marine radar for Omarchy. Put a name to the boats on your horizon, with a little robot keeping watch.
 
