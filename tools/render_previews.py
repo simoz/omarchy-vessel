@@ -34,6 +34,9 @@ def main():
         "KeyboardIcon.qml",
         "KeyboardHelp.qml",
         "SettingsForm.qml",
+        "VesselDetails.qml",
+        "ContactList.qml",
+        "TypeFilters.qml",
     ]:
         shutil.copy(name, root / name)
 

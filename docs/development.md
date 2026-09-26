@@ -78,6 +78,7 @@ Modules:
 - `backend/network.py`: bounded HTTPS JSON requests and HTTPS-only redirects for location services.
 - `VesselService.qml`, `SettingsForm.qml`: shared receiver lifecycle and graphical configuration.
 - `Widget.qml`, `Radar.qml`, `Model.js`: panel layout, map rendering and shared view geometry.
+- `VesselDetails.qml`, `ContactList.qml`, `TypeFilters.qml`: selected vessel details, the contact list and the type filters. Like `SettingsForm.qml`, they receive state as properties and report actions through signals; `Widget.qml` owns selection, filtering and focus.
 - `BoatIcon.qml`, `Robot.qml`: themed artwork; panel controls live in `Widget.qml`.
 - `tools/build_basemap.py`: rebuilds the bundled Natural Earth geometry.
 - `tools/build_cities.py`: filters GeoNames settlements against the coastline for offline labels.
