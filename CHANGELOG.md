@@ -15,7 +15,7 @@ version commit. From 0.7.1 onward, version headings link to release tags.
   vessel details, parsed from Class A static and position reports and Class B
   static data. Unavailable and malformed values are ignored.
 - Draw the selected vessel's recent track: up to 20 positions from the last thirty
-  minutes, fading with age and clipped to the radar. Jumps faster than 120 knots
+  minutes, at least 90 seconds apart, fading with age and clipped to the radar. Jumps faster than 120 knots
   restart the track.
 
 ### Changed

@@ -124,11 +124,13 @@ class FleetTest(unittest.TestCase):
         self.assertIsNone(ship["heading"])
 
     def test_track_keeps_a_bounded_recent_wake(self):
-        fleet = ais.Fleet(0, 0, 25)
-        # 0.005° of longitude every 30 s is about 36 knots at the equator.
+        fleet = ais.Fleet(0, 0, 50)
+        # 0.015° of longitude every 90 s is about 36 knots at the equator.
         for step in range(30):
-            fleet.ingest(report(Longitude=0.1 + step * 0.005), 1000 + step * 30)
-        ship = fleet.snapshot(1870)["ships"][0]
+            fleet.ingest(
+                report(Longitude=0.1 + step * 0.015), 1000 + step * ais.TRACK_INTERVAL
+            )
+        ship = fleet.snapshot(1000 + 29 * ais.TRACK_INTERVAL)["ships"][0]
         self.assertEqual(len(ship["track"]), ais.TRACK_POINTS)
         self.assertTrue(all(len(point) == 2 for point in ship["track"]))
         self.assertLess(ship["track"][0][0], ship["track"][-1][0])

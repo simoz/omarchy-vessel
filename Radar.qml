@@ -229,9 +229,9 @@ Item {
             if (points.length < 2) return;
             var mid = width / 2;
             c.beginPath(); c.arc(mid, mid, root.chartRadius, 0, Math.PI * 2); c.clip();
-            c.strokeStyle = ink; c.fillStyle = ink; c.lineWidth = 1.5; c.lineCap = "round";
+            c.strokeStyle = ink; c.fillStyle = ink; c.lineWidth = 2; c.lineCap = "round";
             for (var i = 1; i < points.length; i++) {
-                c.globalAlpha = 0.15 + 0.6 * i / (points.length - 1);
+                c.globalAlpha = 0.3 + 0.5 * i / (points.length - 1);
                 c.beginPath(); c.moveTo(points[i - 1].x, points[i - 1].y); c.lineTo(points[i].x, points[i].y); c.stroke();
                 if (i < points.length - 1) { c.beginPath(); c.arc(points[i].x, points[i].y, 1.5, 0, Math.PI * 2); c.fill(); }
             }

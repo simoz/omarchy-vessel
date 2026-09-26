@@ -7,8 +7,10 @@ from geometry import coordinates, distance_bearing, number
 
 MAX_AGE, STALE_AGE = 1800, 300
 MAX_TRACKED_SHIPS, MAX_VISIBLE_SHIPS = 2000, 200
-# Keep a short wake: one point per 30 s after moving, within the expiry window.
-TRACK_POINTS, TRACK_INTERVAL, TRACK_MIN_MOVE = 20, 30, 0.01
+# Spread the wake across the whole expiry window: 20 points, 90 s apart, span
+# 30 minutes. Shorter wakes stay hidden under the marker at typical ranges.
+TRACK_POINTS, TRACK_MIN_MOVE = 20, 0.01
+TRACK_INTERVAL = MAX_AGE // TRACK_POINTS
 # Jumps faster than any AIS speed are receiver glitches; restart the wake.
 TRACK_MAX_KNOTS = 120
 POSITION_TYPES = (
