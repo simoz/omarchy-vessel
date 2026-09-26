@@ -477,73 +477,17 @@ BarWidget {
                             Label { width: parent.width / 2; text: "VIEW / " + Model.distance(radar.viewRadiusNm, root.unit); color: Color.muted }
                             Label { visible: !root.expanded; width: parent.width / 2; text: radar.visibleShips.length + " / " + (root.report.total || 0) + " CONTACTS"; horizontalAlignment: Text.AlignRight; color: Color.accent }
                         }
-                        // Type filters double as the color legend; keys 1–6 toggle them too.
-                        // Equal cells keep labels and counts aligned: one row of six when
-                        // it fits, otherwise two rows of three.
-                        Grid {
+                        TypeFilters {
                             id: typeFilters
-                            objectName: "typeFilters"
                             width: parent.width
-                            spacing: 6
-                            columns: width >= 660 ? 6 : 3
-                            readonly property real cellWidth: (width - (columns - 1) * spacing) / columns
-                            Repeater {
-                                model: Model.typeGroups
-                                Rectangle {
-                                    id: chip
-                                    required property var modelData
-                                    required property int index
-                                    readonly property bool shown: !root.hiddenTypes[modelData.key]
-                                    readonly property color ink: root.typeColors[modelData.key] || Color.accent
-                                    objectName: "typeFilter-" + modelData.key
-                                    width: typeFilters.cellWidth; height: 26; radius: 3
-                                    color: shown ? Qt.alpha(ink, 0.12) : "transparent"
-                                    border.width: 1
-                                    border.color: activeFocus ? Color.foreground : shown ? Qt.alpha(ink, 0.7) : Qt.alpha(Color.muted, 0.5)
-                                    activeFocusOnTab: true
-                                    Accessible.role: Accessible.CheckBox
-                                    Accessible.name: "Show " + modelData.label.toLowerCase() + " vessels, key " + (index + 1)
-                                    Accessible.checkable: true
-                                    Accessible.checked: shown
-                                    Accessible.onPressAction: root.toggleType(modelData.key)
-                                    onActiveFocusChanged: if (activeFocus) root.ensureVisible(chip)
-                                    Keys.onReturnPressed: root.toggleType(modelData.key)
-                                    Keys.onEnterPressed: root.toggleType(modelData.key)
-                                    Keys.onSpacePressed: root.toggleType(modelData.key)
-                                    Keys.onEscapePressed: root.close()
-                                    Rectangle {
-                                        id: chipDot
-                                        anchors.left: parent.left; anchors.leftMargin: 8
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        width: 8; height: 8; radius: 4
-                                        color: chip.shown ? chip.ink : "transparent"
-                                        border.width: 1; border.color: chip.shown ? chip.ink : Color.muted
-                                    }
-                                    Label {
-                                        anchors.left: chipDot.right; anchors.leftMargin: 6
-                                        anchors.right: chipCount.left; anchors.rightMargin: 4
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: chip.modelData.label
-                                        elide: Text.ElideRight
-                                        font.pixelSize: root.smallTextSize
-                                        font.strikeout: !chip.shown
-                                        color: chip.shown ? Color.foreground : Color.muted
-                                    }
-                                    Label {
-                                        id: chipCount
-                                        anchors.right: parent.right; anchors.rightMargin: 8
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: root.typeCounts[chip.modelData.key] || 0
-                                        font.pixelSize: root.smallTextSize
-                                        color: chip.shown ? chip.ink : Color.muted
-                                    }
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: root.toggleType(chip.modelData.key)
-                                    }
-                                }
-                            }
+                            hiddenTypes: root.hiddenTypes
+                            typeColors: root.typeColors
+                            typeCounts: root.typeCounts
+                            family: root.family
+                            smallTextSize: root.smallTextSize
+                            onToggled: key => root.toggleType(key)
+                            onFocusRequested: item => root.ensureVisible(item)
+                            onCloseRequested: root.close()
                         }
                         Label {
                             visible: !radar.detailed
@@ -619,122 +563,18 @@ BarWidget {
                         width: keys.wide ? 320 : parent.width
                         spacing: 12
                         Rectangle { visible: !keys.wide; width: parent.width; height: 1; color: Color.muted; opacity: 0.3 }
-                        Column {
-                            width: parent.width; spacing: 14; visible: root.selectedShip !== null
-                            Column {
-                                width: parent.width; spacing: 3
-                                Item {
-                                    width: parent.width
-                                    height: Math.max(vesselName.implicitHeight, vesselLink.height)
-                                    Label {
-                                        id: vesselName
-                                        width: Math.min(implicitWidth, parent.width - vesselLink.width - 8)
-                                        wrapMode: Text.WordWrap
-                                        font.pixelSize: 22; font.bold: true
-                                        text: root.selectedShip ? (root.selectedShip.name || "Unnamed vessel") : ""
-                                    }
-                                    Action {
-                                        id: vesselLink
-                                        objectName: "openVesselPage"
-                                        anchors.left: vesselName.right; anchors.leftMargin: 8
-                                        anchors.top: parent.top
-                                        readonly property string vesselUrl: Model.vesselUrl(root.selectedShip)
-                                        readonly property bool hasImo: !!root.selectedShip && /^[1-9][0-9]{6}$/.test(String(root.selectedShip.imo))
-                                        text: hasImo ? "Open vessel details on VesselFinder" : "Search vessel by MMSI on VesselFinder"
-                                        implicitWidth: 30; implicitHeight: 30
-                                        iconOnly: true
-                                        color: "transparent"
-                                        border.color: activeFocus ? Color.accent : "transparent"
-                                        enabled: vesselUrl.length > 0
-                                        onTriggered: if (enabled) Qt.openUrlExternally(vesselUrl)
-                                        onActiveFocusChanged: if (activeFocus) root.ensureVisible(vesselLink)
-                                        Controls.ToolTip.visible: hovered
-                                        Controls.ToolTip.delay: 500
-                                        Controls.ToolTip.text: text
-                                        Label {
-                                            anchors.centerIn: parent
-                                            text: "↗"; font.pixelSize: 22; color: Color.accent
-                                        }
-                                    }
-                                }
-                                Label {
-                                    width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: root.smallTextSize
-                                    text: root.selectedShip ? root.selectedShip.type + " · " + root.selectedShip.timeSource + " · " + Model.age(root.selectedShip.lastSeen, root.now) + (root.selectedShip.stale ? " · OLD POSITION" : "") : ""
-                                    color: root.selectedShip && root.selectedShip.stale ? Color.accent : Color.muted
-                                }
-                            }
-                            // Three equal columns of caption and value; missing AIS values show "—".
-                            component DetailRow: Row {
-                                id: detailRow
-                                property var fields: []
-                                property bool bold: false
-                                spacing: 8
-                                Repeater {
-                                    model: detailRow.fields
-                                    Column {
-                                        required property var modelData
-                                        width: (parent.width - 16) / 3; spacing: 4
-                                        Label {
-                                            text: modelData.label
-                                            font.pixelSize: root.smallTextSize; color: Color.muted
-                                        }
-                                        Label {
-                                            width: parent.width; wrapMode: Text.WordWrap
-                                            text: modelData.value || "—"
-                                            font.bold: detailRow.bold
-                                        }
-                                    }
-                                }
-                            }
-                            DetailRow {
-                                width: parent.width; bold: true
-                                fields: [
-                                    {label: "DISTANCE", value: root.selectedShip ? Model.distance(root.selectedShip.distance, root.unit) : ""},
-                                    {label: "BEARING", value: root.selectedShip ? Model.compass(root.selectedShip.bearing) + " " + Math.round(root.selectedShip.bearing) + "°" : ""},
-                                    {label: "SPEED", value: root.selectedShip && root.selectedShip.speed !== null ? root.selectedShip.speed.toFixed(1) + " kn" : ""}
-                                ]
-                            }
-                            DetailRow {
-                                objectName: "navigationDetails"
-                                width: parent.width
-                                fields: [
-                                    {label: "STATUS", value: root.selectedShip ? root.selectedShip.status || "" : ""},
-                                    {label: "COURSE", value: root.selectedShip && root.selectedShip.course !== null && root.selectedShip.course !== undefined ? Math.round(root.selectedShip.course) + "°" : ""},
-                                    {label: "SIZE", value: Model.hullSize(root.selectedShip)}
-                                ]
-                            }
-                            Row {
-                                width: parent.width; spacing: 8
-                                Column {
-                                    readonly property string destination: root.selectedShip ? (root.selectedShip.destination || "").trim() : ""
-                                    width: (parent.width - 16) / 3
-                                    spacing: 4
-                                    Label { text: "DESTINATION"; font.pixelSize: root.smallTextSize; color: Color.muted }
-                                    Label { width: parent.width; wrapMode: Text.Wrap; text: parent.destination || "—" }
-                                }
-                                Column {
-                                    id: mmsiField
-                                    width: (parent.width - 16) / 3; spacing: 4
-                                    Label { id: mmsiCaption; text: "MMSI"; font.pixelSize: root.smallTextSize; color: Color.muted }
-                                    Label { id: mmsiValue; text: root.selectedShip ? root.selectedShip.mmsi : "—" }
-                                }
-                                Column {
-                                    id: imoField
-                                    width: (parent.width - 16) / 3; spacing: 4
-                                    Label { id: imoCaption; text: "IMO"; font.pixelSize: root.smallTextSize; color: Color.muted }
-                                    Label { id: imoValue; text: vesselLink.hasImo ? String(root.selectedShip.imo) : "—" }
-                                }
-                            }
-                            DetailRow {
-                                objectName: "voyageDetails"
-                                width: parent.width
-                                fields: [
-                                    {label: "ETA", value: root.selectedShip ? root.selectedShip.eta || "" : ""},
-                                    {label: "CALL SIGN", value: root.selectedShip ? root.selectedShip.callSign || "" : ""},
-                                    {label: "DRAUGHT", value: root.selectedShip && root.selectedShip.draught ? root.selectedShip.draught.toFixed(1) + " m" : ""}
-                                ]
-                            }
-                            Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.2 }
+                        VesselDetails {
+                            id: details
+                            objectName: "vesselDetails"
+                            width: parent.width
+                            ship: root.selectedShip
+                            unit: root.unit
+                            now: root.now
+                            family: root.family
+                            textSize: root.textSize
+                            smallTextSize: root.smallTextSize
+                            onFocusRequested: item => root.ensureVisible(item)
+                            onCloseRequested: root.close()
                         }
                         Label {
                             width: parent.width; wrapMode: Text.WordWrap; visible: root.ships.length === 0
@@ -745,40 +585,21 @@ BarWidget {
                             width: parent.width; wrapMode: Text.WordWrap; visible: !!root.report.error
                             text: root.report.error || ""; color: Color.accent
                         }
-                        ShipModel { id: contactModel; ships: root.ships }
                         // Bound the contact list height; the receiver already sorts by distance.
-                        ListView {
+                        ContactList {
                             id: contacts
-                            objectName: "contacts"
-                            activeFocusOnTab: true
-                            Accessible.role: Accessible.List
-                            Accessible.name: "Vessels; use Up and Down to select"
-                            onActiveFocusChanged: if (activeFocus) root.ensureVisible(contacts)
-                            Keys.onUpPressed: root.selectVessel(-1)
-                            Keys.onDownPressed: root.selectVessel(1)
-                            Keys.onReturnPressed: if (root.selectedShip) root.revealShip(root.selectedShip)
-                            Keys.onEnterPressed: if (root.selectedShip) root.revealShip(root.selectedShip)
-                            Keys.onSpacePressed: if (root.selectedShip) root.revealShip(root.selectedShip)
-                            Rectangle { anchors.fill: parent; color: "transparent"; border.color: Color.accent; visible: contacts.activeFocus; z: 2 }
                             width: parent.width
                             height: Math.min(contentHeight, keys.wide ? Math.max(144, keys.height - 380) : 144)
-                            clip: true
-                            model: contactModel
-                            spacing: 4
-                            delegate: Rectangle {
-                                required property var ship
-                                readonly property var modelData: ship
-                                objectName: "vessel-" + modelData.mmsi
-                                width: ListView.view.width; height: 38
-                                color: Color.background
-                                border.width: root.selectedShip && root.selectedShip.mmsi === modelData.mmsi ? 1 : 0
-                                border.color: Color.accent
-                                opacity: modelData.stale ? 0.5 : 1
-                                Rectangle { anchors.left: parent.left; anchors.leftMargin: 8; anchors.verticalCenter: parent.verticalCenter; width: 8; height: 8; radius: 4; color: radar.inkFor(modelData) }
-                                Label { anchors.left: parent.left; anchors.leftMargin: 24; anchors.verticalCenter: parent.verticalCenter; width: parent.width * 0.65 - 16; elide: Text.ElideRight; text: modelData.name || modelData.mmsi }
-                                Label { anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter; text: Model.distance(modelData.distance, root.unit); color: Color.accent }
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.revealShip(modelData) }
-                            }
+                            ships: root.ships
+                            selectedMmsi: root.selectedShip ? root.selectedShip.mmsi : ""
+                            typeColors: root.typeColors
+                            unit: root.unit
+                            family: root.family
+                            textSize: root.textSize
+                            onFocusRequested: item => root.ensureVisible(item)
+                            onStepRequested: step => root.selectVessel(step)
+                            onRevealRequested: ship => root.revealShip(ship)
+                            onActivated: if (root.selectedShip) root.revealShip(root.selectedShip)
                         }
                     }
                 }
