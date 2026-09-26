@@ -6,6 +6,8 @@ A marine radar for Omarchy. Discover nearby ships, see where they’re heading, 
 
 See nearby AIS-equipped vessels, their names, speed and reported destinations on a map with coastlines and coastal cities. Vessel follows your Omarchy palette and lives behind a single boat icon in the bar.
 
+![Vessel tour: demo traffic off Genoa, with vessels colored by type, a ferry's recent track, and pleasure craft filtered out](docs/vessel-tour.gif)
+
 ## Screenshots
 
 Real AIS traffic received from OpenWaters on 19 September 2026, with the detailed OpenFreeMap map of Genoa. These are captured snapshots; vessel positions and timestamps reflect the reports received.
