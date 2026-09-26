@@ -48,7 +48,7 @@ def main():
     )
     put(
         "qs/Commons/Color.qml",
-        'pragma Singleton\nimport QtQuick\nQtObject { property color foreground:"#dedbd0"; property color background:"#182125"; property color accent:"#d4a86a"; property color muted:"#8e9b9e" }',
+        'pragma Singleton\nimport QtQuick\nQtObject { property string currentThemePath:""; property color foreground:"#dedbd0"; property color background:"#182125"; property color accent:"#d4a86a"; property color muted:"#8e9b9e" }',
     )
     put(
         "qs/Commons/Style.qml",
@@ -82,6 +82,19 @@ def main():
     put(
         "qs/Ui/PanelKeyCatcher.qml",
         "import QtQuick\nItem { property bool blocked; signal closeRequested(); signal returnRequested() }",
+    )
+    # Fixed hues stand in for the theme's colors.toml, which the renderer never reads.
+    put("Quickshell/Io/qmldir", "module Quickshell.Io\nFileView 1.0 FileView.qml\n")
+    put(
+        "Quickshell/Io/FileView.qml",
+        """import QtQuick
+    QtObject {
+     property string path; property bool watchChanges; property bool printErrors
+     signal loaded(); signal loadFailed(); signal fileChanged()
+     function reload() { loaded(); }
+     function text() { return 'red = "#c8745f"\\ngreen = "#8fa876"\\nblue = "#6f9bb3"\\norange = "#d49060"\\nmagenta = "#b58bb0"'; }
+     Component.onCompleted: Qt.callLater(loaded)
+    }""",
     )
     put(
         "Quickshell/qmldir",

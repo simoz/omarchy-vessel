@@ -110,6 +110,11 @@ Item {
     }
     onRadiusNmChanged: recenter()
     property string selectedMmsi: ""
+    // Theme colors by type group; the accent covers themes without named hues.
+    property var typeColors: ({})
+    function inkFor(ship) {
+        return (ship && typeColors[Model.typeGroup(ship.type)]) || Color.accent;
+    }
     signal selected(string mmsi)
     implicitHeight: width
     // Paint order matters: geography, sweep, grid, labels, contacts, then controls.
@@ -221,7 +226,7 @@ Item {
         objectName: "selectedWake"
         anchors.fill: parent
         readonly property var points: Model.trackPoints(root.selectedShip, root.width, root.viewRadiusNm, root.centerPixels)
-        property color ink: Color.accent
+        property color ink: root.inkFor(root.selectedShip)
         onPointsChanged: requestPaint()
         onInkChanged: requestPaint()
         onPaint: {
@@ -252,13 +257,13 @@ Item {
             readonly property bool chosen: root.selectedMmsi === modelData.mmsi
             readonly property var orientation: Model.orientation(modelData)
             readonly property string motion: Model.motion(modelData)
-            readonly property color ink: chosen ? Color.foreground : Color.accent
+            readonly property color ink: root.inkFor(modelData)
             x: position.x - 16; y: position.y - 16; width: 32; height: 32
             z: chosen ? 2 : 1
             opacity: modelData.stale ? 0.4 : 1
             Rectangle {
                 anchors.centerIn: parent; width: root.markerSize + 10; height: width; radius: width / 2
-                color: "transparent"; border.width: 1; border.color: Color.accent
+                color: "transparent"; border.width: 1.5; border.color: Color.foreground
                 visible: target.chosen
             }
             Canvas {

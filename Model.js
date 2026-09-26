@@ -168,3 +168,58 @@ function hullSize(ship) {
     if (ship.length && ship.beam) return ship.length + " × " + ship.beam + " m";
     return (ship.length ? ship.length + " m long" : ship.beam + " m wide");
 }
+
+// Type groups in legend and shortcut order (keys 1–6). Hues name theme colors,
+// following common chart-plotter conventions; "other" uses the foreground.
+var typeGroups = [
+    {key: "cargo", label: "CARGO", hue: "green"},
+    {key: "tanker", label: "TANKER", hue: "red"},
+    {key: "passenger", label: "PASSENGER", hue: "blue"},
+    {key: "fishing", label: "FISHING", hue: "orange"},
+    {key: "pleasure", label: "PLEASURE", hue: "magenta"},
+    {key: "other", label: "OTHER", hue: ""}
+];
+function typeGroup(type) {
+    switch (type) {
+    case "Cargo": return "cargo";
+    case "Tanker": return "tanker";
+    case "Passenger": return "passenger";
+    case "Fishing": return "fishing";
+    case "Sailing": case "Pleasure craft": return "pleasure";
+    }
+    return "other";
+}
+function filterShips(ships, hidden) {
+    return ships.filter(function(ship) { return !hidden[typeGroup(ship.type)]; });
+}
+function typeCounts(ships) {
+    var counts = {};
+    ships.forEach(function(ship) {
+        var key = typeGroup(ship.type);
+        counts[key] = (counts[key] || 0) + 1;
+    });
+    return counts;
+}
+// Read hues from the theme's colors.toml: named keys first, then the matching
+// ANSI slot. Orange falls back to yellow; a missing hue returns "".
+function themeHues(text) {
+    var values = {};
+    String(text || "").split("\n").forEach(function(line) {
+        var match = line.match(/^\s*([A-Za-z0-9_]+)\s*=\s*["']?(#[0-9A-Fa-f]{6})(?![0-9A-Fa-f])/);
+        if (match) values[match[1]] = match[2];
+    });
+    var slots = {red: "color1", green: "color2", yellow: "color3", blue: "color4", magenta: "color5", cyan: "color6"};
+    var hues = {};
+    Object.keys(slots).concat(["orange"]).forEach(function(name) {
+        hues[name] = values[name] || values[slots[name]] || "";
+    });
+    if (!hues.orange) hues.orange = hues.yellow;
+    return hues;
+}
+
+// Identify the monitored location; empty while a report has no valid position.
+function observerKey(report) {
+    if (!report || typeof report.latitude !== "number" || typeof report.longitude !== "number"
+        || !isFinite(report.latitude) || !isFinite(report.longitude)) return "";
+    return report.latitude.toFixed(5) + "," + report.longitude.toFixed(5);
+}

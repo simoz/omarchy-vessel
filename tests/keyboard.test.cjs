@@ -19,7 +19,9 @@ test('keyboard shortcuts accept shifted punctuation, uppercase and keypad input'
     [0, 'r', 0, 'reconnect'], [Qt.Key_Return, '', 0, 'reconnect'],
     [Qt.Key_Enter, '', Qt.KeypadModifier, 'reconnect'],
     [0, '0', 0, 'center'], [Qt.Key_Home, '', 0, 'center'],
-    [Qt.Key_Escape, '', 0, 'dismiss']
+    [Qt.Key_Escape, '', 0, 'dismiss'],
+    [0, '1', 0, 'type1'], [0, '6', Qt.KeypadModifier, 'type6'],
+    [0, 't', 0, 'allTypes'], [0, 'T', Qt.ShiftModifier, 'allTypes']
   ]) assert.equal(keyboard.command(key, text, modifiers), expected);
 });
 test('desktop and editor modifier combinations never trigger radar actions', () => {
