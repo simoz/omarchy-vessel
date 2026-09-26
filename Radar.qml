@@ -210,8 +210,35 @@ Item {
     }
     Rectangle { anchors.centerIn: parent; anchors.horizontalCenterOffset: -root.centerPixels.x; anchors.verticalCenterOffset: -root.centerPixels.y; visible: Math.hypot(root.centerPixels.x, root.centerPixels.y) < root.chartRadius - 4; width: 7; height: 7; radius: 4; color: Color.foreground }
     Text { anchors.centerIn: parent; anchors.horizontalCenterOffset: -root.centerPixels.x; anchors.verticalCenterOffset: 17 - root.centerPixels.y; visible: Math.hypot(root.centerPixels.x, 17 - root.centerPixels.y) < root.chartRadius - 16; text: "YOU"; font.pixelSize: 11; color: Color.muted }
+    // The selected vessel's recent wake, beneath the contacts. Older segments
+    // fade out; the line ends at the current position and is clipped to the chart.
+    readonly property var selectedShip: {
+        for (var i = 0; i < ships.length; i++) if (ships[i].mmsi === selectedMmsi) return ships[i];
+        return null;
+    }
+    Canvas {
+        id: wake
+        objectName: "selectedWake"
+        anchors.fill: parent
+        readonly property var points: Model.trackPoints(root.selectedShip, root.width, root.viewRadiusNm, root.centerPixels)
+        property color ink: Color.accent
+        onPointsChanged: requestPaint()
+        onInkChanged: requestPaint()
+        onPaint: {
+            var c = getContext("2d"); c.reset();
+            if (points.length < 2) return;
+            var mid = width / 2;
+            c.beginPath(); c.arc(mid, mid, root.chartRadius, 0, Math.PI * 2); c.clip();
+            c.strokeStyle = ink; c.fillStyle = ink; c.lineWidth = 1.5; c.lineCap = "round";
+            for (var i = 1; i < points.length; i++) {
+                c.globalAlpha = 0.15 + 0.6 * i / (points.length - 1);
+                c.beginPath(); c.moveTo(points[i - 1].x, points[i - 1].y); c.lineTo(points[i].x, points[i].y); c.stroke();
+                if (i < points.length - 1) { c.beginPath(); c.arc(points[i].x, points[i].y, 1.5, 0, Math.PI * 2); c.fill(); }
+            }
+        }
+    }
     // Stationary contacts are dots; moving contacts use a triangle, oriented by
-    // course when available. Unknown speed is a hollow circle.
+    // course, or by heading when course is unavailable. Unknown speed is a hollow circle.
     ShipModel { id: markerModel; ships: root.ships }
     Repeater {
         model: markerModel
@@ -223,7 +250,7 @@ Item {
             readonly property var position: Model.point(modelData, root.width, root.viewRadiusNm, root.centerPixels)
             visible: Model.inView(position, root.width)
             readonly property bool chosen: root.selectedMmsi === modelData.mmsi
-            readonly property bool hasCourse: typeof modelData.course === "number" && isFinite(modelData.course) && modelData.course >= 0 && modelData.course < 360
+            readonly property var orientation: Model.orientation(modelData)
             readonly property string motion: Model.motion(modelData)
             readonly property color ink: chosen ? Color.foreground : Color.accent
             x: position.x - 16; y: position.y - 16; width: 32; height: 32
@@ -237,7 +264,7 @@ Item {
             Canvas {
                 anchors.centerIn: parent; width: root.markerSize; height: width
                 visible: target.motion === "moving"
-                rotation: target.hasCourse ? target.modelData.course : 0
+                rotation: target.orientation !== null ? target.orientation : 0
                 property color ink: target.ink
                 property color outline: Color.background
                 onWidthChanged: requestPaint()

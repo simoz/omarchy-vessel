@@ -139,3 +139,32 @@ function vesselUrl(ship) {
         return "https://www.vesselfinder.com/vessels?name=" + ship.mmsi;
     return "";
 }
+
+// Course over ground orients a moving marker; true heading is the fallback.
+// Returns null when neither is reported, so the symbol keeps a neutral pose.
+function orientation(ship) {
+    function valid(value) { return typeof value === "number" && isFinite(value) && value >= 0 && value < 360; }
+    if (valid(ship.course)) return ship.course;
+    if (valid(ship.heading)) return ship.heading;
+    return null;
+}
+
+// The recent wake in screen pixels, oldest first, ending at the current position.
+function trackPoints(ship, size, radius, center) {
+    if (!ship || !Array.isArray(ship.track)) return [];
+    var points = ship.track.filter(function(p) {
+        return Array.isArray(p) && typeof p[0] === "number" && isFinite(p[0])
+            && typeof p[1] === "number" && isFinite(p[1]);
+    }).map(function(p) {
+        return point({distance: p[0], bearing: p[1]}, size, radius, center);
+    });
+    if (points.length) points.push(point(ship, size, radius, center));
+    return points;
+}
+
+// Hull size in metres; either dimension may be missing.
+function hullSize(ship) {
+    if (!ship || (!ship.length && !ship.beam)) return "—";
+    if (ship.length && ship.beam) return ship.length + " × " + ship.beam + " m";
+    return (ship.length ? ship.length + " m long" : ship.beam + " m wide");
+}

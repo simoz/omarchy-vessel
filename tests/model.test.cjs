@@ -144,3 +144,24 @@ test('external vessel links cannot use AIS text to change destination or inject 
   assert.equal(url.pathname, '/vessels/details/9400708');
   assert.equal(url.search, '');
 });
+
+test('marker orientation prefers course, then heading', () => {
+  assert.equal(m.orientation({course: 90, heading: 80}), 90);
+  assert.equal(m.orientation({course: null, heading: 80}), 80);
+  assert.equal(m.orientation({course: 360, heading: null}), null);
+  assert.equal(m.orientation({}), null);
+});
+test('wake projects past positions and ends at the vessel', () => {
+  const ship = {bearing: 90, distance: 25, track: [[25, 0], ['x', 1], [12.5, 90]]};
+  const points = m.trackPoints(ship, 300, 25);
+  assert.equal(points.length, 3);
+  assert.deepEqual([points[0].x, points[0].y], [150, 24]);
+  assert.deepEqual([points[2].x, points[2].y], [276, 150]);
+  assert.equal(m.trackPoints({bearing: 0, distance: 1, track: []}, 300, 25).length, 0);
+  assert.equal(m.trackPoints(null, 300, 25).length, 0);
+});
+test('hull size tolerates missing dimensions', () => {
+  assert.equal(m.hullSize({length: 180, beam: 28}), '180 × 28 m');
+  assert.equal(m.hullSize({length: 12}), '12 m long');
+  assert.equal(m.hullSize({}), '—');
+});

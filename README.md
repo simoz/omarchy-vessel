@@ -103,7 +103,9 @@ use `Tab` to reach fields, search results and buttons, type normally, and use
 Letter shortcuts are inactive while editing Settings, and Ctrl/Alt/Super
 combinations are left to the desktop.
 
-Filled dots indicate stationary vessels (reported speed below 0.5 knots). Moving vessels use a triangle, rotated to the reported course when available. Without a reported course, its default orientation does not indicate direction. Hollow circles indicate unknown speed. Stationary does not necessarily mean moored or anchored. The selected vessel has a ring. Positions fade after five minutes and expire after thirty minutes of active reception.
+Filled dots indicate stationary vessels (reported speed below 0.5 knots). Moving vessels use a triangle, rotated to the reported course, or to the reported heading when course is unavailable. Without either, its default orientation does not indicate direction. Hollow circles indicate unknown speed. Stationary does not necessarily mean moored or anchored; check **STATUS** in the vessel details. The selected vessel has a ring and a fading line showing its recent track: up to 20 positions from the last thirty minutes, one every 30 seconds or more while it moves. Implausible jumps restart the track.
+
+Vessel details show distance, bearing and speed; navigational status, course and hull size; destination, MMSI and IMO; ETA, call sign and draught. Values not yet received appear as **—**: static data such as ETA or draught is broadcast every few minutes, and Class B vessels report no status, ETA or draught. ETA is shown as broadcast, in UTC and without a year. Positions fade after five minutes and expire after thirty minutes of active reception.
 
 **VIEW** shows the visible radius. The contact counter shows visible vessels versus all received vessels in range. The list covers the full configured range.
 
