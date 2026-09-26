@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    # A hung test must fail quickly, not hold a runner for six hours.
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      # Ruff is a development tool, not a plugin dependency; pin it here only.
+      - run: python -m pip install ruff==0.16.9
+      - run: ruff check backend tools tests
+      - run: ruff format --check backend tools tests
+      - name: Check manifest JSON
+        run: python -m json.tool manifest.json > /dev/null
+
+  python:
+    name: Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest supported version and the newest stable release.
+        python: ["3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      # Installs the pinned, hash-verified websockets wheel, as on first use.
+      - name: Prepare the managed runtime
+        run: python backend/vessel.py --prepare-runtime
+      - name: Run tests, including local WebSocket peers
+        run: |
+          VENV_PYTHON="$(python -B -c 'import sys; sys.path.insert(0, "backend"); import runtime; print(runtime.location() / "bin/python")')"
+          "$VENV_PYTHON" -B -m unittest discover -s tests -p 'test_*.py'
+
+  javascript:
+    name: JavaScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - run: node --test tests/*.test.cjs

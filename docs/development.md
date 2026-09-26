@@ -36,6 +36,10 @@ VENV_PYTHON="$(python3 -B -c 'import sys; sys.path.insert(0, "backend"); import 
 "$VENV_PYTHON" -B -m unittest discover -s tests -p 'test_*.py'
 ```
 
+GitHub Actions (`.github/workflows/ci.yml`) runs Ruff, the full Python suite
+with Python 3.11 and 3.14, and the JavaScript tests on every pull request and
+push to `master`. `omarchy plugin validate` and QML checks still run locally.
+
 The tests cover AIS normalization, Class A/B merging, timestamps and expiry,
 dateline/polar geometry, settings validation and private
 file permissions. Local WebSocket tests exercise compressed binary messages,
