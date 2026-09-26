@@ -69,6 +69,7 @@ Modules:
 - `RadarLabels.qml`: label measurements and space reserved around visible contacts; collision decisions remain in `Model.js`.
 - `backend/runtime.py`: private virtualenv setup, dependency verification and process replacement.
 - `backend/settings.py`: validated settings and atomic, owner-only credential storage.
+- `backend/fleet_cache.py`: owner-only cache of recent contacts and tracks across receiver restarts; `Fleet.restore` re-validates it as untrusted input.
 - `backend/geocoding.py`: explicit Photon city searches, response validation and location labels.
 - `backend/network.py`: bounded HTTPS JSON requests and HTTPS-only redirects for location services.
 - `VesselService.qml`, `SettingsForm.qml`: shared receiver lifecycle and graphical configuration.

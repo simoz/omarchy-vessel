@@ -15,8 +15,12 @@ version commit. From 0.7.1 onward, version headings link to release tags.
   vessel details, parsed from Class A static and position reports and Class B
   static data. Unavailable and malformed values are ignored.
 - Draw the selected vessel's recent track: up to 20 positions from the last thirty
-  minutes, at least 90 seconds apart, fading with age and clipped to the radar. Jumps faster than 120 knots
-  restart the track.
+  minutes, at least 90 seconds apart, fading with age and clipped to the radar.
+  Jumps faster than 120 knots restart the track.
+- Keep recent contacts, details and tracks when the radar closes. The receiver
+  saves them every 30 seconds and on exit to an owner-only cache file, and
+  re-validates them on the next start; tracks continue from the last saved
+  position. Entries older than thirty minutes or far from the observer are dropped.
 
 ### Changed
 

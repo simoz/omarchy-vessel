@@ -1,6 +1,7 @@
 """Own one AIS connection, with bounded messages and cancellable retries."""
 
 import asyncio
+import itertools
 import json
 import logging
 import random
@@ -27,11 +28,13 @@ class Receiver:
         provider="openwaters",
         url=None,
         retry_delay=2,
+        save=None,
     ):
         self.fleet, self.state, self.key, self.output = fleet, state, key, output
         self.provider = provider
         self.url, self.retry_delay = url or self.URLS[provider], retry_delay
         self.confirmed, self.last_message = False, time.monotonic()
+        self.save = save or (lambda: None)
 
     def emit(self):
         self.output(self.state | self.fleet.snapshot(time.time()))
@@ -85,8 +88,11 @@ class Receiver:
         return True
 
     async def publish(self):
-        while True:
+        # Save periodically too: the process can end without running cleanup.
+        for tick in itertools.count(1):
             self.emit()
+            if tick % 30 == 0:
+                self.save()
             await asyncio.sleep(1)
 
     async def listen(self, socket):
@@ -183,3 +189,4 @@ class Receiver:
             publisher.cancel()
             with suppress(asyncio.CancelledError):
                 await publisher
+            self.save()

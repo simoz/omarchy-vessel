@@ -103,7 +103,7 @@ use `Tab` to reach fields, search results and buttons, type normally, and use
 Letter shortcuts are inactive while editing Settings, and Ctrl/Alt/Super
 combinations are left to the desktop.
 
-Filled dots indicate stationary vessels (reported speed below 0.5 knots). Moving vessels use a triangle, rotated to the reported course, or to the reported heading when course is unavailable. Without either, its default orientation does not indicate direction. Hollow circles indicate unknown speed. Stationary does not necessarily mean moored or anchored; check **STATUS** in the vessel details. The selected vessel has a ring and a fading line showing its recent track: up to 20 positions from the last thirty minutes, at least 90 seconds apart while it moves. Implausible jumps restart the track. At long ranges a slow vessel's track can remain hidden under its marker for several minutes; zoom in to follow it.
+Filled dots indicate stationary vessels (reported speed below 0.5 knots). Moving vessels use a triangle, rotated to the reported course, or to the reported heading when course is unavailable. Without either, its default orientation does not indicate direction. Hollow circles indicate unknown speed. Stationary does not necessarily mean moored or anchored; check **STATUS** in the vessel details. The selected vessel has a ring and a fading line showing its recent track: up to 20 positions from the last thirty minutes, at least 90 seconds apart while it moves. Implausible jumps restart the track. At long ranges a slow vessel's track can remain hidden under its marker for several minutes; zoom in to follow it. Closing the radar keeps recent contacts, details and tracks for thirty minutes: when you reopen it, each track continues from its last saved position to the next report received.
 
 Vessel details show distance, bearing and speed; navigational status, course and hull size; destination, MMSI and IMO; ETA, call sign and draught. Values not yet received appear as **—**: static data such as ETA or draught is broadcast every few minutes, and Class B vessels report no status, ETA or draught. ETA is shown as broadcast, in UTC and without a year. Positions fade after five minutes and expire after thirty minutes of active reception.
 
@@ -126,9 +126,10 @@ Release notes are in the [changelog](CHANGELOG.md).
 omarchy plugin remove simoz.vessel
 ```
 
-Saved preferences and the API key remain in `~/.config/omarchy-vessel/`, and the
-Python runtime remains in `~/.local/share/omarchy-vessel/` (or the corresponding
-`$XDG_CONFIG_HOME` and `$XDG_DATA_HOME` locations). Remove these directories if
+Saved preferences and the API key remain in `~/.config/omarchy-vessel/`, the
+Python runtime remains in `~/.local/share/omarchy-vessel/`, and map tiles and recent
+contacts remain in `~/.cache/omarchy-vessel/` (or the corresponding
+`$XDG_CONFIG_HOME`, `$XDG_DATA_HOME` and `$XDG_CACHE_HOME` locations). Remove these directories if
 you also want to delete Vessel's saved data.
 
 ## Data and privacy
@@ -140,6 +141,7 @@ Vessel is built for watching nearby traffic. Coverage and reported destinations 
 - **VesselFinder** opens in your default browser only when you activate the external link beside a vessel name. It receives the numeric IMO or MMSI and your browser connection; Vessel does not download vessel photos. Tab reuse depends on the browser.
 - **Photon / OpenStreetMap** provides city search from the name you enter.
 - **ipwho.is** provides approximate location from your public IP when enabled.
+- **Recent contacts** are saved locally, never sent anywhere, in `$XDG_CACHE_HOME/omarchy-vessel/fleet.json` (normally `~/.cache/omarchy-vessel/fleet.json`, owner-only). The file holds received vessel data and tracks near your monitored location; entries older than thirty minutes are discarded when it is read. Delete it to clear the history.
 - **Natural Earth** coastlines and **GeoNames** city labels are bundled with the plugin.
 - **OpenFreeMap** receives requests for the map tiles you view, which reveal the viewed area and your IP address. These requests are independent of AIS reception and may continue while reception is paused and the map is open. No AIS keys or vessel positions are sent. Detailed tiles are stored under `$XDG_CACHE_HOME/omarchy-vessel/tiles` (normally `~/.cache/omarchy-vessel/tiles`); above 128 MiB the cache is trimmed to 96 MiB after a batch, so downloads can temporarily exceed that threshold. Map data attribution is shown below the radar; see [OpenFreeMap](https://openfreemap.org/) and [OpenStreetMap copyright](https://www.openstreetmap.org/copyright).
 
