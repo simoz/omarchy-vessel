@@ -9,6 +9,19 @@ version commit. From 0.7.1 onward, version headings link to release tags.
 
 ## Unreleased
 
+### Added
+
+- Show navigational status, course, hull size, ETA, call sign and draught in the
+  vessel details, parsed from Class A static and position reports and Class B
+  static data. Unavailable and malformed values are ignored.
+- Draw the selected vessel's recent track: up to 20 positions from the last thirty
+  minutes, fading with age and clipped to the radar. Jumps faster than 120 knots
+  restart the track.
+
+### Changed
+
+- Orient moving vessels by true heading when course over ground is unavailable.
+
 ## [0.8.3](https://github.com/simoz/omarchy-vessel/releases/tag/v0.8.3) — 2026-09-19
 
 ### Fixed

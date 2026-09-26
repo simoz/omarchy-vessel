@@ -7,6 +7,10 @@ from geometry import coordinates, distance_bearing, number
 
 MAX_AGE, STALE_AGE = 1800, 300
 MAX_TRACKED_SHIPS, MAX_VISIBLE_SHIPS = 2000, 200
+# Keep a short wake: one point per 30 s after moving, within the expiry window.
+TRACK_POINTS, TRACK_INTERVAL, TRACK_MIN_MOVE = 20, 30, 0.01
+# Jumps faster than any AIS speed are receiver glitches; restart the wake.
+TRACK_MAX_KNOTS = 120
 POSITION_TYPES = (
     "PositionReport",
     "StandardClassBPositionReport",
@@ -30,6 +34,19 @@ TYPES = {
     55: "Law enforcement",
     58: "Medical",
 }
+NAVIGATION = {
+    0: "Under way",
+    1: "At anchor",
+    2: "Not under command",
+    3: "Restricted manoeuvrability",
+    4: "Constrained by draught",
+    5: "Moored",
+    6: "Aground",
+    7: "Fishing",
+    8: "Sailing",
+    14: "AIS-SART active",
+}
+MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split()
 
 
 def clean(value, limit=80):
@@ -51,6 +68,51 @@ def category(code):
         if low <= code <= high:
             return name
     return TYPES.get(code, "Unknown" if code == 0 else "Other")
+
+
+def dimensions(value):
+    """Return (length, beam) in metres; AIS uses 0 for unavailable sides."""
+    if not isinstance(value, dict):
+        return None, None
+    sides = [value.get(key) for key in "ABCD"]
+    if not all(type(side) is int for side in sides):
+        return None, None
+    a, b, c, d = sides
+    length = a + b if 0 <= a <= 511 and 0 <= b <= 511 and a and b else None
+    beam = c + d if 0 <= c <= 63 and 0 <= d <= 63 and c and d else None
+    return length, beam
+
+
+def eta_text(value):
+    """Format a year-less AIS ETA; hour 24 or minute 60 mean the time is unknown."""
+    if not isinstance(value, dict):
+        return ""
+    month, day, hour, minute = (
+        value.get(key) for key in ("Month", "Day", "Hour", "Minute")
+    )
+    if not all(type(part) is int for part in (month, day, hour, minute)):
+        return ""
+    if not (1 <= month <= 12 and 1 <= day <= 31):
+        return ""
+    text = f"{day} {MONTHS[month - 1]}"
+    if 0 <= hour <= 23 and 0 <= minute <= 59:
+        text += f" {hour:02d}:{minute:02d} UTC"
+    return text
+
+
+def extend_track(track, point):
+    """Append (time, lat, lon, distance, bearing) without mutating shared history."""
+    if not track:
+        return [point]
+    stamp, lat, lon = point[:3]
+    last_stamp, last_lat, last_lon = track[-1][:3]
+    moved = distance_bearing(last_lat, last_lon, lat, lon)[0]
+    elapsed = stamp - last_stamp
+    if moved > max(0.1, TRACK_MAX_KNOTS * elapsed / 3600):
+        return [point]
+    if elapsed < TRACK_INTERVAL or moved < TRACK_MIN_MOVE:
+        return track
+    return [*track, point][-TRACK_POINTS:]
 
 
 def attribution_text(credits):
@@ -116,6 +178,8 @@ class Fleet:
             clean(body.get("Name")) or clean(metadata.get("ShipName")),
             body.get("Type"),
         )
+        # Call sign and dimensions come from Class A static data or Class B part B.
+        static = body if kind == "ShipStaticData" else {}
         if kind == "StaticDataReport":
             report_a = body.get("ReportA") or {}
             report_b = body.get("ReportB") or {}
@@ -125,6 +189,7 @@ class Fleet:
                 name = clean(report_a.get("Name")) or name
             if report_b.get("Valid") is True:
                 kind_code = report_b.get("ShipType")
+                static = report_b
         self.last_signal, ship["touched"] = now, now
         source = clean(envelope.get("source")).split(":", 1)[0]
         if source:
@@ -144,6 +209,21 @@ class Fleet:
         destination = clean(body.get("Destination"))
         if destination:
             ship["destination"] = destination
+        call_sign = clean(static.get("CallSign"), 7)
+        if call_sign:
+            ship["callSign"] = call_sign
+        length, beam = dimensions(static.get("Dimension"))
+        if length:
+            ship["length"] = length
+        if beam:
+            ship["beam"] = beam
+        if kind == "ShipStaticData":
+            draught = body.get("MaximumStaticDraught")
+            if number(draught, 0.1, 25.5):
+                ship["draught"] = round(draught, 1)
+            eta = eta_text(body.get("Eta"))
+            if eta:
+                ship["eta"] = eta
         if kind in POSITION_TYPES:
             self.update_position(ship, body, metadata, now)
         self.ships[mmsi] = ship
@@ -158,7 +238,20 @@ class Fleet:
         if ship["lastSeen"] is not None and stamp < ship["lastSeen"]:
             return
         distance, bearing = distance_bearing(self.lat, self.lon, lat, lon)
+        ship["track"] = extend_track(
+            ship.get("track", []), (stamp, lat, lon, distance, bearing)
+        )
+        # Only Class A reports carry a navigational status; 15 means undefined.
+        status = body.get("NavigationalStatus")
+        if type(status) is int and 0 <= status <= 15:
+            if status in NAVIGATION:
+                ship["status"] = NAVIGATION[status]
+            else:
+                ship.pop("status", None)
+        heading = body.get("TrueHeading")
         ship.update(
+            # 511 marks an unavailable heading.
+            heading=heading if type(heading) is int and 0 <= heading <= 359 else None,
             latitude=lat,
             longitude=lon,
             distance=distance,
@@ -181,7 +274,15 @@ class Fleet:
                 continue
             retained[mmsi] = ship
             if position_time is not None and ship["distance"] <= self.radius:
-                visible.append(ship | {"stale": now - position_time > STALE_AGE})
+                # Emit only the polar offsets the radar needs, oldest first.
+                track = [
+                    [round(point[3], 4), round(point[4], 3)]
+                    for point in ship.get("track", [])
+                    if now - point[0] < MAX_AGE
+                ]
+                visible.append(
+                    ship | {"stale": now - position_time > STALE_AGE, "track": track}
+                )
         self.ships = retained
         visible.sort(key=lambda ship: (ship["distance"], ship["mmsi"]))
         return dict(

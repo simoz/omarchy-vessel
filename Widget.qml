@@ -545,14 +545,14 @@ BarWidget {
                                     color: root.selectedShip && root.selectedShip.stale ? Color.accent : Color.muted
                                 }
                             }
-                            Row {
-                                width: parent.width; spacing: 8
+                            // Three equal columns of caption and value; missing AIS values show "—".
+                            component DetailRow: Row {
+                                id: detailRow
+                                property var fields: []
+                                property bool bold: false
+                                spacing: 8
                                 Repeater {
-                                    model: [
-                                        {label: "DISTANCE", value: root.selectedShip ? Model.distance(root.selectedShip.distance, root.unit) : "—"},
-                                        {label: "BEARING", value: root.selectedShip ? Model.compass(root.selectedShip.bearing) + " " + Math.round(root.selectedShip.bearing) + "°" : "—"},
-                                        {label: "SPEED", value: root.selectedShip && root.selectedShip.speed !== null ? root.selectedShip.speed.toFixed(1) + " kn" : "—"}
-                                    ]
+                                    model: detailRow.fields
                                     Column {
                                         required property var modelData
                                         width: (parent.width - 16) / 3; spacing: 4
@@ -562,11 +562,28 @@ BarWidget {
                                         }
                                         Label {
                                             width: parent.width; wrapMode: Text.WordWrap
-                                            text: modelData.value
-                                            font.bold: true
+                                            text: modelData.value || "—"
+                                            font.bold: detailRow.bold
                                         }
                                     }
                                 }
+                            }
+                            DetailRow {
+                                width: parent.width; bold: true
+                                fields: [
+                                    {label: "DISTANCE", value: root.selectedShip ? Model.distance(root.selectedShip.distance, root.unit) : ""},
+                                    {label: "BEARING", value: root.selectedShip ? Model.compass(root.selectedShip.bearing) + " " + Math.round(root.selectedShip.bearing) + "°" : ""},
+                                    {label: "SPEED", value: root.selectedShip && root.selectedShip.speed !== null ? root.selectedShip.speed.toFixed(1) + " kn" : ""}
+                                ]
+                            }
+                            DetailRow {
+                                objectName: "navigationDetails"
+                                width: parent.width
+                                fields: [
+                                    {label: "STATUS", value: root.selectedShip ? root.selectedShip.status || "" : ""},
+                                    {label: "COURSE", value: root.selectedShip && root.selectedShip.course !== null && root.selectedShip.course !== undefined ? Math.round(root.selectedShip.course) + "°" : ""},
+                                    {label: "SIZE", value: Model.hullSize(root.selectedShip)}
+                                ]
                             }
                             Row {
                                 width: parent.width; spacing: 8
@@ -589,6 +606,15 @@ BarWidget {
                                     Label { id: imoCaption; text: "IMO"; font.pixelSize: root.smallTextSize; color: Color.muted }
                                     Label { id: imoValue; text: vesselLink.hasImo ? String(root.selectedShip.imo) : "—" }
                                 }
+                            }
+                            DetailRow {
+                                objectName: "voyageDetails"
+                                width: parent.width
+                                fields: [
+                                    {label: "ETA", value: root.selectedShip ? root.selectedShip.eta || "" : ""},
+                                    {label: "CALL SIGN", value: root.selectedShip ? root.selectedShip.callSign || "" : ""},
+                                    {label: "DRAUGHT", value: root.selectedShip && root.selectedShip.draught ? root.selectedShip.draught.toFixed(1) + " m" : ""}
+                                ]
                             }
                             Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.2 }
                         }

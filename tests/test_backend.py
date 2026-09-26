@@ -64,6 +64,88 @@ class FleetTest(unittest.TestCase):
             fleet.ingest(report("ShipStaticData", ImoNumber=imo), 1002)
         self.assertEqual(fleet.snapshot(1002)["ships"][0]["imo"], 9400708)
 
+    def test_static_voyage_and_navigation_details(self):
+        fleet = ais.Fleet(0, 0, 25)
+        fleet.ingest(
+            report(
+                "ShipStaticData",
+                CallSign=" IBCD@@",
+                Dimension=dict(A=150, B=30, C=14, D=14),
+                MaximumStaticDraught=9.5,
+                Eta=dict(Month=10, Day=12, Hour=14, Minute=5),
+            ),
+            1000,
+        )
+        fleet.ingest(report(NavigationalStatus=1, TrueHeading=275), 1001)
+        ship = fleet.snapshot(1001)["ships"][0]
+        self.assertEqual(ship["callSign"], "IBCD")
+        self.assertEqual((ship["length"], ship["beam"]), (180, 28))
+        self.assertEqual(ship["draught"], 9.5)
+        self.assertEqual(ship["eta"], "12 Oct 14:05 UTC")
+        self.assertEqual(ship["status"], "At anchor")
+        self.assertEqual(ship["heading"], 275)
+        # Class B reports carry no status; undefined status and heading clear them.
+        fleet.ingest(report("StandardClassBPositionReport", TrueHeading=511), 1002)
+        ship = fleet.snapshot(1002)["ships"][0]
+        self.assertEqual(ship["status"], "At anchor")
+        self.assertIsNone(ship["heading"])
+        fleet.ingest(report(NavigationalStatus=15), 1003)
+        self.assertNotIn("status", fleet.snapshot(1003)["ships"][0])
+
+    def test_unavailable_or_malformed_static_values_are_ignored(self):
+        self.assertEqual(
+            ais.eta_text(dict(Month=3, Day=9, Hour=24, Minute=60)), "9 Mar"
+        )
+        for eta in (
+            None,
+            [],
+            dict(Month=0, Day=0, Hour=24, Minute=60),
+            dict(Month=13, Day=1, Hour=0, Minute=0),
+            dict(Month="1", Day=1, Hour=0, Minute=0),
+        ):
+            self.assertEqual(ais.eta_text(eta), "")
+        self.assertEqual(ais.dimensions(dict(A=0, B=30, C=5, D=5)), (None, 10))
+        self.assertEqual(ais.dimensions(dict(A=10, B=True, C=5, D=5)), (None, None))
+        self.assertEqual(ais.dimensions(dict(A=10**40, B=1, C=64, D=1)), (None, None))
+        fleet = ais.Fleet(0, 0, 25)
+        fleet.ingest(
+            report(
+                "ShipStaticData",
+                CallSign={"x": 1},
+                MaximumStaticDraught=0,
+                NavigationalStatus=1,
+            ),
+            1000,
+        )
+        fleet.ingest(report(NavigationalStatus="1", TrueHeading=360.0), 1000)
+        ship = fleet.snapshot(1000)["ships"][0]
+        for key in ("callSign", "draught", "eta", "status", "length", "beam"):
+            self.assertNotIn(key, ship)
+        self.assertIsNone(ship["heading"])
+
+    def test_track_keeps_a_bounded_recent_wake(self):
+        fleet = ais.Fleet(0, 0, 25)
+        # 0.005° of longitude every 30 s is about 36 knots at the equator.
+        for step in range(30):
+            fleet.ingest(report(Longitude=0.1 + step * 0.005), 1000 + step * 30)
+        ship = fleet.snapshot(1870)["ships"][0]
+        self.assertEqual(len(ship["track"]), ais.TRACK_POINTS)
+        self.assertTrue(all(len(point) == 2 for point in ship["track"]))
+        self.assertLess(ship["track"][0][0], ship["track"][-1][0])
+        # Frequent or motionless reports do not grow the wake.
+        fleet = ais.Fleet(0, 0, 100)
+        for step in range(10):
+            fleet.ingest(report(), 1000 + step * 60)
+            fleet.ingest(report(Longitude=0.1001), 1000 + step * 60 + 5)
+        self.assertEqual(len(fleet.snapshot(1600)["ships"][0]["track"]), 1)
+        # An impossible jump restarts the wake; old points expire with the window.
+        fleet.ingest(report(Longitude=1.0), 1610)
+        self.assertEqual(len(fleet.snapshot(1610)["ships"][0]["track"]), 1)
+        fleet.ingest(report(Longitude=1.001), 1610 + ais.MAX_AGE - 1)
+        self.assertEqual(
+            len(fleet.snapshot(1610 + ais.MAX_AGE)["ships"][0]["track"]), 1
+        )
+
     def test_class_a_and_b_and_static_merge(self):
         fleet = ais.Fleet(0, 0, 25)
         for index, kind in enumerate(ais.POSITION_TYPES):
