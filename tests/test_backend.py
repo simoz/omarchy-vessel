@@ -13,6 +13,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 import ais
 import basemap
+import fleet_cache
 import geometry as g
 import settings
 
@@ -124,11 +125,13 @@ class FleetTest(unittest.TestCase):
         self.assertIsNone(ship["heading"])
 
     def test_track_keeps_a_bounded_recent_wake(self):
-        fleet = ais.Fleet(0, 0, 25)
-        # 0.005° of longitude every 30 s is about 36 knots at the equator.
+        fleet = ais.Fleet(0, 0, 50)
+        # 0.015° of longitude every 90 s is about 36 knots at the equator.
         for step in range(30):
-            fleet.ingest(report(Longitude=0.1 + step * 0.005), 1000 + step * 30)
-        ship = fleet.snapshot(1870)["ships"][0]
+            fleet.ingest(
+                report(Longitude=0.1 + step * 0.015), 1000 + step * ais.TRACK_INTERVAL
+            )
+        ship = fleet.snapshot(1000 + 29 * ais.TRACK_INTERVAL)["ships"][0]
         self.assertEqual(len(ship["track"]), ais.TRACK_POINTS)
         self.assertTrue(all(len(point) == 2 for point in ship["track"]))
         self.assertLess(ship["track"][0][0], ship["track"][-1][0])
@@ -218,6 +221,86 @@ class FleetTest(unittest.TestCase):
             ais.message_time({"time_utc": "2024-01-01T00:00:00"}, 1000),
             (1000, "Received"),
         )
+
+
+class FleetCacheTest(unittest.TestCase):
+    def moving_fleet(self):
+        fleet = ais.Fleet(0, 0, 25)
+        fleet.ingest(
+            report("ShipStaticData", CallSign="IBCD", MaximumStaticDraught=9.5), 1000
+        )
+        for step in range(4):
+            fleet.ingest(
+                report(Longitude=0.1 + step * 0.015, NavigationalStatus=0),
+                1000 + step * ais.TRACK_INTERVAL,
+            )
+        return fleet
+
+    def test_reopening_restores_details_and_continues_the_track(self):
+        saved = self.moving_fleet()
+        now = 1000 + 3 * ais.TRACK_INTERVAL
+        before = saved.snapshot(now)["ships"][0]
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = Path(tmp) / "vessel" / "fleet.json"
+            fleet_cache.save(saved, cache)
+            self.assertEqual(cache.stat().st_mode & 0o777, 0o600)
+            fleet = ais.Fleet(0, 0, 25)
+            # Ten minutes closed: the next report joins the saved track.
+            later = now + 600
+            fleet_cache.load(fleet, later, cache)
+        restored = fleet.snapshot(later)["ships"][0]
+        for key in ("callSign", "draught", "status", "distance", "track"):
+            self.assertEqual(restored[key], before[key])
+        fleet.ingest(report(Longitude=0.1 + 5 * 0.015), later)
+        track = fleet.snapshot(later)["ships"][0]["track"]
+        self.assertEqual(len(track), len(before["track"]) + 1)
+
+    def test_restore_rejects_malformed_expired_and_distant_entries(self):
+        fleet = ais.Fleet(0, 0, 25)
+        state = self.moving_fleet().export()
+        ship = state["ships"]["123456789"]
+        state["ships"] |= {
+            "12345": ship,
+            "223456789": ship | {"touched": 1300 - ais.MAX_AGE - 1},
+            "323456789": ship | {"latitude": 5},
+            "423456789": "not a ship",
+            "523456789": ship
+            | {
+                "name": "<b>X</b>\x00",
+                "draught": 1e400,
+                "imo": True,
+                "speed": "fast",
+                "timeSource": "forged",
+                "credits": {"src": ["nested"]},
+                "track": [[1000, 0, 0.1], ["x", 0, 0], [1000, 91, 0], [900, 0, 0.1]],
+            },
+        }
+        fleet.restore(state, 1300)
+        self.assertEqual(sorted(fleet.ships), ["123456789", "523456789"])
+        odd = fleet.ships["523456789"]
+        self.assertEqual(odd["name"], "<b>X</b>")
+        self.assertNotIn("draught", odd)
+        self.assertNotIn("imo", odd)
+        self.assertNotIn("credits", odd)
+        self.assertIsNone(odd["speed"])
+        self.assertEqual(odd["timeSource"], "Received")
+        self.assertEqual(len(odd["track"]), 1)
+        for bad in (None, [], {"version": 2, "ships": {}}, {"version": 1, "ships": []}):
+            fleet.restore(bad, 1300)
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = Path(tmp) / "fleet.json"
+            for content in (
+                b"{",
+                b"[" * 100000,
+                b" " * (fleet_cache.MAX_CACHE_BYTES + 1),
+            ):
+                cache.write_bytes(content)
+                empty = ais.Fleet(0, 0, 25)
+                fleet_cache.load(empty, 1300, cache)
+                self.assertEqual(empty.ships, {})
+            fleet_cache.load(empty, 1300, Path(tmp) / "missing.json")
+            # An unwritable destination never interrupts reception.
+            fleet_cache.save(fleet, Path(tmp) / "fleet.json" / "nested")
 
 
 class SettingsTest(unittest.TestCase):

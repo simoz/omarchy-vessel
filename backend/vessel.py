@@ -6,8 +6,10 @@ import asyncio
 import json
 import signal
 import sys
+import time
 
 import basemap
+import fleet_cache
 import settings
 from ais import Fleet, clean
 from geometry import coordinates, number
@@ -186,7 +188,18 @@ def main(argv=None):
     )
     state["basemap"] = basemap.build(lat, lon, args.radius)
     fleet = Fleet(lat, lon, args.radius)
-    asyncio.run(Receiver(fleet, state, key, output, provider=provider).run())
+    # Closing the radar stops reception; restore recent contacts and tracks.
+    fleet_cache.load(fleet, time.time())
+    asyncio.run(
+        Receiver(
+            fleet,
+            state,
+            key,
+            output,
+            provider=provider,
+            save=lambda: fleet_cache.save(fleet),
+        ).run()
+    )
     return 0
 
 

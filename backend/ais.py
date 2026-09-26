@@ -7,8 +7,10 @@ from geometry import coordinates, distance_bearing, number
 
 MAX_AGE, STALE_AGE = 1800, 300
 MAX_TRACKED_SHIPS, MAX_VISIBLE_SHIPS = 2000, 200
-# Keep a short wake: one point per 30 s after moving, within the expiry window.
-TRACK_POINTS, TRACK_INTERVAL, TRACK_MIN_MOVE = 20, 30, 0.01
+# Spread the wake across the whole expiry window: 20 points, 90 s apart, span
+# 30 minutes. Shorter wakes stay hidden under the marker at typical ranges.
+TRACK_POINTS, TRACK_MIN_MOVE = 20, 0.01
+TRACK_INTERVAL = MAX_AGE // TRACK_POINTS
 # Jumps faster than any AIS speed are receiver glitches; restart the wake.
 TRACK_MAX_KNOTS = 120
 POSITION_TYPES = (
@@ -46,6 +48,11 @@ NAVIGATION = {
     8: "Sailing",
     14: "AIS-SART active",
 }
+# Saved state is re-validated with the same limits as live AIS reports.
+SAVED_TEXT = dict(name=80, type=80, destination=80, status=80, eta=80, callSign=7)
+SAVED_NUMBERS = dict(
+    imo=(1000000, 9999999), length=(2, 1022), beam=(2, 126), draught=(0.1, 25.5)
+)
 MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split()
 
 
@@ -261,6 +268,103 @@ class Fleet:
             speed=body.get("Sog") if number(body.get("Sog"), 0, 102.2) else None,
             course=body.get("Cog") if number(body.get("Cog"), 0, 359.9) else None,
         )
+
+    def export(self):
+        """Serializable fleet state; observer-relative values are recomputed on load."""
+        return dict(
+            version=1,
+            ships={
+                mmsi: {
+                    key: value
+                    for key, value in ship.items()
+                    if key not in ("mmsi", "distance", "bearing", "attribution")
+                }
+                | {"track": [list(point[:3]) for point in ship.get("track", [])]}
+                for mmsi, ship in self.ships.items()
+            },
+        )
+
+    def restore(self, data, now):
+        """Merge saved state as untrusted input, keeping only recent, valid fields."""
+        if not isinstance(data, dict) or data.get("version") != 1:
+            return
+        saved = data.get("ships")
+        if not isinstance(saved, dict):
+            return
+        for mmsi, raw in list(saved.items())[:MAX_TRACKED_SHIPS]:
+            ship = self.restored_ship(mmsi, raw, now)
+            if ship and mmsi not in self.ships:
+                self.ships[mmsi] = ship
+
+    def restored_ship(self, mmsi, raw, now):
+        if not isinstance(raw, dict) or not re.fullmatch(r"[0-9]{9}", str(mmsi)):
+            return None
+        recent = now - MAX_AGE, now + 60
+        if not number(raw.get("touched"), *recent):
+            return None
+        ship = dict(
+            mmsi=mmsi,
+            name="",
+            type="Unknown",
+            destination="",
+            lastSeen=None,
+            touched=raw["touched"],
+        )
+        for key, limit in SAVED_TEXT.items():
+            text = clean(raw.get(key), limit)
+            if text:
+                ship[key] = text
+        for key, (low, high) in SAVED_NUMBERS.items():
+            if number(raw.get(key), low, high):
+                ship[key] = raw[key]
+        credits = raw.get("credits")
+        if isinstance(credits, dict):
+            credits = {
+                clean(source): clean(text, 600)
+                for source, text in list(credits.items())[:8]
+                if clean(source) and clean(text, 600)
+            }
+            if credits:
+                ship["credits"] = credits
+                ship["attribution"] = attribution_text(credits.values())
+        lat, lon, seen = raw.get("latitude"), raw.get("longitude"), raw.get("lastSeen")
+        if coordinates(lat, lon) and number(seen, *recent):
+            distance, bearing = distance_bearing(self.lat, self.lon, lat, lon)
+            # A different observer location leaves distant contacts behind.
+            if distance > 2 * self.radius:
+                return None
+            track = []
+            points = raw.get("track")
+            for point in points[-TRACK_POINTS:] if isinstance(points, list) else []:
+                if (
+                    isinstance(point, list)
+                    and len(point) == 3
+                    and number(point[0], recent[0], seen)
+                    and coordinates(point[1], point[2])
+                    and (not track or point[0] >= track[-1][0])
+                ):
+                    track.append(
+                        (*point, *distance_bearing(self.lat, self.lon, *point[1:]))
+                    )
+            ship.update(
+                latitude=lat,
+                longitude=lon,
+                distance=distance,
+                bearing=bearing,
+                lastSeen=seen,
+                timeSource=raw.get("timeSource")
+                if raw.get("timeSource") in ("AIS timestamp", "Received")
+                else "Received",
+                speed=raw.get("speed") if number(raw.get("speed"), 0, 102.2) else None,
+                course=raw.get("course")
+                if number(raw.get("course"), 0, 359.9)
+                else None,
+                heading=raw.get("heading")
+                if type(raw.get("heading")) is int and 0 <= raw["heading"] <= 359
+                else None,
+                track=track,
+            )
+        return ship
 
     def snapshot(self, now):
         retained, visible = {}, []
