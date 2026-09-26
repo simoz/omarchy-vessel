@@ -165,3 +165,38 @@ test('hull size tolerates missing dimensions', () => {
   assert.equal(m.hullSize({length: 12}), '12 m long');
   assert.equal(m.hullSize({}), '—');
 });
+
+test('vessel types map to six filter groups', () => {
+  assert.equal(m.typeGroups.length, 6);
+  assert.equal(m.typeGroup('Cargo'), 'cargo');
+  assert.equal(m.typeGroup('Tanker'), 'tanker');
+  assert.equal(m.typeGroup('Passenger'), 'passenger');
+  assert.equal(m.typeGroup('Fishing'), 'fishing');
+  assert.equal(m.typeGroup('Sailing'), 'pleasure');
+  assert.equal(m.typeGroup('Pleasure craft'), 'pleasure');
+  for (const type of ['Tug', 'High-speed craft', 'Unknown', undefined]) assert.equal(m.typeGroup(type), 'other');
+});
+test('type filter hides groups and counts all vessels', () => {
+  const ships = [{mmsi: '1', type: 'Cargo'}, {mmsi: '2', type: 'Sailing'}, {mmsi: '3', type: 'Unknown'}, {mmsi: '4', type: 'Cargo'}];
+  assert.deepEqual(Array.from(m.filterShips(ships, {}), s => s.mmsi), ['1', '2', '3', '4']);
+  assert.deepEqual(Array.from(m.filterShips(ships, {cargo: true, other: true}), s => s.mmsi), ['2']);
+  const counts = m.typeCounts(ships);
+  assert.equal(counts.cargo, 2); assert.equal(counts.pleasure, 1); assert.equal(counts.other, 1);
+  assert.equal(counts.tanker, undefined);
+});
+test('theme hues prefer named colors, then ANSI slots', () => {
+  const named = m.themeHues('red = "#ea6962"\ngreen = "#a9b665"\ncolor4 = "#123456"\nblue = "#7daea3"\nyellow="#d8a657"');
+  assert.equal(named.red, '#ea6962'); assert.equal(named.blue, '#7daea3');
+  assert.equal(named.orange, '#d8a657');
+  const ansi = m.themeHues("color1 = '#aa0000'\ncolor2 = '#00aa00'\ncolor5 = '#aa00aa'\n# red = \"#ffffff\"");
+  assert.equal(ansi.red, '#aa0000'); assert.equal(ansi.magenta, '#aa00aa');
+  assert.equal(ansi.orange, '');
+  assert.equal(m.themeHues('red = "#12345678"\nblue = "red"').red, '');
+  assert.equal(m.themeHues(null).green, '');
+});
+test('observer key ignores reports without a position', () => {
+  assert.equal(m.observerKey({latitude: 44.4056, longitude: 8.9463}), '44.40560,8.94630');
+  assert.equal(m.observerKey({status: 'STARTING'}), '');
+  assert.equal(m.observerKey({latitude: null, longitude: 8}), '');
+  assert.equal(m.observerKey(null), '');
+});

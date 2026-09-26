@@ -69,6 +69,7 @@ The map shows coastlines, rivers, docks, roads and local place names, with more 
 | Center button (crosshair, beside zoom) | Return to your position and reset zoom to 1×. |
 | Vessel on the map or in the list | Select a vessel to see its details. Selecting from the list also brings it into view on the map. |
 | External link icon beside the vessel name | Open its VesselFinder details page by IMO, or search by MMSI when IMO is unavailable. Destination, MMSI and IMO appear together in one row. |
+| Type filters below the radar | Show or hide cargo, tanker, passenger, fishing, pleasure and other vessels. Each filter shows the type's color and number of vessels. |
 | Status button beside the location | Click to pause reception; click again when it reads PAUSED to resume. Last positions remain visible while paused. |
 | Settings button in the footer | Change location, API key, range and units. |
 | Keyboard icon (top right) | Open the shortcut guide. You can also press `?` or `F1`. |
@@ -87,6 +88,8 @@ With the radar view focused:
 | `+` / `=` / `−` | Zoom in or out. |
 | `0` / `Home` | Return to your position and reset zoom. |
 | `,` / `.` | Select and reveal the previous or next vessel. |
+| `1`–`6` | Show or hide a vessel type, in the order shown below the radar. |
+| `T` | Show all vessel types. |
 | `Space` / `P` | Pause or resume reception. |
 | `R` | Restart reception. Enter also reconnects when no control consumes the key. |
 | `F` | Switch between the panel and expanded window. |
@@ -103,7 +106,7 @@ use `Tab` to reach fields, search results and buttons, type normally, and use
 Letter shortcuts are inactive while editing Settings, and Ctrl/Alt/Super
 combinations are left to the desktop.
 
-Filled dots indicate stationary vessels (reported speed below 0.5 knots). Moving vessels use a triangle, rotated to the reported course, or to the reported heading when course is unavailable. Without either, its default orientation does not indicate direction. Hollow circles indicate unknown speed. Stationary does not necessarily mean moored or anchored; check **STATUS** in the vessel details. The selected vessel has a ring and a fading line showing its recent track: up to 20 positions from the last thirty minutes, at least 90 seconds apart while it moves. Implausible jumps restart the track. At long ranges a slow vessel's track can remain hidden under its marker for several minutes; zoom in to follow it. Closing the radar keeps recent contacts, details and tracks for thirty minutes: when you reopen it, each track continues from its last saved position to the next report received.
+Filled dots indicate stationary vessels (reported speed below 0.5 knots). Moving vessels use a triangle, rotated to the reported course, or to the reported heading when course is unavailable. Without either, its default orientation does not indicate direction. Hollow circles indicate unknown speed. Colors show the vessel type, using your theme's green, red, blue, orange and magenta for cargo, tanker, passenger, fishing and pleasure craft (including sailing); other and unidentified vessels use the text color. Types arrive with static data, so a new contact may appear as other at first. Type filters apply to the radar, the list and vessel navigation, and reset when the shell restarts or the monitored location changes; their counts include hidden vessels. Stationary does not necessarily mean moored or anchored; check **STATUS** in the vessel details. The selected vessel has a ring and a fading line showing its recent track: up to 20 positions from the last thirty minutes, at least 90 seconds apart while it moves. Implausible jumps restart the track. At long ranges a slow vessel's track can remain hidden under its marker for several minutes; zoom in to follow it. Closing the radar keeps recent contacts, details and tracks for thirty minutes: when you reopen it, each track continues from its last saved position to the next report received.
 
 Vessel details show distance, bearing and speed; navigational status, course and hull size; destination, MMSI and IMO; ETA, call sign and draught. Values not yet received appear as **—**: static data such as ETA or draught is broadcast every few minutes, and Class B vessels report no status, ETA or draught. ETA is shown as broadcast, in UTC and without a year. Positions fade after five minutes and expire after thirty minutes of active reception.
 

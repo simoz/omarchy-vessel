@@ -5,6 +5,8 @@ var hints = [
     [["+", "−"], "Zoom (= too)"],
     [["0", "Home"], "Reset to your location"],
     [[",", "."], "Previous / next vessel"],
+    [["1–6"], "Show / hide a vessel type"],
+    [["T"], "Show all vessel types"],
     [["Space", "P"], "Pause / resume reception"],
     [["R"], "Reconnect (Enter too)"],
     [["F"], "Expand / widget"],
@@ -31,6 +33,7 @@ function command(key, text, modifiers) {
         "w":"up", "a":"left", "s":"down", "d":"right",
         "+":"zoomIn", "=":"zoomIn", "-":"zoomOut", "0":"center",
         ",":"previous", ".":"next", " ":"pause", "p":"pause",
-        "r":"reconnect", "<":"settings", "f":"expand"};
+        "r":"reconnect", "<":"settings", "f":"expand", "t":"allTypes",
+        "1":"type1", "2":"type2", "3":"type3", "4":"type4", "5":"type5", "6":"type6"};
     return commands[(text || "").toLowerCase()] || "";
 }

@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Window
 import QtQuick.Controls.Basic as Controls
 import Quickshell
+import Quickshell.Io
 import qs.Commons
 import qs.Ui
 import "."
@@ -26,7 +27,52 @@ BarWidget {
     readonly property int textSize: expanded ? 15 : 14
     readonly property int smallTextSize: expanded ? 12 : 11
     readonly property var report: VesselService.report
-    readonly property var ships: VesselService.ships
+    readonly property var allShips: VesselService.ships
+    // Hidden type groups by key. Filtering here keeps the radar, list, selection
+    // and vessel navigation consistent; the choice survives panel/window switches.
+    property var hiddenTypes: ({})
+    readonly property bool filtering: Object.keys(hiddenTypes).length > 0
+    readonly property var ships: Model.filterShips(allShips, hiddenTypes)
+    readonly property var typeCounts: Model.typeCounts(allShips)
+    // A new monitored location starts with every type shown. Restarts, pauses and
+    // reconnects briefly report no position; only a different position resets.
+    property string filterOrigin: ""
+    readonly property string origin: Model.observerKey(report)
+    onOriginChanged: {
+        if (!origin) return;
+        if (filterOrigin && filterOrigin !== origin) hiddenTypes = {};
+        filterOrigin = origin;
+    }
+    function toggleType(key) {
+        var next = Object.assign({}, hiddenTypes);
+        if (next[key]) delete next[key];
+        else next[key] = true;
+        hiddenTypes = next;
+    }
+    // Type colors come from the theme's named hues, not a fixed palette.
+    property var themeHues: Model.themeHues("")
+    readonly property var typeColors: {
+        var colors = {};
+        Model.typeGroups.forEach(function(group) {
+            colors[group.key] = !group.hue ? Color.foreground : (themeHues[group.hue] || Color.accent);
+        });
+        return colors;
+    }
+    FileView {
+        id: themeColors
+        path: Color.currentThemePath + "/colors.toml"
+        watchChanges: true
+        printErrors: false
+        onLoaded: root.themeHues = Model.themeHues(text())
+        onLoadFailed: root.themeHues = Model.themeHues("")
+        onFileChanged: reload()
+    }
+    // A theme switch replaces the theme directory; the shell palette changes with it.
+    Connections {
+        target: Color
+        function onAccentChanged() { themeColors.reload(); }
+        function onBackgroundChanged() { themeColors.reload(); }
+    }
     readonly property string unit: VesselService.preferences.unit || "nm"
     // Keep selection by MMSI as distance sorting changes; fall back when a contact expires.
     readonly property var selectedShip: {
@@ -122,6 +168,9 @@ BarWidget {
         case "center": radar.recenter(); break;
         case "previous": selectVessel(-1); break;
         case "next": selectVessel(1); break;
+        case "type1": case "type2": case "type3": case "type4": case "type5": case "type6":
+            toggleType(Model.typeGroups[Number(command.slice(4)) - 1].key); break;
+        case "allTypes": hiddenTypes = {}; break;
         case "pause": VesselService.togglePaused(); break;
         case "reconnect": refresh(); break;
         case "settings": showSettings(); break;
@@ -400,7 +449,7 @@ BarWidget {
                         Item {
                             id: radarFrame
                             width: parent.width
-                            height: root.expanded ? Math.min(width, Math.max(300, keys.height - 260 - Math.max(0, contactSummary.height - chartNotes.implicitHeight))) : Math.min(width, 380)
+                            height: root.expanded ? Math.min(width, Math.max(300, keys.height - 260 - typeFilters.height - 12 - Math.max(0, contactSummary.height - chartNotes.implicitHeight))) : Math.min(width, 380)
                             Radar {
                                 id: radar
                                 objectName: "radar"
@@ -418,6 +467,7 @@ BarWidget {
                                 detailEnabled: root.viewing && !root.configuring
                                 onDetailRequested: query => VesselService.requestDetail(query)
                                 selectedMmsi: root.selectedShip ? root.selectedShip.mmsi : ""
+                                typeColors: root.typeColors
                                 onCloseRequested: root.close()
                                 onSelected: function(mmsi) { root.selectedMmsi = mmsi; }
                             }
@@ -426,6 +476,74 @@ BarWidget {
                             width: parent.width
                             Label { width: parent.width / 2; text: "VIEW / " + Model.distance(radar.viewRadiusNm, root.unit); color: Color.muted }
                             Label { visible: !root.expanded; width: parent.width / 2; text: radar.visibleShips.length + " / " + (root.report.total || 0) + " CONTACTS"; horizontalAlignment: Text.AlignRight; color: Color.accent }
+                        }
+                        // Type filters double as the color legend; keys 1–6 toggle them too.
+                        // Equal cells keep labels and counts aligned: one row of six when
+                        // it fits, otherwise two rows of three.
+                        Grid {
+                            id: typeFilters
+                            objectName: "typeFilters"
+                            width: parent.width
+                            spacing: 6
+                            columns: width >= 660 ? 6 : 3
+                            readonly property real cellWidth: (width - (columns - 1) * spacing) / columns
+                            Repeater {
+                                model: Model.typeGroups
+                                Rectangle {
+                                    id: chip
+                                    required property var modelData
+                                    required property int index
+                                    readonly property bool shown: !root.hiddenTypes[modelData.key]
+                                    readonly property color ink: root.typeColors[modelData.key] || Color.accent
+                                    objectName: "typeFilter-" + modelData.key
+                                    width: typeFilters.cellWidth; height: 26; radius: 3
+                                    color: shown ? Qt.alpha(ink, 0.12) : "transparent"
+                                    border.width: 1
+                                    border.color: activeFocus ? Color.foreground : shown ? Qt.alpha(ink, 0.7) : Qt.alpha(Color.muted, 0.5)
+                                    activeFocusOnTab: true
+                                    Accessible.role: Accessible.CheckBox
+                                    Accessible.name: "Show " + modelData.label.toLowerCase() + " vessels, key " + (index + 1)
+                                    Accessible.checkable: true
+                                    Accessible.checked: shown
+                                    Accessible.onPressAction: root.toggleType(modelData.key)
+                                    onActiveFocusChanged: if (activeFocus) root.ensureVisible(chip)
+                                    Keys.onReturnPressed: root.toggleType(modelData.key)
+                                    Keys.onEnterPressed: root.toggleType(modelData.key)
+                                    Keys.onSpacePressed: root.toggleType(modelData.key)
+                                    Keys.onEscapePressed: root.close()
+                                    Rectangle {
+                                        id: chipDot
+                                        anchors.left: parent.left; anchors.leftMargin: 8
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: 8; height: 8; radius: 4
+                                        color: chip.shown ? chip.ink : "transparent"
+                                        border.width: 1; border.color: chip.shown ? chip.ink : Color.muted
+                                    }
+                                    Label {
+                                        anchors.left: chipDot.right; anchors.leftMargin: 6
+                                        anchors.right: chipCount.left; anchors.rightMargin: 4
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: chip.modelData.label
+                                        elide: Text.ElideRight
+                                        font.pixelSize: root.smallTextSize
+                                        font.strikeout: !chip.shown
+                                        color: chip.shown ? Color.foreground : Color.muted
+                                    }
+                                    Label {
+                                        id: chipCount
+                                        anchors.right: parent.right; anchors.rightMargin: 8
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: root.typeCounts[chip.modelData.key] || 0
+                                        font.pixelSize: root.smallTextSize
+                                        color: chip.shown ? chip.ink : Color.muted
+                                    }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.toggleType(chip.modelData.key)
+                                    }
+                                }
+                            }
                         }
                         Label {
                             visible: !radar.detailed
@@ -620,7 +738,7 @@ BarWidget {
                         }
                         Label {
                             width: parent.width; wrapMode: Text.WordWrap; visible: root.ships.length === 0
-                            text: VesselService.paused ? "Reception paused. Click PAUSED next to the location, or press P, to resume." : root.report.status === "SETUP" ? "Your lookout is ready for setup." : "Listening for vessels. New contacts appear as AIS reports arrive."
+                            text: root.allShips.length > 0 ? "No vessels of the selected types. Click a type below the radar, or press T to show all." : VesselService.paused ? "Reception paused. Click PAUSED next to the location, or press P, to resume." : root.report.status === "SETUP" ? "Your lookout is ready for setup." : "Listening for vessels. New contacts appear as AIS reports arrive."
                             color: Color.muted
                         }
                         Label {
@@ -656,7 +774,8 @@ BarWidget {
                                 border.width: root.selectedShip && root.selectedShip.mmsi === modelData.mmsi ? 1 : 0
                                 border.color: Color.accent
                                 opacity: modelData.stale ? 0.5 : 1
-                                Label { anchors.left: parent.left; anchors.leftMargin: 8; anchors.verticalCenter: parent.verticalCenter; width: parent.width * 0.65; elide: Text.ElideRight; text: modelData.name || modelData.mmsi }
+                                Rectangle { anchors.left: parent.left; anchors.leftMargin: 8; anchors.verticalCenter: parent.verticalCenter; width: 8; height: 8; radius: 4; color: radar.inkFor(modelData) }
+                                Label { anchors.left: parent.left; anchors.leftMargin: 24; anchors.verticalCenter: parent.verticalCenter; width: parent.width * 0.65 - 16; elide: Text.ElideRight; text: modelData.name || modelData.mmsi }
                                 Label { anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter; text: Model.distance(modelData.distance, root.unit); color: Color.accent }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.revealShip(modelData) }
                             }

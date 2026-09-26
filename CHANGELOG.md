@@ -22,8 +22,14 @@ version commit. From 0.7.1 onward, version headings link to release tags.
   re-validates them on the next start; tracks continue from the last saved
   position. Entries older than thirty minutes or far from the observer are dropped.
 
+- Color vessels by type with the theme's named hues: cargo, tanker, passenger,
+  fishing, pleasure and other. Filters below the radar, also on keys 1–6 (T shows
+  all), hide types on the radar, in the list and in vessel navigation. A new
+  monitored location shows every type again.
+
 ### Changed
 
+- Draw the selection ring in the text color, since markers now carry type colors.
 - Orient moving vessels by true heading when course over ground is unavailable.
 
 ## [0.8.3](https://github.com/simoz/omarchy-vessel/releases/tag/v0.8.3) — 2026-09-19
