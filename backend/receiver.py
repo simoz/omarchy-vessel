@@ -119,8 +119,11 @@ class Receiver:
                     status="LISTENING",
                     error="No recent AIS messages. Coverage varies by area.",
                 )
+            # asyncio.timeout, unlike wait_for on Python 3.11, runs recv in this
+            # task, so cancelling the receiver cannot leave it waiting forever.
             try:
-                raw = await asyncio.wait_for(socket.recv(), timeout=1)
+                async with asyncio.timeout(1):
+                    raw = await socket.recv()
             except TimeoutError:
                 continue
             if not self.handle_message(raw):
