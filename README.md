@@ -10,7 +10,7 @@ See nearby AIS-equipped vessels, their names, speed and reported destinations on
 
 ## Screenshots
 
-Real AIS traffic received from OpenWaters on 19 September 2026, with the detailed OpenFreeMap map of Genoa. These are captured snapshots; vessel positions and timestamps reflect the reports received.
+Real AIS traffic received from OpenWaters on 27 September 2026, with the detailed OpenFreeMap map of Genoa. These are captured snapshots; vessel positions and timestamps reflect the reports received.
 
 ### Dark palette
 

@@ -31,6 +31,8 @@ version commit. From 0.7.1 onward, version headings link to release tags.
 
 - Add a short animated tour to the README, rendered from the widget with demo
   traffic off Genoa.
+- Refresh the README screenshots with type colors, filters and the new vessel
+  details, from real AIS traffic received on 27 September 2026.
 - Draw the selection ring in the text color, since markers now carry type colors.
 - Orient moving vessels by true heading when course over ground is unavailable.
 

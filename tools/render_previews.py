@@ -5,6 +5,7 @@ Requires PySide6, VESSEL_PREVIEW_LIVE (receiver snapshot JSON) and
 VESSEL_PREVIEW_DETAIL (map batch JSON, Genoa / 25 nm / zoom 8 / center 0,0).
 The renderer uses local input only; it never connects or uses credentials.
 QT_QPA_PLATFORM=offscreen QT_SCALE_FACTOR=2 python3 tools/render_previews.py
+Set VESSEL_PREVIEW_FONT to render with a font other than Menlo.
 """
 
 
@@ -138,9 +139,9 @@ def main():
     service = """pragma Singleton
     import QtQuick
     Item {
-     property var report: REPORT
+     property var report: (@@REPORT@@)
      property var ships: report.ships
-     property var basemap: MAP
+     property var basemap: (@@MAP@@)
      property var preferences: ({provider:"openwaters",hasOpenwatersKey:false,unit:"nm",radiusNm:25,cityName:"Genoa",latitude:44.4056,longitude:8.9463,autoLocation:false,hasApiKey:false})
      property var mapDetail: ({available:false})
      property string completedDetail: ""
@@ -156,10 +157,14 @@ def main():
      function setViewing(v) {} function attach(s) {} function detach() {} function configure(s) {} function restart() {} function loadSettings() {}
      function clearCitySearch() {} function searchCity(t) {} function saveSettings(v) {}
      function togglePaused() {paused=!paused}
-    }""".replace("REPORT", json.dumps(report)).replace("MAP", json.dumps(geo))
+    }""".replace("@@MAP@@", json.dumps(geo)).replace("@@REPORT@@", json.dumps(report))
     (base / "VesselService.qml").write_text(service)
+    # Menlo matches the macOS harness; set VESSEL_PREVIEW_FONT for other hosts.
+    font = os.environ.get("VESSEL_PREVIEW_FONT", "Menlo")
     (base / "qs/Ui/BarWidget.qml").write_text(
-        'import QtQuick\nItem {property string moduleName; property QtObject bar: QtObject {property string fontFamily:"Menlo"}; property var settings: ({}); property bool vertical:false}'
+        "import QtQuick\nItem {property string moduleName; property QtObject bar: QtObject {property string fontFamily:"
+        + json.dumps(font)
+        + "}; property var settings: ({}); property bool vertical:false}"
     )
     (base / "Main.qml").write_text(
         'import QtQuick\nimport qs.Commons\nWindow {property var previewColors: Color; width:32;height:32;visible:true; Widget {objectName:"widget"}}'
