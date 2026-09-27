@@ -3,6 +3,7 @@
 import json
 import os
 import tempfile
+from contextlib import suppress
 from pathlib import Path
 
 MAX_CACHE_BYTES = 8 << 20
@@ -18,13 +19,21 @@ def path():
 def load(fleet, now, destination=None):
     """Restore saved contacts; a missing, oversized or corrupt cache is ignored."""
     destination = destination or path()
+    before = len(fleet.ships)
     try:
         with destination.open("rb") as cached:
             raw = cached.read(MAX_CACHE_BYTES + 1)
         if len(raw) <= MAX_CACHE_BYTES:
             fleet.restore(json.loads(raw), now)
+    except FileNotFoundError:
+        return
     except (OSError, ValueError, RecursionError):
         pass
+    # Do not keep old positions on disk: remove a cache with nothing restorable,
+    # whether expired, corrupt, oversized or saved for another location.
+    if len(fleet.ships) == before:
+        with suppress(OSError):
+            destination.unlink(missing_ok=True)
 
 
 def save(fleet, destination=None):

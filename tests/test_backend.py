@@ -248,6 +248,10 @@ class FleetCacheTest(unittest.TestCase):
             # Ten minutes closed: the next report joins the saved track.
             later = now + 600
             fleet_cache.load(fleet, later, cache)
+            self.assertTrue(cache.exists())
+            # A cache with nothing recent left is deleted, not kept on disk.
+            fleet_cache.load(ais.Fleet(0, 0, 25), later + ais.MAX_AGE, cache)
+            self.assertFalse(cache.exists())
         restored = fleet.snapshot(later)["ships"][0]
         for key in ("callSign", "draught", "status", "distance", "track"):
             self.assertEqual(restored[key], before[key])
@@ -298,7 +302,12 @@ class FleetCacheTest(unittest.TestCase):
                 empty = ais.Fleet(0, 0, 25)
                 fleet_cache.load(empty, 1300, cache)
                 self.assertEqual(empty.ships, {})
+                self.assertFalse(cache.exists())
             fleet_cache.load(empty, 1300, Path(tmp) / "missing.json")
+            # A cache saved for another location is removed too.
+            fleet_cache.save(self.moving_fleet(), cache)
+            fleet_cache.load(ais.Fleet(10, 10, 25), 1300, cache)
+            self.assertFalse(cache.exists())
             # An unwritable destination never interrupts reception.
             fleet_cache.save(fleet, Path(tmp) / "fleet.json" / "nested")
 
