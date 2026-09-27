@@ -9,6 +9,8 @@ version commit. From 0.7.1 onward, version headings link to release tags.
 
 ## Unreleased
 
+## [0.9.0](https://github.com/simoz/omarchy-vessel/releases/tag/v0.9.0) — 2026-09-27
+
 ### Added
 
 - Show navigational status, course, hull size, ETA, call sign and draught in the
@@ -21,7 +23,6 @@ version commit. From 0.7.1 onward, version headings link to release tags.
   saves them every 30 seconds and on exit to an owner-only cache file, and
   re-validates them on the next start; tracks continue from the last saved
   position. Entries older than thirty minutes or far from the observer are dropped.
-
 - Color vessels by type with the theme's named hues: cargo, tanker, passenger,
   fishing, pleasure and other. Filters below the radar, also on keys 1–6 (T shows
   all), hide types on the radar, in the list and in vessel navigation. A new
@@ -29,8 +30,27 @@ version commit. From 0.7.1 onward, version headings link to release tags.
 
 ### Changed
 
+- Add a short animated tour to the README, rendered from the widget with demo
+  traffic off Genoa.
+- Refresh the README screenshots with type colors, filters and the new vessel
+  details, from real AIS traffic received on 27 September 2026.
 - Draw the selection ring in the text color, since markers now carry type colors.
 - Orient moving vessels by true heading when course over ground is unavailable.
+- Split vessel details, the contact list and type filters out of `Widget.qml`.
+- Reorganize the README usage section into markers, filters, tracks and details.
+
+### Fixed
+
+- Let receiver cancellation finish on Python 3.11, the minimum supported version;
+  the reconnect test previously hung there.
+
+### Security
+
+- Delete a recent-contact cache with nothing restorable (expired, corrupt or saved
+  for another location) instead of keeping old positions on disk (SR-07).
+- Run CI with read-only permissions, Actions pinned to full commit SHAs and a
+  hash-verified Ruff; add `tests/run` for reproducible portable checks.
+- Update the security review and evidence for this release.
 
 ## [0.8.3](https://github.com/simoz/omarchy-vessel/releases/tag/v0.8.3) — 2026-09-19
 

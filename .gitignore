@@ -7,3 +7,11 @@ __pycache__/
 
 # Local agent instructions
 /AGENTS.md
+
+# Promotional media stays out of the plugin: every install clones this repo.
+*.mp4
+*.mov
+*.webm
+*.mp3
+*.wav
+*.m4a
