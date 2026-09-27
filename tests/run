@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Portable checks: JavaScript tests, Python tests and, when available, Ruff and
+# the Omarchy manifest validator. The full Python suite needs the managed
+# runtime (python3 backend/vessel.py --prepare-runtime); without it, only the
+# standard-library tests run and the missing coverage is reported.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+node --test tests/*.test.cjs
+
+python="$(python3 -B -c 'import sys; sys.path.insert(0, "backend"); import runtime; print(runtime.location() / "bin/python")')"
+if [ -x "$python" ]; then
+    "$python" -B -m unittest discover -s tests -p 'test_*.py'
+else
+    echo "Managed runtime missing: running standard-library Python tests only." >&2
+    python3 -B -m unittest discover -s tests -p 'test_backend.py'
+fi
+
+if command -v ruff >/dev/null; then
+    ruff check backend tools tests
+    ruff format --check backend tools tests
+fi
+if command -v omarchy >/dev/null; then
+    omarchy plugin validate .
+fi

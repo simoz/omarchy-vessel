@@ -36,9 +36,20 @@ VENV_PYTHON="$(python3 -B -c 'import sys; sys.path.insert(0, "backend"); import 
 "$VENV_PYTHON" -B -m unittest discover -s tests -p 'test_*.py'
 ```
 
-GitHub Actions (`.github/workflows/ci.yml`) runs Ruff, the full Python suite
-with Python 3.11 and 3.14, and the JavaScript tests on every pull request and
-push to `master`. `omarchy plugin validate` and QML checks still run locally.
+`tests/run` runs the JavaScript tests and the Python suite (the full suite when
+the managed runtime exists, otherwise the standard-library tests), plus Ruff and
+`omarchy plugin validate` when they are installed:
+
+```sh
+python3 backend/vessel.py --prepare-runtime
+./tests/run
+```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs Ruff and `tests/run` with
+Python 3.11 and 3.14 on every pull request and push to `master`, with read-only
+permissions, Actions pinned to full commit SHAs and a hash-verified Ruff
+(`.github/ruff-requirements.txt`). `omarchy plugin validate` and QML checks still
+run locally.
 
 The tests cover AIS normalization, Class A/B merging, timestamps and expiry,
 dateline/polar geometry, settings validation and private

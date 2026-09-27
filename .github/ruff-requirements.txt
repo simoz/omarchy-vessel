@@ -1,0 +1,4 @@
+# Development-only lint tool for CI; not a plugin dependency.
+ruff==0.16.9 \
+    --hash=sha256:a21713e629d3e5bdb2f5c2def1cc7f04f47fa8e1a7eb0571b4a28e1da64bc728 \
+    --hash=sha256:b3f951b14d865d5952c89d40a5ca07e87abe24fa5453299878411e127748fb1c
