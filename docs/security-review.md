@@ -1,46 +1,69 @@
 # Security review
 
-Reviewed on **2026-09-19** for **0.8.2**, starting from commit `cf101ba`.
-This pass covers changes since the 0.8.1 assessment at `c0ef578`, plus the current
-expanded layout, preview tooling and security regressions. Exact reviewed files
-are identified in [security-review-evidence.json](security-review-evidence.json).
+Reviewed on **2026-09-27** for **0.9.0**, starting from commit `ed4190c`.
+This pass covers changes since the 0.8.3 release at `805746a`: vessel details,
+recent tracks, the recent-contact cache, type colors and filters, the widget
+split, the Python 3.11 cancellation fix, CI and preview tooling. Exact reviewed
+files are identified in [security-review-evidence.json](security-review-evidence.json).
 This identifies reviewed contents, not publication of a release tag.
 
 ## Scope and result
 
-The review inspected the receiver and credential paths, settings storage,
-subprocess/runtime setup, HTTPS requests and redirects, vector parsing,
-projection, tile caching, and QML data/rendering boundaries. Checks combined source
-inspection, adversarial inputs, local WebSocket servers and the regression suite.
-**No new actionable security findings were identified in the reviewed changes.**
-The previous assessment's six fixes remain in place and their regression tests
-pass. No production credentials were used; external requests were limited to package metadata/advisories and anonymous AIS/map
-captures at public Genoa coordinates. This was not a penetration test of providers.
-Remaining trust boundaries and availability limits below still apply.
+The review inspected the new AIS parsing, track bounds, cache storage and
+re-validation, theme-file reading, QML rendering of new fields, receiver
+cancellation, the CI workflow and the preview renderer. Checks combined source
+inspection, adversarial inputs, local WebSocket servers, the regression suite on
+Python 3.11 and 3.14, and a live Omarchy shell load.
+**One low-severity privacy finding (SR-07) was fixed; no other actionable
+security findings were identified in the reviewed changes.** SR-01 through SR-06
+remain fixed and their regression tests pass. No production credentials were used;
+external requests were limited to package metadata/advisories, pinned CI tool
+metadata, and anonymous AIS/map captures at public Genoa and Copenhagen
+coordinates. This was not a penetration test of providers.
 
 ## Changes rechecked
 
-- **Closed views:** the shared viewer count gates reception, map requests and city
-  search. Closing the last view cancels active and deferred work; another open view
-  keeps reception alive. Reopening respects manual pause. Lifecycle regressions
-  cover hidden views, transitions and late callbacks. Actual OS shutdown timing
-  remains unverified on Omarchy; in-flight map workers can finish while shutting down.
-- **Vessel links:** IMO values are accepted only as seven-digit integers, excluding
-  booleans. Browser URLs have a fixed HTTPS VesselFinder host and numeric IMO/MMSI;
-  names, destinations and provider URLs cannot change the target. New adversarial
-  regressions exercise malformed IMO values and URL-like AIS text. Opening requires
-  explicit user action and does not automatically download photos.
-- **UI and previews:** vessel fields remain plain text. Map attribution links are
-  fixed literals. Credits are compacted below the legend; original AIS attribution
-  remains in receiver snapshots. Real captures contain public vessel identifiers,
-  names and positions; no raw captures or credentials are committed. The renderer
-  uses trusted local JSON and a temporary mocked host, without network or credential
-  lookup. Its whole-file reads are not bounded and are not a public ingestion API.
-- **Existing protections:** transport, credential storage, runtime installation,
-  redirect restrictions, vector budgets and private tile cache were rechecked.
-  The previous six security fixes remain covered by the full regression suite.
+- **Vessel details:** navigational status, heading, call sign, dimensions,
+  draught and ETA are accepted only as exact types within AIS ranges; unavailable
+  sentinels (heading 511, status 15, ETA hour 24/minute 60, zero dimensions) and
+  malformed values are ignored. Text is cleaned and length-limited like names and
+  destinations, and all fields render as plain text.
+- **Recent tracks:** at most 20 points per vessel from the last thirty minutes,
+  one per 90 seconds; implausible jumps restart the track. Snapshots emit only
+  rounded distance/bearing pairs; the fleet caps (2,000 tracked, 200 shown) apply.
+- **Recent-contact cache:** the receiver saves the fleet every 30 seconds and on
+  exit to `$XDG_CACHE_HOME/omarchy-vessel/fleet.json`, written atomically through
+  a private temporary file (`0600`, new directories `0700`); failures never stop
+  reception. On load the read is bounded to 8 MiB, JSON errors and deep nesting are
+  rejected, and every entry is re-validated as untrusted input: text is cleaned,
+  numbers are range-checked, attributions are rebuilt, distances and bearings are
+  recomputed for the current observer, and entries older than thirty minutes or
+  more than twice the radius away are dropped. See SR-07 for stale-file removal.
+- **Type colors and filters:** hues are read from the active theme's
+  `colors.toml`, the same file the Omarchy shell already reads; only `#rrggbb`
+  values are extracted, and nothing is evaluated. Filters change presentation only.
+- **Widget split:** `VesselDetails`, `ContactList` and `TypeFilters` receive data as
+  properties and report actions through signals. The VesselFinder link keeps its
+  fixed HTTPS host and numeric IMO/MMSI and still requires explicit activation.
+- **Receiver cancellation:** on Python 3.11, cancelling the receiver during
+  `asyncio.wait_for(socket.recv())` left the inner task pending, so the reconnect
+  test hung. `asyncio.timeout` now runs `recv` in the receiver task. A real receiver
+  stopped with `SIGTERM` exited in 0.1–0.16 s on 3.11 before and after the change;
+  the hang was reproduced only with direct task cancellation.
+- **CI and tooling:** GitHub Actions run with `contents: read`, without persisted
+  checkout credentials, and use Actions pinned to full commit SHAs. Ruff, a
+  development-only tool, is installed with `--require-hashes`. `tests/run` executes
+  only repository tests and local validators. The preview renderer now wraps
+  injected JSON in parentheses and uses unique placeholders; it still reads trusted
+  local captures only. Launch videos and audio are ignored by Git.
 
-## Findings and fixes from the previous assessment
+## Findings in this review
+
+| ID | Finding and impact | Resolution and evidence |
+| --- | --- | --- |
+| SR-07 | **Stale position history — low-severity privacy.** Entries older than thirty minutes were discarded when the cache was read, but the file itself kept the last received positions near the monitored location indefinitely if Vessel was not reopened, or after a location change. | A cache with nothing restorable (expired, corrupt, oversized or saved for another location) is deleted when reception next starts. Regressions cover expiry, corrupt and oversized files, and a different observer. A file written at the last exit still remains until the next start; the README documents its location and how to delete it. |
+
+## Findings and fixes from earlier assessments
 
 The following findings were fixed before this pass. Their tests were rerun for
 this review; the original vulnerable implementations were not reintroduced or retested.
@@ -73,8 +96,8 @@ Regressions: [test_receiver.py](../tests/test_receiver.py),
 - **TLS and reception:** provider endpoints use WSS with certificate verification.
   Local TLS rejection tests confirm that an untrusted certificate cannot receive
   a subscription. Messages are limited to 1 MiB; the fleet tracks at most 2,000
-  records and exposes at most 200 contacts. Pause, reconnect and cancellation
-  tests continue to pass.
+  records, each with at most 20 track points, and exposes at most 200 contacts.
+  Pause, reconnect and cancellation tests pass on Python 3.11 and 3.14.
 - **Process execution:** helpers and browser launchers use argument arrays, not
   shell interpolation. Map requests run separately from AIS reception and do not
   load saved credentials or bootstrap the WebSocket dependency. Superseded map
@@ -112,19 +135,23 @@ Regressions: [test_receiver.py](../tests/test_receiver.py),
 | ipwho.is | IP-geolocation request; the provider observes the client's IP. |
 | PyPI/files.pythonhosted.org | Dependency installation requests; no saved AIS key is passed by the installer. |
 
-Pausing AIS reception does not disable map requests while the map is open. The
-runtime writes no persistent vessel-position history; developer captures and
-published screenshots are explicit exceptions outside normal receiver operation.
-Cached tile filenames/data can reveal areas previously viewed to someone with local
-access. These behaviours are documented in the [README](../README.md#data-and-privacy).
+Pausing AIS reception does not disable map requests while the map is open.
+The recent-contact cache is local and never transmitted. It holds up to thirty
+minutes of received vessel data and tracks near the monitored location, so it and
+cached tile filenames/data can reveal the monitored and viewed areas to someone
+with local access. These behaviours are documented in the [README](../README.md#data-and-privacy).
 
 ## Dependency check
 
-Rechecked on 2026-09-19 at 20:49 UTC: the [OSV query API](https://google.github.io/osv.dev/api/) returned
+Rechecked on 2026-09-27 at 00:42 UTC: the [OSV query API](https://google.github.io/osv.dev/api/) returned
 no matching advisories for PyPI `websockets` version `17.1`. The pinned portable
 wheel URL and SHA-256 matched the
 [official PyPI metadata](https://pypi.org/pypi/websockets/17.1/json).
 This is a point-in-time package lookup, not proof of absence of vulnerabilities.
+The new code adds no runtime dependency. CI pins `actions/checkout` v7.0.1,
+`actions/setup-python` v7.0.0 and `actions/setup-node` v7.0.0 to the full commit
+SHAs of those tags, and Ruff 0.16.9 to its PyPI wheel hashes; this binds the
+reviewed versions but does not establish upstream provenance.
 
 The prior assessment inspected the websockets 17.1 redirect implementation: it strips
 sensitive headers across origins, which does not protect a key subsequently placed
@@ -136,41 +163,35 @@ not new plugin dependencies.
 
 ## Verification
 
-- **70 Python tests and 41 JavaScript tests pass.** Python checks include private
-  settings, legacy-demo migration, bounded attributions, TLS rejection, provider
-  credential isolation, redirects, cache errors,
-  invalid geometry and resource limits. JavaScript checks include map-response
-  ordering, closed views, retry behaviour, mouse/keyboard zoom and settings submission.
-- One parser regression runs **1,024 deterministic mutations** of a small valid MVT
-  fixture (seed `20260919`). Accepted inputs decode; rejected inputs fail with the
-  controlled exception type. This is targeted robustness testing, not exhaustive fuzzing.
-- In the previous assessment, the local redirect regression first failed because
-  the second server received the synthetic AISStream key, then passed after
-  redirects were disabled. It passes again in this review. Those two peers
-  use loopback WS; certificate verification is covered by the separate TLS test.
-- Fresh anonymous Genoa captures produced 200 displayed vessel records (117 with
-  IMO) and a 501,042-byte detailed-map response, using fixed public coordinates
-  and no saved user credentials.
-- Ruff lint/format checks and Git whitespace checks pass. The negative TLS test may
-  emit a local handshake-reset diagnostic while its security assertions pass.
+- **75 Python tests and 48 JavaScript tests pass** through `tests/run`, with the
+  managed runtime on Python 3.14.7 and 3.11.16; CI runs the same suite on both
+  versions. New checks cover AIS details and sentinels, track bounds and jumps,
+  cache round trips, malformed/expired/distant entries, stale-file removal,
+  `0600` permissions, type grouping and filters, theme-hue parsing and shortcuts.
+- The deterministic MVT mutation regression (1,024 mutations, seed `20260919`)
+  still passes. This is targeted robustness testing, not exhaustive fuzzing.
+- A real receiver stopped with `SIGTERM` after 8 seconds wrote the cache with
+  `0600` permissions; the next start showed 140 restored vessels before connecting.
+- A fresh anonymous Genoa capture produced 200 displayed vessel records (104 with
+  IMO) and a 1,354,268-byte detailed-map response, using fixed public coordinates
+  and no saved user credentials. Timestamps were shifted to render time for the
+  screenshots; relative report ages are unchanged.
+- Ruff 0.16.9 lint/format checks and the release preflight's structural checks
+  pass; its remaining warnings are reviewed above and in earlier assessments.
 
-Test environment: macOS, Python 3.14.5, websockets 17.1, OpenSSL 3.6.4.
-The full suite needs permission to bind local loopback test servers. Reproduce with
-an interpreter containing the dependency pinned in `requirements.txt`:
+Test environment: Omarchy on Linux aarch64, Python 3.14.7 and 3.11.16,
+websockets 17.1, OpenSSL 3.6.4, Node 26.10, PySide6 6.11.2. Reproduce with:
 
 ```sh
-python -B -m unittest discover -s tests -p 'test_*.py'
-node --test tests/*.test.cjs
-ruff check backend tools tests
-ruff format --check backend tools tests
+python3 backend/vessel.py --prepare-runtime
+./tests/run
 ```
 
-Expanded and compact views were rendered in both palettes using PySide6 6.11.2
-and real local AIS/map captures. Layout assertions pass for the expanded robot
-above Contacts, bottom alignment with credits and unchanged compact placement.
-The four published screenshots and catalog preview were refreshed. Rendering
-uses a mocked Omarchy host; real Quickshell/Hyprland operation, process shutdown
-timing and an authenticated production AISStream connection remain unverified.
+Expanded and compact views were rendered in both palettes with PySide6 and real
+local AIS/map captures; layout assertions pass and the four published screenshots
+and catalog preview were refreshed. The plugin was loaded in the live Omarchy
+shell with no Vessel warnings in its log. Rendering uses a mocked Omarchy host;
+an authenticated production AISStream connection remains unverified.
 
 ## Remaining trust boundaries and limitations
 
@@ -191,14 +212,21 @@ timing and an authenticated production AISStream connection remain unverified.
 - Hash-pinning the dependency does not authenticate future plugin Git updates.
   Providers' retention policies, operating-system components, production accounts
   and the actual Omarchy host were not audited.
+- The recent-contact cache is plaintext JSON protected by file permissions, within
+  the same local-user trust boundary as settings. Reads follow a symlink placed by
+  that user; replacement writes do not. The cache written at exit remains until the
+  next start, or until the user deletes it.
+- Theme `colors.toml` files are read whole, as the Omarchy shell does; a theme is
+  trusted local configuration.
 - AIS content may be false, stale or incomplete. Vessel is not a navigation instrument.
 
-## Previous review
+## Previous reviews
 
-The 2026-09-17 report covered 0.7.0 at commit
-`73d801fb89b6743286fceac20b1fc9ba89adad9e` and reported 39 Python/22 JavaScript tests.
-Earlier fixes for huge numbers, invalid text/deep JSON, public-settings allowlists,
-file/HTTP size limits, HTTPS downgrade rejection and installer shutdown races remain
-covered by the current tests. The prior 2026-09-19 assessment at `a6c3e8b` added OpenWaters, detailed maps and
-SR-01 through SR-06 (64 Python/33 JavaScript tests). This update supersedes the 0.8.1
-snapshot while retaining those findings as historical context.
+The 2026-09-19 review covered 0.8.2 from commit `cf101ba` (70 Python/41 JavaScript
+tests): closed-view cancellation, VesselFinder links and previews, with no new
+findings. The earlier 2026-09-19 assessment at `a6c3e8b` added OpenWaters, detailed
+maps and SR-01 through SR-06 (64 Python/33 JavaScript tests). The 2026-09-17 report
+covered 0.7.0 at commit `73d801fb89b6743286fceac20b1fc9ba89adad9e` (39 Python/22
+JavaScript tests). Earlier fixes for huge numbers, invalid text/deep JSON,
+public-settings allowlists, file/HTTP size limits, HTTPS downgrade rejection and
+installer shutdown races remain covered by the current tests.

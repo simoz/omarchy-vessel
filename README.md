@@ -4,9 +4,11 @@
 
 A marine radar for Omarchy. Discover nearby ships, see where they’re heading, and explore the traffic along your coast.
 
-See nearby AIS-equipped vessels, their names, speed and reported destinations on a map with coastlines and coastal cities. Vessel follows your Omarchy palette and lives behind a single boat icon in the bar.
+See nearby AIS-equipped vessels, colored by type, with their names, speed, destinations and recent tracks on a map with coastlines and coastal cities. Vessel follows your Omarchy palette and lives behind a single boat icon in the bar.
 
 ![Vessel tour: demo traffic off Genoa, with vessels colored by type, a ferry's recent track, and pleasure craft filtered out](docs/vessel-tour.gif)
+
+*Tour with demo traffic, sped up. The screenshots below show real AIS traffic.*
 
 ## Screenshots
 
@@ -70,7 +72,7 @@ The map shows coastlines, rivers, docks, roads and local place names, with more 
 | Map drag | Move around the loaded area after zooming in. |
 | Center button (crosshair, beside zoom) | Return to your position and reset zoom to 1×. |
 | Vessel on the map or in the list | Select a vessel to see its details. Selecting from the list also brings it into view on the map. |
-| External link icon beside the vessel name | Open its VesselFinder details page by IMO, or search by MMSI when IMO is unavailable. Destination, MMSI and IMO appear together in one row. |
+| External link icon beside the vessel name | Open its VesselFinder details page by IMO, or search by MMSI when IMO is unavailable. |
 | Type filters below the radar | Show or hide cargo, tanker, passenger, fishing, pleasure and other vessels. Each filter shows the type's color and number of vessels. |
 | Status button beside the location | Click to pause reception; click again when it reads PAUSED to resume. Last positions remain visible while paused. |
 | Settings button in the footer | Change location, API key, range and units. |
@@ -108,9 +110,27 @@ use `Tab` to reach fields, search results and buttons, type normally, and use
 Letter shortcuts are inactive while editing Settings, and Ctrl/Alt/Super
 combinations are left to the desktop.
 
-Filled dots indicate stationary vessels (reported speed below 0.5 knots). Moving vessels use a triangle, rotated to the reported course, or to the reported heading when course is unavailable. Without either, its default orientation does not indicate direction. Hollow circles indicate unknown speed. Colors show the vessel type, using your theme's green, red, blue, orange and magenta for cargo, tanker, passenger, fishing and pleasure craft (including sailing); other and unidentified vessels use the text color. Types arrive with static data, so a new contact may appear as other at first. Type filters apply to the radar, the list and vessel navigation, and reset when the shell restarts or the monitored location changes; their counts include hidden vessels. Stationary does not necessarily mean moored or anchored; check **STATUS** in the vessel details. The selected vessel has a ring and a fading line showing its recent track: up to 20 positions from the last thirty minutes, at least 90 seconds apart while it moves. Implausible jumps restart the track. At long ranges a slow vessel's track can remain hidden under its marker for several minutes; zoom in to follow it. Closing the radar keeps recent contacts, details and tracks for thirty minutes: when you reopen it, each track continues from its last saved position to the next report received.
+### Markers and colors
 
-Vessel details show distance, bearing and speed; navigational status, course and hull size; destination, MMSI and IMO; ETA, call sign and draught. Values not yet received appear as **—**: static data such as ETA or draught is broadcast every few minutes, and Class B vessels report no status, ETA or draught. ETA is shown as broadcast, in UTC and without a year. Positions fade after five minutes and expire after thirty minutes of active reception.
+Filled dots indicate stationary vessels (reported speed below 0.5 knots); stationary does not necessarily mean moored or anchored, so check **STATUS** in the vessel details. Moving vessels use a triangle, rotated to the reported course, or to the reported heading when course is unavailable; without either, its orientation does not indicate direction. Hollow circles indicate unknown speed. The selected vessel has a ring. Positions fade after five minutes and expire thirty minutes after their last report.
+
+Colors show the vessel type, using your theme's green, red, blue, orange and magenta for cargo, tanker, passenger, fishing and pleasure craft (including sailing). Other and unidentified vessels use the text color. Types arrive with static data, so a new contact may appear as other at first.
+
+### Filters
+
+The type filters below the radar double as the color legend and show how many vessels of each type are in range, including hidden ones. Click a filter or press `1`–`6` to hide or show a type; `T` shows all. Filters apply to the radar, the list and vessel navigation. They reset when the shell restarts or the monitored location changes.
+
+### Recent tracks
+
+The selected vessel shows a fading line of its recent track: up to 20 positions from the last thirty minutes, at least 90 seconds apart while it moves. Implausible jumps restart the track. At long ranges a slow vessel's track can stay hidden under its marker for several minutes; zoom in to follow it.
+
+Closing the radar keeps recent contacts, details and tracks for thirty minutes. When you reopen it, contacts appear at once and each track continues from its last saved position to the next report received.
+
+### Vessel details
+
+Details show distance, bearing and speed; navigational status, course and hull size; destination, MMSI and IMO; ETA, call sign and draught. Values not yet received appear as **—**: static data such as ETA or draught is broadcast every few minutes, and Class B vessels report no status, ETA or draught. ETA is shown as broadcast, in UTC and without a year.
+
+### Status
 
 **VIEW** shows the visible radius. The contact counter shows visible vessels versus all received vessels in range. The list covers the full configured range.
 
@@ -146,7 +166,7 @@ Vessel is built for watching nearby traffic. Coverage and reported destinations 
 - **VesselFinder** opens in your default browser only when you activate the external link beside a vessel name. It receives the numeric IMO or MMSI and your browser connection; Vessel does not download vessel photos. Tab reuse depends on the browser.
 - **Photon / OpenStreetMap** provides city search from the name you enter.
 - **ipwho.is** provides approximate location from your public IP when enabled.
-- **Recent contacts** are saved locally, never sent anywhere, in `$XDG_CACHE_HOME/omarchy-vessel/fleet.json` (normally `~/.cache/omarchy-vessel/fleet.json`, owner-only). The file holds received vessel data and tracks near your monitored location; entries older than thirty minutes are discarded when it is read. Delete it to clear the history.
+- **Recent contacts** are saved locally, never sent anywhere, in `$XDG_CACHE_HOME/omarchy-vessel/fleet.json` (normally `~/.cache/omarchy-vessel/fleet.json`, owner-only). The file holds received vessel data and tracks near your monitored location. Entries older than thirty minutes are discarded when it is read, and a file with nothing recent left, or saved for another location, is deleted when reception next starts. Delete it to clear the history.
 - **Natural Earth** coastlines and **GeoNames** city labels are bundled with the plugin.
 - **OpenFreeMap** receives requests for the map tiles you view, which reveal the viewed area and your IP address. These requests are independent of AIS reception and may continue while reception is paused and the map is open. No AIS keys or vessel positions are sent. Detailed tiles are stored under `$XDG_CACHE_HOME/omarchy-vessel/tiles` (normally `~/.cache/omarchy-vessel/tiles`); above 128 MiB the cache is trimmed to 96 MiB after a batch, so downloads can temporarily exceed that threshold. Map data attribution is shown below the radar; see [OpenFreeMap](https://openfreemap.org/) and [OpenStreetMap copyright](https://www.openstreetmap.org/copyright).
 
