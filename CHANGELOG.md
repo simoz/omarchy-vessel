@@ -9,6 +9,8 @@ version commit. From 0.7.1 onward, version headings link to release tags.
 
 ## Unreleased
 
+## [0.9.0](https://github.com/simoz/omarchy-vessel/releases/tag/v0.9.0) — 2026-09-27
+
 ### Added
 
 - Show navigational status, course, hull size, ETA, call sign and draught in the

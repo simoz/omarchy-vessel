@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "simoz.vessel",
   "name": "Vessel",
-  "version": "0.8.3",
+  "version": "0.9.0",
   "author": "simoz",
   "license": "MIT",
   "description": "A marine radar for Omarchy. Discover nearby ships, see where they’re heading, and explore the traffic along your coast.",
