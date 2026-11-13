@@ -1,9 +1,10 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 
 // Geometric keys stay legible even when the selected font lacks a keyboard glyph.
 Rectangle {
-    property color ink: Color.foreground
+    property color ink: Commons.Color.foreground
     implicitWidth: 20
     implicitHeight: 13
     color: "transparent"

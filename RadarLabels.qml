@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 import "Model.js" as Model
 
 // Lay out names after reserving space for the observer and visible contacts.
@@ -18,8 +19,8 @@ Canvas {
     property point viewCenter: Qt.point(0, 0)
     property real viewRadiusNm: 25
     property real markerSize: 12
-    property color ink: Color.muted
-    property color halo: Color.background
+    property color ink: Commons.Color.muted
+    property color halo: Commons.Color.background
     onGeographyChanged: requestPaint()
     onContactsChanged: requestPaint()
     onViewScaleChanged: requestPaint()

@@ -4,6 +4,7 @@ import QtQuick.Controls.Basic as Controls
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "."
 import "Model.js" as Model
@@ -54,13 +55,13 @@ BarWidget {
     readonly property var typeColors: {
         var colors = {};
         Model.typeGroups.forEach(function(group) {
-            colors[group.key] = !group.hue ? Color.foreground : (themeHues[group.hue] || Color.accent);
+            colors[group.key] = !group.hue ? Commons.Color.foreground : (themeHues[group.hue] || Commons.Color.accent);
         });
         return colors;
     }
     FileView {
         id: themeColors
-        path: Color.currentThemePath + "/colors.toml"
+        path: Commons.Color.currentThemePath + "/colors.toml"
         watchChanges: true
         printErrors: false
         onLoaded: root.themeHues = Model.themeHues(text())
@@ -69,7 +70,7 @@ BarWidget {
     }
     // A theme switch replaces the theme directory; the shell palette changes with it.
     Connections {
-        target: Color
+        target: Commons.Color
         function onAccentChanged() { themeColors.reload(); }
         function onBackgroundChanged() { themeColors.reload(); }
     }
@@ -201,7 +202,7 @@ BarWidget {
     Timer { interval: 1000; running: root.viewing; repeat: true; onTriggered: root.now = Date.now() }
 
     component Label: Text {
-        color: Color.foreground; font.family: root.family; font.pixelSize: root.textSize
+        color: Commons.Color.foreground; font.family: root.family; font.pixelSize: root.textSize
         textFormat: Text.PlainText
     }
     // Consistent hit-area heights and shared styling keep all panel
@@ -218,12 +219,12 @@ BarWidget {
         implicitWidth: actionLabel.implicitWidth + 16
         implicitHeight: 30
         radius: 3
-        color: checked && !hoverOnly ? Qt.alpha(Color.accent, 0.15) : "transparent"
+        color: checked && !hoverOnly ? Qt.alpha(Commons.Color.accent, 0.15) : "transparent"
         border.width: 1
         // Expansion keeps its accessible state without a persistent visual selection.
-        border.color: hoverOnly ? (hovered ? Color.accent : "transparent")
-            : checked ? Color.accent : activeFocus ? Color.foreground
-            : hovered ? Color.muted : "transparent"
+        border.color: hoverOnly ? (hovered ? Commons.Color.accent : "transparent")
+            : checked ? Commons.Color.accent : activeFocus ? Commons.Color.foreground
+            : hovered ? Commons.Color.muted : "transparent"
         activeFocusOnTab: true
         Accessible.role: Accessible.Button
         Accessible.name: text
@@ -234,7 +235,7 @@ BarWidget {
             id: actionLabel
             anchors.centerIn: parent
             visible: !action.iconOnly
-            text: action.text; color: Color.accent
+            text: action.text; color: Commons.Color.accent
         }
         Keys.onReturnPressed: triggered()
         Keys.onEnterPressed: triggered()
@@ -295,7 +296,7 @@ BarWidget {
         implicitWidth: 1100
         implicitHeight: 760
         minimumSize: Qt.size(440, 420)
-        color: Color.background
+        color: Commons.Color.background
         onVisibleChanged: if (!visible && root.expanded) root.close()
         Item { id: windowSlot; anchors.fill: parent; anchors.margins: 20 }
     }
@@ -347,7 +348,7 @@ BarWidget {
                         anchors.left: parent.left; anchors.right: headerActions.left
                         anchors.verticalCenter: parent.verticalCenter
                         text: "VESSEL / MARINE RADAR"; elide: Text.ElideRight
-                        color: Color.accent; font.bold: true; font.pixelSize: root.smallTextSize + 1
+                        color: Commons.Color.accent; font.bold: true; font.pixelSize: root.smallTextSize + 1
                     }
                     Row {
                         id: headerActions
@@ -367,7 +368,7 @@ BarWidget {
                             Canvas {
                                 anchors.centerIn: parent
                                 width: 18; height: 18
-                                property color ink: Color.accent
+                                property color ink: Commons.Color.accent
                                 onInkChanged: requestPaint()
                                 onPaint: {
                                     var c = getContext("2d"); c.reset();
@@ -388,7 +389,7 @@ BarWidget {
                             implicitWidth: 30; implicitHeight: 30
                             iconOnly: true
                             onTriggered: root.showHelp()
-                            KeyboardIcon { anchors.centerIn: parent; ink: Color.accent }
+                            KeyboardIcon { anchors.centerIn: parent; ink: Commons.Color.accent }
                         }
                     }
                 }
@@ -399,7 +400,7 @@ BarWidget {
                         anchors.left: parent.left; anchors.right: statusBadge.left; anchors.rightMargin: 16
                         anchors.verticalCenter: parent.verticalCenter
                         text: root.report.location || "Finding your lookout…"
-                        elide: Text.ElideRight; color: Color.muted
+                        elide: Text.ElideRight; color: Commons.Color.muted
                     }
                     Action {
                         id: statusBadge
@@ -412,7 +413,7 @@ BarWidget {
                         checked: !VesselService.paused
                         text: VesselService.paused ? "Resume reception (P)" : "Pause reception (P)"
                         color: "transparent"
-                        border.color: activeFocus ? Color.foreground : hovered ? Color.muted : "transparent"
+                        border.color: activeFocus ? Commons.Color.foreground : hovered ? Commons.Color.muted : "transparent"
                         onTriggered: VesselService.togglePaused()
                         Controls.ToolTip.visible: hovered
                         Controls.ToolTip.delay: 500
@@ -425,17 +426,17 @@ BarWidget {
                             Rectangle {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: 6; height: 6; radius: 3
-                                color: statusBadge.live ? Color.accent : Color.muted
+                                color: statusBadge.live ? Commons.Color.accent : Commons.Color.muted
                             }
                             Label {
                                 text: VesselService.paused ? "PAUSED" : root.report.status
-                                color: statusBadge.live ? Color.accent : Color.muted
+                                color: statusBadge.live ? Commons.Color.accent : Commons.Color.muted
                                 font.bold: true; font.pixelSize: root.smallTextSize + 1
                             }
                         }
                     }
                 }
-                Rectangle { width: parent.width; height: 1; color: Color.accent; opacity: 0.4 }
+                Rectangle { width: parent.width; height: 1; color: Commons.Color.accent; opacity: 0.4 }
                 // The chart and vessel details share a row only when both fit.
                 Grid {
                     width: parent.width
@@ -474,8 +475,8 @@ BarWidget {
                         }
                         Row {
                             width: parent.width
-                            Label { width: parent.width / 2; text: "VIEW / " + Model.distance(radar.viewRadiusNm, root.unit); color: Color.muted }
-                            Label { visible: !root.expanded; width: parent.width / 2; text: radar.visibleShips.length + " / " + (root.report.total || 0) + " CONTACTS"; horizontalAlignment: Text.AlignRight; color: Color.accent }
+                            Label { width: parent.width / 2; text: "VIEW / " + Model.distance(radar.viewRadiusNm, root.unit); color: Commons.Color.muted }
+                            Label { visible: !root.expanded; width: parent.width / 2; text: radar.visibleShips.length + " / " + (root.report.total || 0) + " CONTACTS"; horizontalAlignment: Text.AlignRight; color: Commons.Color.accent }
                         }
                         TypeFilters {
                             id: typeFilters
@@ -492,7 +493,7 @@ BarWidget {
                         Label {
                             visible: !radar.detailed
                             text: radar.mapLoading ? "LOADING MAP…" : (VesselService.basemap.available ? "OFFLINE MAP" : "BASEMAP UNAVAILABLE")
-                            font.pixelSize: root.smallTextSize; color: Color.muted
+                            font.pixelSize: root.smallTextSize; color: Commons.Color.muted
                         }
                         Item {
                             id: chartFooter
@@ -506,7 +507,7 @@ BarWidget {
                                 Label {
                                     width: parent.width; wrapMode: Text.WordWrap
                                     text: "● STATIONARY · ▲ MOVING · ○ SPEED UNKNOWN"
-                                    font.pixelSize: root.smallTextSize; color: Color.muted
+                                    font.pixelSize: root.smallTextSize; color: Commons.Color.muted
                                 }
                                 Column {
                                     id: credits
@@ -520,7 +521,7 @@ BarWidget {
                                         textFormat: Text.StyledText
                                         font.pixelSize: credits.textSize
                                         font.family: root.family
-                                        color: Color.muted; linkColor: Color.muted
+                                        color: Commons.Color.muted; linkColor: Commons.Color.muted
                                         wrapMode: Text.Wrap
                                         onLinkActivated: link => Qt.openUrlExternally(link)
                                     }
@@ -528,7 +529,7 @@ BarWidget {
                                         visible: !radar.detailed && VesselService.basemap.available
                                         width: parent.width; wrapMode: Text.WordWrap
                                         text: "Natural Earth · © GeoNames"
-                                        font.pixelSize: credits.textSize; color: Color.muted
+                                        font.pixelSize: credits.textSize; color: Commons.Color.muted
                                     }
                                 }
                             }
@@ -544,7 +545,7 @@ BarWidget {
                                     id: contactCount
                                     objectName: "contactCount"
                                     text: radar.visibleShips.length + " / " + (root.report.total || 0) + " CONTACTS"
-                                    color: Color.accent
+                                    color: Commons.Color.accent
                                 }
                             }
                             Robot {
@@ -562,7 +563,7 @@ BarWidget {
                     Column {
                         width: keys.wide ? 320 : parent.width
                         spacing: 12
-                        Rectangle { visible: !keys.wide; width: parent.width; height: 1; color: Color.muted; opacity: 0.3 }
+                        Rectangle { visible: !keys.wide; width: parent.width; height: 1; color: Commons.Color.muted; opacity: 0.3 }
                         VesselDetails {
                             id: details
                             objectName: "vesselDetails"
@@ -579,11 +580,11 @@ BarWidget {
                         Label {
                             width: parent.width; wrapMode: Text.WordWrap; visible: root.ships.length === 0
                             text: root.allShips.length > 0 ? "No vessels of the selected types. Click a type below the radar, or press T to show all." : VesselService.paused ? "Reception paused. Click PAUSED next to the location, or press P, to resume." : root.report.status === "SETUP" ? "Your lookout is ready for setup." : "Listening for vessels. New contacts appear as AIS reports arrive."
-                            color: Color.muted
+                            color: Commons.Color.muted
                         }
                         Label {
                             width: parent.width; wrapMode: Text.WordWrap; visible: !!root.report.error
-                            text: root.report.error || ""; color: Color.accent
+                            text: root.report.error || ""; color: Commons.Color.accent
                         }
                         // Bound the contact list height; the receiver already sorts by distance.
                         ContactList {
@@ -613,7 +614,7 @@ BarWidget {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             height: 43
-            Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.3 }
+            Rectangle { width: parent.width; height: 1; color: Commons.Color.muted; opacity: 0.3 }
             Row {
                 anchors.bottom: parent.bottom
                 spacing: 4

@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 import "Model.js" as Model
 
 // Projected vectors share the AIS coordinate system; zoom never stretches a bitmap.
@@ -11,10 +12,10 @@ Canvas {
     // One coordinate unit is the observer's loaded range; offset is already pixels.
     property real viewScale: 1
     property point offset: Qt.point(0, 0)
-    property color land: Color.foreground
-    property color sea: Color.background
-    property color roads: Color.muted
-    property color waterway: Color.accent
+    property color land: Commons.Color.foreground
+    property color sea: Commons.Color.background
+    property color roads: Commons.Color.muted
+    property color waterway: Commons.Color.accent
     onGeographyChanged: requestPaint()
     onViewScaleChanged: requestPaint()
     onOffsetChanged: requestPaint()

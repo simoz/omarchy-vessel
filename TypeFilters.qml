@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 import "Model.js" as Model
 
 // Type filters double as the color legend; keys 1–6 toggle them too. Equal
@@ -17,7 +18,7 @@ Grid {
     signal closeRequested()
 
     component Label: Text {
-        color: Color.foreground; font.family: root.family; font.pixelSize: root.smallTextSize
+        color: Commons.Color.foreground; font.family: root.family; font.pixelSize: root.smallTextSize
         textFormat: Text.PlainText
     }
 
@@ -32,12 +33,12 @@ Grid {
             required property var modelData
             required property int index
             readonly property bool shown: !root.hiddenTypes[modelData.key]
-            readonly property color ink: root.typeColors[modelData.key] || Color.accent
+            readonly property color ink: root.typeColors[modelData.key] || Commons.Color.accent
             objectName: "typeFilter-" + modelData.key
             width: root.cellWidth; height: 26; radius: 3
             color: shown ? Qt.alpha(ink, 0.12) : "transparent"
             border.width: 1
-            border.color: activeFocus ? Color.foreground : shown ? Qt.alpha(ink, 0.7) : Qt.alpha(Color.muted, 0.5)
+            border.color: activeFocus ? Commons.Color.foreground : shown ? Qt.alpha(ink, 0.7) : Qt.alpha(Commons.Color.muted, 0.5)
             activeFocusOnTab: true
             Accessible.role: Accessible.CheckBox
             Accessible.name: "Show " + modelData.label.toLowerCase() + " vessels, key " + (index + 1)
@@ -55,7 +56,7 @@ Grid {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 8; height: 8; radius: 4
                 color: chip.shown ? chip.ink : "transparent"
-                border.width: 1; border.color: chip.shown ? chip.ink : Color.muted
+                border.width: 1; border.color: chip.shown ? chip.ink : Commons.Color.muted
             }
             Label {
                 anchors.left: chipDot.right; anchors.leftMargin: 6
@@ -64,14 +65,14 @@ Grid {
                 text: chip.modelData.label
                 elide: Text.ElideRight
                 font.strikeout: !chip.shown
-                color: chip.shown ? Color.foreground : Color.muted
+                color: chip.shown ? Commons.Color.foreground : Commons.Color.muted
             }
             Label {
                 id: chipCount
                 anchors.right: parent.right; anchors.rightMargin: 8
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.typeCounts[chip.modelData.key] || 0
-                color: chip.shown ? chip.ink : Color.muted
+                color: chip.shown ? chip.ink : Commons.Color.muted
             }
             MouseArea {
                 anchors.fill: parent
