@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 import "Model.js" as Model
 
 // Contacts in receiver order, nearest first. The widget owns selection and
@@ -18,7 +19,7 @@ ListView {
     signal activated()
 
     component Label: Text {
-        color: Color.foreground; font.family: root.family; font.pixelSize: root.textSize
+        color: Commons.Color.foreground; font.family: root.family; font.pixelSize: root.textSize
         textFormat: Text.PlainText
     }
 
@@ -36,19 +37,19 @@ ListView {
     spacing: 4
     // Keep delegates stable across snapshots; MMSI, not position, is identity.
     model: ShipModel { ships: root.ships }
-    Rectangle { anchors.fill: parent; color: "transparent"; border.color: Color.accent; visible: root.activeFocus; z: 2 }
+    Rectangle { anchors.fill: parent; color: "transparent"; border.color: Commons.Color.accent; visible: root.activeFocus; z: 2 }
     delegate: Rectangle {
         required property var ship
         readonly property var modelData: ship
         objectName: "vessel-" + modelData.mmsi
         width: ListView.view.width; height: 38
-        color: Color.background
+        color: Commons.Color.background
         border.width: root.selectedMmsi === modelData.mmsi ? 1 : 0
-        border.color: Color.accent
+        border.color: Commons.Color.accent
         opacity: modelData.stale ? 0.5 : 1
-        Rectangle { anchors.left: parent.left; anchors.leftMargin: 8; anchors.verticalCenter: parent.verticalCenter; width: 8; height: 8; radius: 4; color: root.typeColors[Model.typeGroup(modelData.type)] || Color.accent }
+        Rectangle { anchors.left: parent.left; anchors.leftMargin: 8; anchors.verticalCenter: parent.verticalCenter; width: 8; height: 8; radius: 4; color: root.typeColors[Model.typeGroup(modelData.type)] || Commons.Color.accent }
         Label { anchors.left: parent.left; anchors.leftMargin: 24; anchors.verticalCenter: parent.verticalCenter; width: parent.width * 0.65 - 16; elide: Text.ElideRight; text: modelData.name || modelData.mmsi }
-        Label { anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter; text: Model.distance(modelData.distance, root.unit); color: Color.accent }
+        Label { anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter; text: Model.distance(modelData.distance, root.unit); color: Commons.Color.accent }
         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.revealRequested(modelData) }
     }
 }

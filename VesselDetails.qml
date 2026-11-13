@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Basic as Controls
 import qs.Commons
+import qs.Commons as Commons
 import "Model.js" as Model
 
 // Details of the selected vessel. The widget supplies the selection, units and
@@ -19,7 +20,7 @@ Column {
     visible: ship !== null
 
     component Label: Text {
-        color: Color.foreground; font.family: root.family; font.pixelSize: root.textSize
+        color: Commons.Color.foreground; font.family: root.family; font.pixelSize: root.textSize
         textFormat: Text.PlainText
     }
     // Three equal columns of caption and value.
@@ -35,7 +36,7 @@ Column {
                 width: (parent.width - 16) / 3; spacing: 4
                 Label {
                     text: modelData.label
-                    font.pixelSize: root.smallTextSize; color: Color.muted
+                    font.pixelSize: root.smallTextSize; color: Commons.Color.muted
                 }
                 Label {
                     // Wrap breaks long unspaced values, such as port codes, when needed.
@@ -71,7 +72,7 @@ Column {
                 width: 30; height: 30; radius: 3
                 color: "transparent"
                 border.width: 1
-                border.color: activeFocus ? Color.accent : "transparent"
+                border.color: activeFocus ? Commons.Color.accent : "transparent"
                 enabled: vesselUrl.length > 0
                 activeFocusOnTab: true
                 Accessible.role: Accessible.Button
@@ -87,7 +88,7 @@ Column {
                 Controls.ToolTip.text: text
                 Label {
                     anchors.centerIn: parent
-                    text: "↗"; font.pixelSize: 22; color: Color.accent
+                    text: "↗"; font.pixelSize: 22; color: Commons.Color.accent
                 }
                 MouseArea {
                     id: pointer
@@ -101,7 +102,7 @@ Column {
         Label {
             width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: root.smallTextSize
             text: root.ship ? root.ship.type + " · " + root.ship.timeSource + " · " + Model.age(root.ship.lastSeen, root.now) + (root.ship.stale ? " · OLD POSITION" : "") : ""
-            color: root.ship && root.ship.stale ? Color.accent : Color.muted
+            color: root.ship && root.ship.stale ? Commons.Color.accent : Commons.Color.muted
         }
     }
     DetailRow {
@@ -139,5 +140,5 @@ Column {
             {label: "DRAUGHT", value: root.ship && root.ship.draught ? root.ship.draught.toFixed(1) + " m" : ""}
         ]
     }
-    Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.2 }
+    Rectangle { width: parent.width; height: 1; color: Commons.Color.muted; opacity: 0.2 }
 }

@@ -1,12 +1,13 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 
 // A compact side-profile ship for the bar, separate from radar contact markers.
 Canvas {
     id: root
     implicitWidth: 16
     implicitHeight: 16
-    property color ink: Color.foreground
+    property color ink: Commons.Color.foreground
     onInkChanged: requestPaint()
     onWidthChanged: requestPaint()
     onHeightChanged: requestPaint()

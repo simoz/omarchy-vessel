@@ -1,1 +1,14 @@
 singleton VesselService 1.0 VesselService.qml
+BoatIcon 1.0 BoatIcon.qml
+ContactList 1.0 ContactList.qml
+DetailMap 1.0 DetailMap.qml
+KeyboardHelp 1.0 KeyboardHelp.qml
+KeyboardIcon 1.0 KeyboardIcon.qml
+OfflineMap 1.0 OfflineMap.qml
+Radar 1.0 Radar.qml
+RadarLabels 1.0 RadarLabels.qml
+Robot 1.0 Robot.qml
+SettingsForm 1.0 SettingsForm.qml
+ShipModel 1.0 ShipModel.qml
+TypeFilters 1.0 TypeFilters.qml
+VesselDetails 1.0 VesselDetails.qml

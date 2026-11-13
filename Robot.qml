@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 
 // Render the sprite with theme-bound rectangles so palette changes apply immediately.
 Item {
@@ -37,7 +38,7 @@ Item {
             width: Math.ceil(root.width / 16)
             height: pixel === "b" && (!root.awake) ? 1 : Math.ceil(root.height / 16)
             visible: pixel !== "."
-            color: pixel === "a" ? Color.accent : pixel === "b" ? (!root.awake ? Color.muted : root.eyesLit ? Color.accent : Color.background) : Color.foreground
+            color: pixel === "a" ? Commons.Color.accent : pixel === "b" ? (!root.awake ? Commons.Color.muted : root.eyesLit ? Commons.Color.accent : Commons.Color.background) : Commons.Color.foreground
         }
     }
     // A gentle bob makes activity visible without distracting from the chart.

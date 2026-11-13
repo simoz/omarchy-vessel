@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 import "Model.js" as Model
 
 // Draw only the bundled geography. Both map layers accept the same normalized
@@ -15,8 +16,8 @@ Canvas {
     onOffsetChanged: requestPaint()
     property real viewScale: 1
     onViewScaleChanged: requestPaint()
-    property color coastColor: Color.accent
-    property color landColor: Color.foreground
+    property color coastColor: Commons.Color.accent
+    property color landColor: Commons.Color.foreground
     onGeographyChanged: requestPaint()
     onCoastColorChanged: requestPaint()
     onLandColorChanged: requestPaint()

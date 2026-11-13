@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import QtQuick.Controls.Basic
 import qs.Commons
+import qs.Commons as Commons
 
 // The password lives in this editor only until Save/Cancel. Python never sends a
 // saved credential back to QML; an empty field preserves the existing key.
@@ -77,7 +78,7 @@ Column {
     }
     onVisibleChanged: { if (visible) populate(); else { apiKey.text = ""; VesselService.clearCitySearch(); } }
     component Caption: Text {
-        color: Color.foreground; font.family: root.family; font.pixelSize: 12
+        color: Commons.Color.foreground; font.family: root.family; font.pixelSize: 12
         textFormat: Text.PlainText; wrapMode: Text.WordWrap; width: parent.width
     }
     component Field: TextField {
@@ -90,18 +91,18 @@ Column {
             if (selectOnFocus) Qt.callLater(() => { if (editor.activeFocus) editor.selectAll(); });
         }
         width: parent.width; height: 38
-        color: Color.foreground; placeholderTextColor: Color.muted
+        color: Commons.Color.foreground; placeholderTextColor: Commons.Color.muted
         font.family: root.family; font.pixelSize: 13
-        selectionColor: Color.accent; selectedTextColor: Color.background
+        selectionColor: Commons.Color.accent; selectedTextColor: Commons.Color.background
         selectByMouse: true
-        background: Rectangle { color: Color.background; border.color: parent.activeFocus ? Color.accent : Color.muted; radius: 3 }
+        background: Rectangle { color: Commons.Color.background; border.color: parent.activeFocus ? Commons.Color.accent : Commons.Color.muted; radius: 3 }
     }
     component Action: Button {
         focusPolicy: Qt.StrongFocus
         onActiveFocusChanged: if (activeFocus) root.focusRequested(this)
         font.family: root.family
-        contentItem: Text { textFormat: Text.PlainText; text: parent.text; color: Color.accent; font: parent.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-        background: Rectangle { color: Color.background; border.color: parent.activeFocus ? Color.foreground : Color.accent; border.width: parent.activeFocus ? 2 : 1; radius: 3; opacity: parent.enabled ? 1 : 0.4 }
+        contentItem: Text { textFormat: Text.PlainText; text: parent.text; color: Commons.Color.accent; font: parent.font; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+        background: Rectangle { color: Commons.Color.background; border.color: parent.activeFocus ? Commons.Color.foreground : Commons.Color.accent; border.width: parent.activeFocus ? 2 : 1; radius: 3; opacity: parent.enabled ? 1 : 0.4 }
     }
     // Sibling radio buttons keep the three unit choices mutually exclusive.
     component UnitOption: RadioButton {
@@ -109,20 +110,20 @@ Column {
         onActiveFocusChanged: if (activeFocus) root.focusRequested(this)
         font.family: root.family
         contentItem: Text {
-            text: parent.text; textFormat: Text.PlainText; color: Color.foreground
+            text: parent.text; textFormat: Text.PlainText; color: Commons.Color.foreground
             font: parent.font; leftPadding: 30; verticalAlignment: Text.AlignVCenter
         }
         indicator: Rectangle {
             width: 18; height: 18; radius: 9; y: (parent.height - height) / 2
-            color: Color.background; border.color: parent.activeFocus ? Color.foreground : Color.accent
+            color: Commons.Color.background; border.color: parent.activeFocus ? Commons.Color.foreground : Commons.Color.accent
             Rectangle {
                 anchors.centerIn: parent; width: 8; height: 8; radius: 4
-                color: Color.accent; visible: parent.parent.checked
+                color: Commons.Color.accent; visible: parent.parent.checked
             }
         }
     }
-    Caption { text: "VESSEL / SETTINGS"; color: Color.accent; font.bold: true }
-    Caption { text: "LOCATION"; color: Color.muted; font.pixelSize: 10 }
+    Caption { text: "VESSEL / SETTINGS"; color: Commons.Color.accent; font.bold: true }
+    Caption { text: "LOCATION"; color: Commons.Color.muted; font.pixelSize: 10 }
     Row {
         width: parent.width; spacing: 6
         component Mode: Action {
@@ -130,8 +131,8 @@ Column {
             width: (parent.width - 12) / 3
             checked: root.locationMode === mode
             background: Rectangle {
-                color: parent.checked ? Qt.alpha(Color.accent, 0.15) : Color.background
-                border.color: parent.activeFocus ? Color.foreground : parent.checked ? Color.accent : Color.muted
+                color: parent.checked ? Qt.alpha(Commons.Color.accent, 0.15) : Commons.Color.background
+                border.color: parent.activeFocus ? Commons.Color.foreground : parent.checked ? Commons.Color.accent : Commons.Color.muted
                 radius: 3
             }
             onClicked: root.chooseMode(mode)
@@ -173,7 +174,7 @@ Column {
                 text: modelData.label + (modelData.detail ? " · " + modelData.detail : "")
                 contentItem: Text {
                     text: parent.text; textFormat: Text.PlainText
-                    color: Color.foreground; font.family: root.family; font.pixelSize: 12
+                    color: Commons.Color.foreground; font.family: root.family; font.pixelSize: 12
                     wrapMode: Text.WordWrap
                 }
                 onClicked: {
@@ -185,8 +186,8 @@ Column {
                 }
             }
         }
-        Caption { text: root.cityName ? "Selected: " + root.cityName : "Search, then choose a city from the results."; color: Color.muted }
-        Caption { text: VesselService.cityError; visible: text.length > 0; color: Color.accent }
+        Caption { text: root.cityName ? "Selected: " + root.cityName : "Search, then choose a city from the results."; color: Commons.Color.muted }
+        Caption { text: VesselService.cityError; visible: text.length > 0; color: Commons.Color.accent }
         Action {
             text: "City search: Photon / © OpenStreetMap contributors ↗"
             font.pixelSize: 10
@@ -196,15 +197,15 @@ Column {
     Caption {
         visible: root.locationMode === "ip"
         text: "Uses your public IP to estimate your location. A VPN may place you elsewhere."
-        color: Color.muted
+        color: Commons.Color.muted
     }
     Row {
         width: parent.width; spacing: 8; visible: root.locationMode === "coordinates"
         Field { id: latitude; width: (parent.width - 8) / 2; placeholderText: "Latitude"; onTextEdited: root.cityName = "" }
         Field { id: longitude; width: (parent.width - 8) / 2; placeholderText: "Longitude"; onTextEdited: root.cityName = "" }
     }
-    Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.3 }
-    Caption { text: "COVERAGE"; color: Color.muted; font.pixelSize: 10 }
+    Rectangle { width: parent.width; height: 1; color: Commons.Color.muted; opacity: 0.3 }
+    Caption { text: "COVERAGE"; color: Commons.Color.muted; font.pixelSize: 10 }
     Caption { text: "Radius in nautical miles (1–200)" }
     Field { id: radius; placeholderText: "25" }
     Caption { text: "Distance units" }
@@ -214,9 +215,9 @@ Column {
         UnitOption { id: kilometres; objectName: "unitKm"; text: "km" }
         UnitOption { id: miles; objectName: "unitMi"; text: "mi" }
     }
-    Caption { text: "Speed is shown in knots (kn)."; color: Color.muted }
-    Rectangle { width: parent.width; height: 1; color: Color.muted; opacity: 0.3 }
-    Caption { text: "AIS CONNECTION"; color: Color.muted; font.pixelSize: 10 }
+    Caption { text: "Speed is shown in knots (kn)."; color: Commons.Color.muted }
+    Rectangle { width: parent.width; height: 1; color: Commons.Color.muted; opacity: 0.3 }
+    Caption { text: "AIS CONNECTION"; color: Commons.Color.muted; font.pixelSize: 10 }
     Row {
         width: parent.width; spacing: 12
         UnitOption {
@@ -232,7 +233,7 @@ Column {
         text: root.provider === "openwaters"
             ? "Ready without an account. An optional personal token raises the limits."
             : "Sign in with GitHub to create a free AISStream key."
-        color: Color.muted
+        color: Commons.Color.muted
     }
     Row {
         width: parent.width; spacing: 12
@@ -256,5 +257,5 @@ Column {
         text: root.provider === "openwaters" ? "OPENWATERS / TOKEN ↗" : "GET AN API KEY ↗"
         onClicked: root.openBrowser(root.provider === "openwaters" ? "https://openwaters.io/ais/" : "https://aisstream.io/account")
     }
-    Caption { text: VesselService.settingsError; visible: text.length > 0; color: Color.accent }
+    Caption { text: VesselService.settingsError; visible: text.length > 0; color: Commons.Color.accent }
 }

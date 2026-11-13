@@ -1,5 +1,7 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
+import "."
 import "Model.js" as Model
 
 // Positions are relative to the observer; vessel course controls the symbol orientation.
@@ -113,7 +115,7 @@ Item {
     // Theme colors by type group; the accent covers themes without named hues.
     property var typeColors: ({})
     function inkFor(ship) {
-        return (ship && typeColors[Model.typeGroup(ship.type)]) || Color.accent;
+        return (ship && typeColors[Model.typeGroup(ship.type)]) || Commons.Color.accent;
     }
     signal selected(string mmsi)
     implicitHeight: width
@@ -142,7 +144,7 @@ Item {
         objectName: "radarSweep"
         anchors.fill: parent
         visible: root.scanning
-        property color ink: Color.accent
+        property color ink: Commons.Color.accent
         onInkChanged: requestPaint()
         onWidthChanged: requestPaint()
         onHeightChanged: requestPaint()
@@ -171,8 +173,8 @@ Item {
     Canvas {
         id: grid
         anchors.fill: parent
-        property color ink: Color.accent
-        property color muted: Color.muted
+        property color ink: Commons.Color.accent
+        property color muted: Commons.Color.muted
         onInkChanged: requestPaint()
         onMutedChanged: requestPaint()
         onWidthChanged: requestPaint()
@@ -210,11 +212,11 @@ Item {
             required property string modelData
             x: index === 1 ? root.width - width : index === 3 ? 0 : (root.width - width) / 2
             y: index === 0 ? 0 : index === 2 ? root.height - height : (root.height - height) / 2
-            text: modelData; color: Color.muted; font.pixelSize: 12; font.family: "monospace"
+            text: modelData; color: Commons.Color.muted; font.pixelSize: 12; font.family: "monospace"
         }
     }
-    Rectangle { anchors.centerIn: parent; anchors.horizontalCenterOffset: -root.centerPixels.x; anchors.verticalCenterOffset: -root.centerPixels.y; visible: Math.hypot(root.centerPixels.x, root.centerPixels.y) < root.chartRadius - 4; width: 7; height: 7; radius: 4; color: Color.foreground }
-    Text { anchors.centerIn: parent; anchors.horizontalCenterOffset: -root.centerPixels.x; anchors.verticalCenterOffset: 17 - root.centerPixels.y; visible: Math.hypot(root.centerPixels.x, 17 - root.centerPixels.y) < root.chartRadius - 16; text: "YOU"; font.pixelSize: 11; color: Color.muted }
+    Rectangle { anchors.centerIn: parent; anchors.horizontalCenterOffset: -root.centerPixels.x; anchors.verticalCenterOffset: -root.centerPixels.y; visible: Math.hypot(root.centerPixels.x, root.centerPixels.y) < root.chartRadius - 4; width: 7; height: 7; radius: 4; color: Commons.Color.foreground }
+    Text { anchors.centerIn: parent; anchors.horizontalCenterOffset: -root.centerPixels.x; anchors.verticalCenterOffset: 17 - root.centerPixels.y; visible: Math.hypot(root.centerPixels.x, 17 - root.centerPixels.y) < root.chartRadius - 16; text: "YOU"; font.pixelSize: 11; color: Commons.Color.muted }
     // The selected vessel's recent wake, beneath the contacts. Older segments
     // fade out; the line ends at the current position and is clipped to the chart.
     readonly property var selectedShip: {
@@ -263,7 +265,7 @@ Item {
             opacity: modelData.stale ? 0.4 : 1
             Rectangle {
                 anchors.centerIn: parent; width: root.markerSize + 10; height: width; radius: width / 2
-                color: "transparent"; border.width: 1.5; border.color: Color.foreground
+                color: "transparent"; border.width: 1.5; border.color: Commons.Color.foreground
                 visible: target.chosen
             }
             Canvas {
@@ -271,7 +273,7 @@ Item {
                 visible: target.motion === "moving"
                 rotation: target.orientation !== null ? target.orientation : 0
                 property color ink: target.ink
-                property color outline: Color.background
+                property color outline: Commons.Color.background
                 onWidthChanged: requestPaint()
                 onHeightChanged: requestPaint()
                 onInkChanged: requestPaint()
@@ -287,9 +289,9 @@ Item {
             Rectangle {
                 anchors.centerIn: parent; width: root.markerSize * 0.75; height: width; radius: width / 2
                 visible: target.motion !== "moving"
-                color: target.motion === "stationary" ? target.ink : Color.background
+                color: target.motion === "stationary" ? target.ink : Commons.Color.background
                 border.width: target.motion === "stationary" ? 0.6 : 1
-                border.color: target.motion === "stationary" ? Color.background : target.ink
+                border.color: target.motion === "stationary" ? Commons.Color.background : target.ink
             }
         }
     }
@@ -356,7 +358,7 @@ Item {
             property bool available: true
             signal activated()
             width: 32; height: 32; radius: 3
-            color: Color.background; border.color: activeFocus ? Color.accent : Color.muted
+            color: Commons.Color.background; border.color: activeFocus ? Commons.Color.accent : Commons.Color.muted
             opacity: available ? 0.9 : 0.3
             activeFocusOnTab: available
             Accessible.role: Accessible.Button
@@ -365,8 +367,8 @@ Item {
             Item {
                 anchors.centerIn: parent; width: 12; height: 12
                 visible: !parent.centerIcon
-                Rectangle { anchors.centerIn: parent; width: 12; height: 2; color: Color.foreground }
-                Rectangle { anchors.centerIn: parent; width: 2; height: 12; color: Color.foreground; visible: parent.parent.label === "+" }
+                Rectangle { anchors.centerIn: parent; width: 12; height: 2; color: Commons.Color.foreground }
+                Rectangle { anchors.centerIn: parent; width: 2; height: 12; color: Commons.Color.foreground; visible: parent.parent.label === "+" }
             }
             // Draw the reticle geometrically so font metrics cannot shift its center.
             Item {
@@ -374,10 +376,10 @@ Item {
                 visible: parent.centerIcon
                 Rectangle {
                     anchors.centerIn: parent; width: 10; height: 10; radius: 5
-                    color: "transparent"; border.width: 1; border.color: Color.foreground
+                    color: "transparent"; border.width: 1; border.color: Commons.Color.foreground
                 }
-                Rectangle { anchors.centerIn: parent; width: 14; height: 1; color: Color.foreground }
-                Rectangle { anchors.centerIn: parent; width: 1; height: 14; color: Color.foreground }
+                Rectangle { anchors.centerIn: parent; width: 14; height: 1; color: Commons.Color.foreground }
+                Rectangle { anchors.centerIn: parent; width: 1; height: 14; color: Commons.Color.foreground }
             }
             Keys.onReturnPressed: if (available) activated()
             Keys.onEnterPressed: if (available) activated()
